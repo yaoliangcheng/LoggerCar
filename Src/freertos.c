@@ -55,6 +55,7 @@
 #include "led.h"
 #include "debug.h"
 #include "RealTime.h"
+#include "MainProcess.h"
 
 /* USER CODE END Includes */
 
@@ -63,9 +64,14 @@ osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN Variables */
 
+/* 任务句柄 */
 osThreadId ledTaskHandle;
 osThreadId debugTaskHandle;
 osThreadId realtimeTaskHandle;
+osThreadId mainprocessTaskHandle;
+
+/* 队列句柄 */
+osMessageQId realtimeMessageQId;
 
 /* USER CODE END Variables */
 
@@ -117,11 +123,18 @@ void MX_FREERTOS_Init(void) {
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityRealtime, 0, 128);
+  mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
+  osThreadSuspend(mainprocessTaskHandle);
+
+
 
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  osMessageQDef(REALTIME_MESSAGE, 5, sizeof(uint32_t*));
+  realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
   /* USER CODE END RTOS_QUEUES */
 }
 

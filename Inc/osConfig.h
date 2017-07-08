@@ -8,5 +8,8 @@
 extern osThreadId ledTaskHandle;
 extern osThreadId debugTaskHandle;
 extern osThreadId realtimeTaskHandle;
+extern osThreadId mainprocessTaskHandle;
+
+extern osMessageQId realtimeMessageQId;
 
 #endif

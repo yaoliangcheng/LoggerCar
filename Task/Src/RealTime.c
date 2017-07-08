@@ -1,4 +1,5 @@
 #include "RealTime.h"
+#include "osConfig.h"
 
 /******************************************************************************/
 void REALTIME_Task(void)
@@ -29,10 +30,10 @@ void REALTIME_Task(void)
 			if ((realTime.time.Seconds == 0)
 				&& (realTime.time.Minutes % REALTIME_SAVE_INTERVAL == 0))
 			{
-//				osMessagePut(realtimeMessageQId, (uint32_t)&RealTime_Time, 100);
-////				osMailPut(realtimeMailQId, &RealTime_Time);
-//				/* 激活MainProcess任务 */
-//				osThreadResume(mainProcessTaskHandle);
+				osMessagePut(realtimeMessageQId, (uint32_t)&realTime, 100);
+
+				/* 激活MainProcess任务 */
+				osThreadResume(mainprocessTaskHandle);
 			}
 		}
 		else
