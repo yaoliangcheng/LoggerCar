@@ -1,0 +1,9 @@
+#忽略编译生成的文件
+.cproject
+.project
+.mxproject
+/MDK-ARM/LoggerCar/
+/MDK-ARM/LoggerCar.uvguix.路格科技-研发部
+/MDK-ARM/LoggerCar.uvoptx
+/MDK-ARM/startup_stm32f105xc.lst
+/MDK-ARM/EventRecorderStub.scvd
