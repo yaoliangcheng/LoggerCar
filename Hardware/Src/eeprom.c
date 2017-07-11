@@ -129,6 +129,8 @@ void DEVICE_Init(void)
 //		EEPROM_WriteBytes(EE_ADDR_PARAM_8, &EE_Param[7], sizeof(EE_Param));
 
 		exFLASH_ChipErase();
+//		exFLASH_SectorErase(0x0000);
+//		exFLASH_SectorErase(0x1000);
 		/* flash¥¢¥Êµÿ÷∑πÈ¡„£¨≤¡≥˝flash’˚∆¨ */
 		EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR,
 				(uint8_t*)&EE_FlashInfoSaveAddr, sizeof(EE_FlashInfoSaveAddr));

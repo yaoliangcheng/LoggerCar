@@ -16,6 +16,8 @@ void MAINPROCESS_Task(void)
 	RT_TimeTypedef *time;
 	exFLASH_InfoTypedef flashInfo;
 
+	exFLASH_ChipErase();
+
 	while(1)
 	{
 		signal = osMessageGet(realtimeMessageQId, 100);
@@ -75,7 +77,6 @@ void MAINPROCESS_Task(void)
 
 		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);
-
 	}
 }
 
