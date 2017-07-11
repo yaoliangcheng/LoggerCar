@@ -6,7 +6,6 @@
 
 #include "exFlash.h"
 
-
 /*******************************************************************************
  *
  */
@@ -15,18 +14,12 @@ void MAINPROCESS_Task(void)
 	osEvent signal;
 	ANALOG_ValueTypedef AnalogValue;
 	RT_TimeTypedef *time;
-	exFLASH_SaveInfoTypedef flashInfo;
-	uint32_t flashID = 0;
-	
-//	exFLASH_ChipErase();
-	exFLASH_SectorErase(0x00);
+	exFLASH_InfoTypedef flashInfo;
 
 	while(1)
 	{
 		signal = osMessageGet(realtimeMessageQId, 100);
 		time = (RT_TimeTypedef*)signal.value.v;
-		
-		flashID = exFLASH_ReadDeviceID();
 
 		/* 触发ADC采样 */
 		ANALOG_ConvertEnable();
@@ -43,7 +36,6 @@ void MAINPROCESS_Task(void)
 		
 		/* 获取传感器的值 */
 		ANALOG_GetSensorValue(&AnalogValue);
-		printf("温湿度数据采集正常...\r\n");
 		printf("温度1 = %f\r\n", AnalogValue.temp1);
 		printf("温度2 = %f\r\n", AnalogValue.temp2);
 		printf("温度3 = %f\r\n", AnalogValue.temp3);
@@ -68,9 +60,7 @@ void MAINPROCESS_Task(void)
 		exFLASH_SaveStructInfo(time, &AnalogValue, FORMAT_ONE_DECIMAL);
 
 		/* 读取数值 */
-		exFLASH_ReadBuffer(EE_FlashInfoSaveAddr - sizeof(exFLASH_SaveInfoTypedef),
-				(uint8_t*)&flashInfo, sizeof(exFLASH_SaveInfoTypedef));
-		printf("温湿度数据读取正常...\r\n");
+		exFLASH_ReadStructInfo(&flashInfo);
 		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time->date.Year,
 				time->date.Month, time->date.Date,
 				time->time.Hours,time->time.Minutes,
@@ -82,8 +72,6 @@ void MAINPROCESS_Task(void)
 
 		/* 通过GPRS上传到平台 */
 		/* todo */
-
-
 
 		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);

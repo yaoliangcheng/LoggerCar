@@ -38,9 +38,6 @@ static void exFLASH_WaitForIdle(void)
 	}
 
 	exFLASH_CS_DISABLE();
-
-	/* 芯片空闲后，写使能 */
-	exFLASH_WriteEnable();
 }
 
 /*******************************************************************************
@@ -62,8 +59,8 @@ static void exFLASH_SendCmdAddr(uint8_t cmd, uint32_t addr)
  */
 void exFLASH_SectorErase(uint32_t sectorAddr)
 {
-	/* 等待flash空闲 */
-//	exFLASH_WaitForIdle();
+	exFLASH_WriteEnable();
+	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 
@@ -71,6 +68,8 @@ void exFLASH_SectorErase(uint32_t sectorAddr)
 	exFLASH_SendCmdAddr(exFLASH_CMD_SECTOR_ERASE, sectorAddr);
 
 	exFLASH_CS_DISABLE();
+
+	exFLASH_WaitForIdle();
 }
 
 /*******************************************************************************
@@ -81,14 +80,16 @@ void exFLASH_ChipErase(void)
 	/* 发送扇区擦除指令，和扇区地址（高位在前） */
 	uint8_t chipEraseCmd = exFLASH_CMD_CHIP_ERASE;
 
-	/* 等待flash空闲 */
-//	exFLASH_WaitForIdle();
+	exFLASH_WriteEnable();
+	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 
 	HAL_SPI_Transmit(&exFLASH_SPI, &chipEraseCmd, 1, 100);
 
 	exFLASH_CS_DISABLE();
+
+	exFLASH_WaitForIdle();
 }
 
 /******************************************************************************/
@@ -121,8 +122,7 @@ static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
 	if (dataLength > exFLASH_PAGE_SIZE_MAX)
 		return;
 
-	/* 等待flash空闲 */
-	exFLASH_WaitForIdle();
+	exFLASH_WriteEnable();
 
 	exFLASH_CS_ENABLE();
 
@@ -133,6 +133,8 @@ static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
 	HAL_SPI_Transmit(&exFLASH_SPI, pBuffer, dataLength, 100);
 
 	exFLASH_CS_DISABLE();
+
+	exFLASH_WaitForIdle();
 }
 
 /*******************************************************************************
@@ -204,9 +206,6 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
  */
 void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength)
 {
-	/* 等待flash空闲 */
-	exFLASH_WaitForIdle();
-
 	exFLASH_CS_ENABLE();
 
 	exFLASH_SendCmdAddr(exFLASH_CMD_READ_DATA, readAddr);
@@ -271,7 +270,7 @@ void exFLASH_SaveStructInfo(RT_TimeTypedef* realTime,
 							ANALOG_ValueTypedef* analogValue,
 							EE_DataFormatEnum format)
 {
-	exFLASH_SaveInfoTypedef exFLASH_SaveInfo;
+	exFLASH_InfoTypedef exFLASH_SaveInfo;
 
 	/* 结构体复位，避免数据出错 */
 	memset(&exFLASH_SaveInfo, 0, sizeof(exFLASH_SaveInfo));
@@ -310,14 +309,25 @@ void exFLASH_SaveStructInfo(RT_TimeTypedef* realTime,
 			(uint8_t*)&exFLASH_SaveInfo.analogValue.humi4);
 
 	exFLASH_WriteBuffer(EE_FlashInfoSaveAddr, (uint8_t*)&exFLASH_SaveInfo,
-			sizeof(exFLASH_SaveInfoTypedef));
+			sizeof(exFLASH_InfoTypedef));
 
-	EE_FlashInfoSaveAddr += sizeof(exFLASH_SaveInfoTypedef);
+	EE_FlashInfoSaveAddr += sizeof(exFLASH_InfoTypedef);
 	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR, &EE_FlashInfoSaveAddr,
 			sizeof(EE_FlashInfoSaveAddr));
 }
 
+/*******************************************************************************
+ *
+ */
+void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info)
+{
+	exFLASH_ReadBuffer(EE_FlashInfoReadAddr, (uint8_t*)info,
+			sizeof(exFLASH_InfoTypedef));
 
+	EE_FlashInfoReadAddr += sizeof(exFLASH_InfoTypedef);
+	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_READ_ADDR, &EE_FlashInfoReadAddr,
+			sizeof(exFLASH_InfoTypedef));
+}
 
 
 

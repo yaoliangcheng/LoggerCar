@@ -50,11 +50,11 @@ void RT_Init(RT_TimeTypedef* time)
 	{
 		time->date.Year = 0X17;
 		time->date.Month = RTC_MONTH_JULY;
-		time->date.Date = 0x08;
-		time->date.WeekDay = RTC_WEEKDAY_SATURDAY;
-		time->time.Hours = 0x09;
-		time->time.Minutes = 0x30;
-		time->time.Seconds = 0x30;
+		time->date.Date = 0x11;
+		time->date.WeekDay = RTC_WEEKDAY_TUESDAY;
+		time->time.Hours = 0x13;
+		time->time.Minutes = 0x43;
+		time->time.Seconds = 0x00;
 		RT_SetRealTime(time);
 
 		HAL_RTCEx_BKUPWrite(&RT_RTC, RTC_BKUP_REG_DATA, RTC_BKUP_DATA);

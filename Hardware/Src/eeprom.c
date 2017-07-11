@@ -12,6 +12,7 @@ uint8_t EE_exitAnalogChannelNumb = 8;					/* 外部模拟量通道数 */
 EE_ParamTypedef EE_Param[ANALOG_CHANNEL_NUMB_MAX];		/* 通道参数信息 */
 
 uint32_t EE_FlashInfoSaveAddr = 0;						/* 外部Flash结构体信息保存地址 */
+uint32_t EE_FlashInfoReadAddr = 0;						/* 外部Flash结构体信息保存地址 */
 uint32_t EE_FlashDeviceID = 0;							/* 外部flash型号 */
 
 /*******************************************************************************
@@ -75,7 +76,7 @@ void EEPROM_ReadBytes(uint16_t addr, uint8_t* pBuffer, uint8_t dataLength)
 void DEVICE_Init(void)
 {
 	EEPROM_ReadBytes(EE_ADDR_DEVICE_INIT, &EE_DeviceInit, sizeof(EE_DeviceInit));
-	if (EE_DeviceInit != 0xAA)
+	if (EE_DeviceInit != 0xBB)
 	{
 //		EEPROM_WriteBytes(EE_ADDR_DEVICE_SN, EE_deviceSN, sizeof(EE_deviceSN));
 //		EEPROM_WriteBytes(EE_ADDR_FIRMWARE_VERSION, &EE_firmwareVersion,
@@ -127,52 +128,55 @@ void DEVICE_Init(void)
 //		EE_Param[7].dataFormat = FORMAT_ONE_DECIMAL;
 //		EEPROM_WriteBytes(EE_ADDR_PARAM_8, &EE_Param[7], sizeof(EE_Param));
 
+		exFLASH_ChipErase();
 		/* flash储存地址归零，擦除flash整片 */
 		EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR,
-				(uint8_t*)&EE_FlashInfoSaveAddr,
-				sizeof(EE_FlashInfoSaveAddr));
-//		exFLASH_ChipErase();
+				(uint8_t*)&EE_FlashInfoSaveAddr, sizeof(EE_FlashInfoSaveAddr));
+		EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_READ_ADDR,
+				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 
 		/* 测试阶段，每次开机都重新写eeprom和exflash */
-//		EE_DeviceInit = 0xAA;
-//		EEPROM_WriteBytes(EE_ADDR_DEVICE_INIT, &EE_DeviceInit,
-//				sizeof(EE_DeviceInit));
+		EE_DeviceInit = 0xBB;
+		EEPROM_WriteBytes(EE_ADDR_DEVICE_INIT, &EE_DeviceInit,
+				sizeof(EE_DeviceInit));
 	}
 	else
 	{
-		EEPROM_ReadBytes(EE_ADDR_DEVICE_SN, (uint8_t*)&EE_deviceSN,
-				sizeof(EE_deviceSN));
-		EEPROM_ReadBytes(EE_ADDR_FIRMWARE_VERSION,
-				(uint8_t*)&EE_firmwareVersion, sizeof(EE_firmwareVersion));
-		EEPROM_ReadBytes(EE_ADDR_RECORD_INTERVAL, (uint8_t*)&EE_recordInterval,
-				sizeof(EE_recordInterval));
-		EEPROM_ReadBytes(EE_ADDR_OVER_LIMIT_RECORD_INTERVAL,
-				(uint8_t*)&EE_overLimitRecordInterval,
-				sizeof(EE_overLimitRecordInterval));
-		EEPROM_ReadBytes(EE_ADDR_EXIT_ANALOG_CHANNEL_NUMB,
-				(uint8_t*)&EE_exitAnalogChannelNumb,
-				sizeof(EE_exitAnalogChannelNumb));
-
-		EEPROM_ReadBytes(EE_ADDR_PARAM_1, (uint8_t*)&EE_Param[0],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_2, (uint8_t*)&EE_Param[1],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_3, (uint8_t*)&EE_Param[2],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_4, (uint8_t*)&EE_Param[3],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_5, (uint8_t*)&EE_Param[4],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_6, (uint8_t*)&EE_Param[5],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_7, (uint8_t*)&EE_Param[6],
-				sizeof(EE_Param));
-		EEPROM_ReadBytes(EE_ADDR_PARAM_8, (uint8_t*)&EE_Param[7],
-				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_DEVICE_SN, (uint8_t*)&EE_deviceSN,
+//				sizeof(EE_deviceSN));
+//		EEPROM_ReadBytes(EE_ADDR_FIRMWARE_VERSION,
+//				(uint8_t*)&EE_firmwareVersion, sizeof(EE_firmwareVersion));
+//		EEPROM_ReadBytes(EE_ADDR_RECORD_INTERVAL, (uint8_t*)&EE_recordInterval,
+//				sizeof(EE_recordInterval));
+//		EEPROM_ReadBytes(EE_ADDR_OVER_LIMIT_RECORD_INTERVAL,
+//				(uint8_t*)&EE_overLimitRecordInterval,
+//				sizeof(EE_overLimitRecordInterval));
+//		EEPROM_ReadBytes(EE_ADDR_EXIT_ANALOG_CHANNEL_NUMB,
+//				(uint8_t*)&EE_exitAnalogChannelNumb,
+//				sizeof(EE_exitAnalogChannelNumb));
+//
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_1, (uint8_t*)&EE_Param[0],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_2, (uint8_t*)&EE_Param[1],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_3, (uint8_t*)&EE_Param[2],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_4, (uint8_t*)&EE_Param[3],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_5, (uint8_t*)&EE_Param[4],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_6, (uint8_t*)&EE_Param[5],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_7, (uint8_t*)&EE_Param[6],
+//				sizeof(EE_Param));
+//		EEPROM_ReadBytes(EE_ADDR_PARAM_8, (uint8_t*)&EE_Param[7],
+//				sizeof(EE_Param));
 
 
 		EEPROM_ReadBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR,
 				(uint8_t*)&EE_FlashInfoSaveAddr, sizeof(EE_FlashInfoSaveAddr));
+		EEPROM_ReadBytes(EE_ADDR_FLASH_INFO_READ_ADDR,
+				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 	}
 
 //	EE_FlashDeviceID = exFLASH_ReadDeviceID();

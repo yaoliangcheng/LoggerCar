@@ -38,6 +38,7 @@
 #define EE_ADDR_PARAM_14						(0x036)
 
 #define EE_ADDR_FLASH_INFO_SAVE_ADDR			(0x039)
+#define EE_ADDR_FLASH_INFO_READ_ADDR			(0x043)
 
 
 /******************************************************************************/
@@ -97,6 +98,9 @@ typedef enum
 } EE_DataFormatEnum;
 
 /******************************************************************************/
+#pragma pack(push)
+#pragma pack(1)											/* 按字节对齐 */
+
 typedef struct
 {
 	EE_ChannelTypeEnum channelType;					/* 通道类型 */
@@ -104,7 +108,7 @@ typedef struct
 	EE_DataFormatEnum  dataFormat;					/* 数据形式 */
 } EE_ParamTypedef;
 
-
+#pragma pack(pop)
 /******************************************************************************/
 extern uint8_t EE_DeviceInit;
 extern char 	EE_deviceSN[10];
@@ -114,6 +118,7 @@ extern uint8_t EE_overLimitRecordInterval;
 extern uint8_t EE_exitAnalogChannelNumb;
 extern EE_ParamTypedef EE_Param[ANALOG_CHANNEL_NUMB_MAX];
 extern uint32_t EE_FlashInfoSaveAddr;
+extern uint32_t EE_FlashInfoReadAddr;
 
 /******************************************************************************/
 void EEPROM_WriteBytes(uint16_t addr, void* pBuffer, uint8_t dataLength);

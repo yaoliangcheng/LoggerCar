@@ -19,6 +19,9 @@
 #define ANALOG_SAMPLE_NUMB						(20)	/* 模拟量采样数 */
 
 /******************************************************************************/
+#pragma pack(push)
+#pragma pack(1)											/* 按字节对齐 */
+
 typedef struct
 {
 	uint16_t temp1;				/* temp1转换值 */
@@ -49,6 +52,7 @@ typedef struct
 	uint8_t batVoltage;				/* 电池电压 */
 } ANALOG_ValueTypedef;
 
+#pragma pack(pop)
 /******************************************************************************/
 void ANALOG_GetSensorValue(ANALOG_ValueTypedef* value);
 void ANALOG_ConvertEnable(void);

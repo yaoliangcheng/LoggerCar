@@ -83,12 +83,12 @@ typedef struct
 	int latitude;								/* 纬度 */
 	uint8_t resever;							/* 保留 */
 	exFLASH_AnalogValueTypedef analogValue;		/* 模拟量值 */
-} exFLASH_SaveInfoTypedef;
+} exFLASH_InfoTypedef;
 
 #pragma pack(pop)
 
 /******************************************************************************/
-extern exFLASH_SaveInfoTypedef exFLASH_SaveInfo;
+extern exFLASH_InfoTypedef exFLASH_SaveInfo;
 
 /******************************************************************************/
 void exFLASH_Init(void);
@@ -101,5 +101,6 @@ void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength
 void exFLASH_SectorErase(uint32_t sectorAddr);
 void exFLASH_ChipErase(void);
 uint32_t exFLASH_ReadDeviceID(void);
+void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
 
 #endif

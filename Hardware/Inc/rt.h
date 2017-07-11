@@ -11,7 +11,7 @@
 #define RT_RTC						(hrtc)
 
 /******************************************************************************/
-#define RTC_BKUP_DATA			(0xA0A0)
+#define RTC_BKUP_DATA			(0xA0A1)
 
 #define RTC_BKUP_REG_DATA		(RTC_BKP_DR2)
 #define RTC_BKUP_REG_YEAR		(RTC_BKP_DR3)
@@ -20,12 +20,17 @@
 #define RTC_BKUP_REG_WEEK		(RTC_BKP_DR6)
 
 /******************************************************************************/
+#pragma pack(push)
+#pragma pack(1)											/* 按字节对齐 */
+
 typedef struct
 {
 	RTC_DateTypeDef date;
 	RTC_TimeTypeDef time;
 	uint8_t oldWeekDay;				/* 上次记录星期,用于更新日期 */
 } RT_TimeTypedef;
+
+#pragma pack(pop)
 
 /******************************************************************************/
 void RT_BKUP_UpdateDate(RT_TimeTypedef* time);

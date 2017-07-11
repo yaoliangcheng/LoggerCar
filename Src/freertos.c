@@ -129,8 +129,8 @@ void MX_FREERTOS_Init(void) {
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 
-  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityNormal, 0, 128);
-  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
+//  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityNormal, 0, 128);
+//  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
 
 
   /* USER CODE END RTOS_THREADS */

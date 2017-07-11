@@ -117,6 +117,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   GPRS_Init();
+  DEVICE_Init();
 
   /* USER CODE END 2 */
 

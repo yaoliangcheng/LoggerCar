@@ -23,6 +23,9 @@
 #define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
 
 /******************************************************************************/
+#pragma pack(push)
+#pragma pack(1)											/* 按字节对齐 */
+
 typedef struct
 {
 	uint8_t recvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];			/* 接收缓存 */
@@ -44,11 +47,12 @@ typedef struct
 	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB];				/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
-	exFLASH_SaveInfoTypedef dataPack[DATA_PACK_NUMB_MAX];		/* m条数据点 */
+	exFLASH_InfoTypedef dataPack[DATA_PACK_NUMB_MAX];		/* m条数据点 */
 	uint8_t tail;											/* 数据尾 */
 	uint8_t verifyData;										/* 校验数据 */
 } GPRS_StructTypedef;
 
+#pragma pack(pop)
 /******************************************************************************/
 //extern uint8_t GPRS_RecvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];
 extern GPRS_BufferStatusTypedef GPRS_BufferStatus;
