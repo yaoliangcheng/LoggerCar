@@ -56,6 +56,10 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define GPRS_PWRKEY_CTRL_Pin GPIO_PIN_2
+#define GPRS_PWRKEY_CTRL_GPIO_Port GPIOE
+#define GPRS_RST_CTRL_Pin GPIO_PIN_3
+#define GPRS_RST_CTRL_GPIO_Port GPIOE
 #define TEMP1_Pin GPIO_PIN_0
 #define TEMP1_GPIO_Port GPIOC
 #define TEMP2_Pin GPIO_PIN_1
@@ -96,6 +100,10 @@
 #define EE_SDA_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_12
 #define LED_GPIO_Port GPIOB
+#define GPRS_RX_Pin GPIO_PIN_5
+#define GPRS_RX_GPIO_Port GPIOD
+#define GPRS_TX_Pin GPIO_PIN_6
+#define GPRS_TX_GPIO_Port GPIOD
 #define SPI_CS_FLASH_Pin GPIO_PIN_7
 #define SPI_CS_FLASH_GPIO_Port GPIOD
 #define DEBUG_RX_Pin GPIO_PIN_6

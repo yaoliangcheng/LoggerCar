@@ -106,7 +106,6 @@ void ANALOG_ConvertEnable(void)
 void ANALOG_ConvertDisable(void)
 {
 	HAL_ADC_Stop_DMA(&ANALOG_ADC);
-//	osDelay(10);
 	ANALOG_PWR_DISABLE();
 }
 

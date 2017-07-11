@@ -58,6 +58,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "gprs.h"
 
 /* USER CODE END Includes */
 
@@ -112,8 +113,10 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C2_Init();
   MX_SPI1_Init();
+  MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  GPRS_Init();
 
   /* USER CODE END 2 */
 

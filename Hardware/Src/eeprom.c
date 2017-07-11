@@ -6,7 +6,7 @@
 uint8_t EE_DeviceInit = 0xAA;							/* EE储存标志位 */
 char 	EE_deviceSN[10] = "1707041010";					/* 设备SN号 */
 uint8_t EE_firmwareVersion = 10;						/* 固件版本号 */
-uint8_t EE_recordInterval = 5;							/* 记录间隔 */
+uint8_t EE_recordInterval = 1;							/* 记录间隔 */
 uint8_t EE_overLimitRecordInterval = 2;					/* 超标记录间隔 */
 uint8_t EE_exitAnalogChannelNumb = 8;					/* 外部模拟量通道数 */
 EE_ParamTypedef EE_Param[ANALOG_CHANNEL_NUMB_MAX];		/* 通道参数信息 */

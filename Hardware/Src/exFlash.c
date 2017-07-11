@@ -63,7 +63,7 @@ static void exFLASH_SendCmdAddr(uint8_t cmd, uint32_t addr)
 void exFLASH_SectorErase(uint32_t sectorAddr)
 {
 	/* µÈ´ýflash¿ÕÏÐ */
-	exFLASH_WaitForIdle();
+//	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 
@@ -82,7 +82,7 @@ void exFLASH_ChipErase(void)
 	uint8_t chipEraseCmd = exFLASH_CMD_CHIP_ERASE;
 
 	/* µÈ´ýflash¿ÕÏÐ */
-	exFLASH_WaitForIdle();
+//	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 

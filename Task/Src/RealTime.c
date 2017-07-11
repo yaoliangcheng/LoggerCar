@@ -1,5 +1,6 @@
 #include "RealTime.h"
 #include "osConfig.h"
+#include "eeprom.h"
 
 /******************************************************************************/
 void REALTIME_Task(void)
@@ -28,7 +29,7 @@ void REALTIME_Task(void)
 			}
 
 			if ((realTime.time.Seconds == 0)
-				&& (realTime.time.Minutes % REALTIME_SAVE_INTERVAL == 0))
+				&& (realTime.time.Minutes % EE_recordInterval == 0))
 			{
 				osMessagePut(realtimeMessageQId, (uint32_t)&realTime, 100);
 

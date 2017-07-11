@@ -18,6 +18,9 @@ void MAINPROCESS_Task(void)
 	exFLASH_SaveInfoTypedef flashInfo;
 	uint32_t flashID = 0;
 	
+//	exFLASH_ChipErase();
+	exFLASH_SectorErase(0x00);
+
 	while(1)
 	{
 		signal = osMessageGet(realtimeMessageQId, 100);
@@ -68,7 +71,11 @@ void MAINPROCESS_Task(void)
 		exFLASH_ReadBuffer(EE_FlashInfoSaveAddr - sizeof(exFLASH_SaveInfoTypedef),
 				(uint8_t*)&flashInfo, sizeof(exFLASH_SaveInfoTypedef));
 		printf("温湿度数据读取正常...\r\n");
-		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", flashInfo.realTime.year,
+		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time->date.Year,
+				time->date.Month, time->date.Date,
+				time->time.Hours,time->time.Minutes,
+				time->time.Seconds);
+		printf("储存时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", flashInfo.realTime.year,
 				flashInfo.realTime.month,flashInfo.realTime.day,
 				flashInfo.realTime.hour,flashInfo.realTime.min,
 				flashInfo.realTime.sec);
