@@ -1,4 +1,6 @@
 #include "RealTime.h"
+#include "osConfig.h"
+#include "eeprom.h"
 
 /******************************************************************************/
 void REALTIME_Task(void)
@@ -25,14 +27,18 @@ void REALTIME_Task(void)
 				/* 日期更新到备份 */
 				RT_BKUP_UpdateDate(&realTime);
 			}
+			printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", realTime.date.Year,
+				realTime.date.Month, realTime.date.Date,
+				realTime.time.Hours, realTime.time.Minutes,
+				realTime.time.Seconds);
 
 			if ((realTime.time.Seconds == 0)
-				&& (realTime.time.Minutes % REALTIME_SAVE_INTERVAL == 0))
+				&& (realTime.time.Minutes % EE_recordInterval == 0))
 			{
-//				osMessagePut(realtimeMessageQId, (uint32_t)&RealTime_Time, 100);
-////				osMailPut(realtimeMailQId, &RealTime_Time);
-//				/* 激活MainProcess任务 */
-//				osThreadResume(mainProcessTaskHandle);
+				osMessagePut(realtimeMessageQId, (uint32_t)&realTime, 100);
+
+				/* 激活MainProcess任务 */
+				osThreadResume(mainprocessTaskHandle);
 			}
 		}
 		else
