@@ -27,6 +27,10 @@ void REALTIME_Task(void)
 				/* 日期更新到备份 */
 				RT_BKUP_UpdateDate(&realTime);
 			}
+			printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", realTime.date.Year,
+				realTime.date.Month, realTime.date.Date,
+				realTime.time.Hours, realTime.time.Minutes,
+				realTime.time.Seconds);
 
 			if ((realTime.time.Seconds == 0)
 				&& (realTime.time.Minutes % EE_recordInterval == 0))

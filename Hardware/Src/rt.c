@@ -50,10 +50,10 @@ void RT_Init(RT_TimeTypedef* time)
 	{
 		time->date.Year = 0X17;
 		time->date.Month = RTC_MONTH_JULY;
-		time->date.Date = 0x11;
-		time->date.WeekDay = RTC_WEEKDAY_TUESDAY;
-		time->time.Hours = 0x13;
-		time->time.Minutes = 0x43;
+		time->date.Date = 0x12;
+		time->date.WeekDay = RTC_WEEKDAY_WEDNESDAY;
+		time->time.Hours = 0x15;
+		time->time.Minutes = 0x58;
 		time->time.Seconds = 0x00;
 		RT_SetRealTime(time);
 

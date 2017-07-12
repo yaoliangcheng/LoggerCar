@@ -116,8 +116,9 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  HAL_Delay(1000);
   GPRS_Init();
-  DEVICE_Init();
+//  DEVICE_Init();
 
   /* USER CODE END 2 */
 

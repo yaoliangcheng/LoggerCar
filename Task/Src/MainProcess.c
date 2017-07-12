@@ -16,10 +16,11 @@ void MAINPROCESS_Task(void)
 	RT_TimeTypedef *time;
 	exFLASH_InfoTypedef flashInfo;
 
-	exFLASH_ChipErase();
+//	exFLASH_ChipErase();
 
 	while(1)
 	{
+
 		signal = osMessageGet(realtimeMessageQId, 100);
 		time = (RT_TimeTypedef*)signal.value.v;
 
@@ -59,24 +60,25 @@ void MAINPROCESS_Task(void)
 		/* todo */
 
 		/* 记录数值 */
-		exFLASH_SaveStructInfo(time, &AnalogValue, FORMAT_ONE_DECIMAL);
+//		exFLASH_SaveStructInfo(time, &AnalogValue, FORMAT_ONE_DECIMAL);
 
 		/* 读取数值 */
-		exFLASH_ReadStructInfo(&flashInfo);
-		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time->date.Year,
-				time->date.Month, time->date.Date,
-				time->time.Hours,time->time.Minutes,
-				time->time.Seconds);
-		printf("储存时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", flashInfo.realTime.year,
-				flashInfo.realTime.month,flashInfo.realTime.day,
-				flashInfo.realTime.hour,flashInfo.realTime.min,
-				flashInfo.realTime.sec);
+//		exFLASH_ReadStructInfo(&flashInfo);
+//		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time->date.Year,
+//				time->date.Month, time->date.Date,
+//				time->time.Hours,time->time.Minutes,
+//				time->time.Seconds);
+//		printf("储存时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", flashInfo.realTime.year,
+//				flashInfo.realTime.month,flashInfo.realTime.day,
+//				flashInfo.realTime.hour,flashInfo.realTime.min,
+//				flashInfo.realTime.sec);
 
 		/* 通过GPRS上传到平台 */
 		/* todo */
 
 		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);
+
 	}
 }
 

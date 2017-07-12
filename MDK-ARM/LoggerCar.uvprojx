@@ -639,6 +639,11 @@
               <FileType>1</FileType>
               <FilePath>..\Task\Src\GPRSProcess.c</FilePath>
             </File>
+            <File>
+              <FileName>MainProcess.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Task\Src\MainProcess.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
