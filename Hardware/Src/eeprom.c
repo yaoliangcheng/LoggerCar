@@ -128,7 +128,7 @@ void DEVICE_Init(void)
 //		EE_Param[7].dataFormat = FORMAT_ONE_DECIMAL;
 //		EEPROM_WriteBytes(EE_ADDR_PARAM_8, &EE_Param[7], sizeof(EE_Param));
 
-//		exFLASH_ChipErase();
+		exFLASH_ChipErase();
 //		exFLASH_SectorErase(0x0000);
 //		exFLASH_SectorErase(0x1000);
 		/* flash¥¢¥Êµÿ÷∑πÈ¡„£¨≤¡≥˝flash’˚∆¨ */
