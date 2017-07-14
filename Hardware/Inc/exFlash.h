@@ -43,7 +43,8 @@
 #define exFLASH_ID									(uint32_t)(0X00EF3013)
 #define DUMMY_BYTE									(uint8_t)(0xFF)
 
-#define exFLASH_PAGE_SIZE_MAX						(256)
+#define exFLASH_PAGE_SIZE_BYTES						(256)
+#define exFLASH_SECTOR_SIZE_BYTES					(4096)
 
 /******************************************************************************/
 #pragma pack(push)

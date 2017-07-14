@@ -118,7 +118,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_Delay(1000);
   GPRS_Init();
-//  DEVICE_Init();
+  DEVICE_Init();
 
   /* USER CODE END 2 */
 

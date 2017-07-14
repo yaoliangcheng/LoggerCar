@@ -119,7 +119,7 @@ static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
 								 uint16_t dataLength)
 {
 	/* 写数据的长度不能大于flash的页字节 */
-	if (dataLength > exFLASH_PAGE_SIZE_MAX)
+	if (dataLength > exFLASH_PAGE_SIZE_BYTES)
 		return;
 
 	exFLASH_WriteEnable();
@@ -147,23 +147,23 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 	uint8_t dataBytesRemainder;				/* 最后一页还剩字节数 */
 
 	/* 写地址与flash页地址对齐 */
-	if (0 == (writeAddr % FLASH_PAGE_SIZE))
+	if (0 == (writeAddr % exFLASH_PAGE_SIZE_BYTES))
 	{
 		/* 字节长度<=页字节长度 */
-		if (dataLength <=  FLASH_PAGE_SIZE)
+		if (dataLength <=  exFLASH_PAGE_SIZE_BYTES)
 			exFLASH_WritePageBytes(writeAddr, pBuffer, dataLength);
 		else
 		{
 			/* 需要写的页数 */
-			pageWriteNumb = dataLength / FLASH_PAGE_SIZE;
+			pageWriteNumb = dataLength / exFLASH_PAGE_SIZE_BYTES;
 			/* 写完页，还需写的字节数 */
-			dataBytesRemainder = dataLength % FLASH_PAGE_SIZE;
+			dataBytesRemainder = dataLength % exFLASH_PAGE_SIZE_BYTES;
 
 			while (pageWriteNumb--)
 			{
-				exFLASH_WritePageBytes(writeAddr, pBuffer, FLASH_PAGE_SIZE);
-				writeAddr += FLASH_PAGE_SIZE;
-				pBuffer += FLASH_PAGE_SIZE;
+				exFLASH_WritePageBytes(writeAddr, pBuffer, exFLASH_PAGE_SIZE_BYTES);
+				writeAddr += exFLASH_PAGE_SIZE_BYTES;
+				pBuffer += exFLASH_PAGE_SIZE_BYTES;
 			}
 			exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
 		}
@@ -171,7 +171,7 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 	else
 	{
 		/* 当前页可写入字节数 */
-		pageBytesRemainder = FLASH_PAGE_SIZE - (writeAddr % FLASH_PAGE_SIZE);
+		pageBytesRemainder = exFLASH_PAGE_SIZE_BYTES - (writeAddr % exFLASH_PAGE_SIZE_BYTES);
 
 		/* 当前页可以写完 */
 		if (dataLength <= pageBytesRemainder)
@@ -185,16 +185,16 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 			dataLength -= pageBytesRemainder;
 
 			/* 需要写的页数 */
-			pageWriteNumb = dataLength / FLASH_PAGE_SIZE;
+			pageWriteNumb = dataLength / exFLASH_PAGE_SIZE_BYTES;
 			while (pageWriteNumb--)
 			{
-				exFLASH_WritePageBytes(writeAddr, pBuffer, FLASH_PAGE_SIZE);
-				writeAddr += FLASH_PAGE_SIZE;
-				pBuffer += FLASH_PAGE_SIZE;
+				exFLASH_WritePageBytes(writeAddr, pBuffer, exFLASH_PAGE_SIZE_BYTES);
+				writeAddr += exFLASH_PAGE_SIZE_BYTES;
+				pBuffer += exFLASH_PAGE_SIZE_BYTES;
 			}
 
 			/* 写完页，还需写的字节数 */
-			dataBytesRemainder = dataLength % FLASH_PAGE_SIZE;
+			dataBytesRemainder = dataLength % exFLASH_PAGE_SIZE_BYTES;
 			if (dataBytesRemainder > 0)
 				exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
 		}
