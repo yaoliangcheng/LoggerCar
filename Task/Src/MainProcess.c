@@ -56,9 +56,6 @@ void MAINPROCESS_Task(void)
 		/* 获取定位数据 */
 		/* todo */
 
-		/* 从信号队列中获取时间值 */
-		/* todo */
-
 		/* 记录数值 */
 		exFLASH_SaveStructInfo(time, &AnalogValue, FORMAT_ONE_DECIMAL);
 

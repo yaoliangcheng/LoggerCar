@@ -130,7 +130,7 @@ void DEVICE_Init(void)
 
 		exFLASH_ChipErase();
 //		exFLASH_SectorErase(0x0000);
-//		exFLASH_SectorErase(0x1000);
+
 		/* flash储存地址归零，擦除flash整片 */
 		EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR,
 				(uint8_t*)&EE_FlashInfoSaveAddr, sizeof(EE_FlashInfoSaveAddr));
@@ -138,7 +138,7 @@ void DEVICE_Init(void)
 				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 
 		/* 测试阶段，每次开机都重新写eeprom和exflash */
-		EE_DeviceInit = 0xBB;
+//		EE_DeviceInit = 0xBB;
 		EEPROM_WriteBytes(EE_ADDR_DEVICE_INIT, &EE_DeviceInit,
 				sizeof(EE_DeviceInit));
 	}
@@ -181,7 +181,7 @@ void DEVICE_Init(void)
 				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 	}
 
-//	EE_FlashDeviceID = exFLASH_ReadDeviceID();
+	EE_FlashDeviceID = exFLASH_ReadDeviceID();
 }
 
 

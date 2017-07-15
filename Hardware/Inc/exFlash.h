@@ -40,7 +40,7 @@
 #define exFLASH_CMD_MANUFACE_DIVICE_ID				(uint8_t)(0X90)
 #define exFLASH_CMD_JEDEC_DIVICE_ID					(uint8_t)(0X9F)
 
-#define exFLASH_ID									(uint32_t)(0X00EF3013)
+#define exFLASH_ID									(uint32_t)(0X00EF4017)
 #define DUMMY_BYTE									(uint8_t)(0xFF)
 
 #define exFLASH_PAGE_SIZE_BYTES						(256)
@@ -101,6 +101,10 @@ void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength
 
 void exFLASH_SectorErase(uint32_t sectorAddr);
 void exFLASH_ChipErase(void);
+void exFLASH_ModePwrDown(void);
+void exFLASH_ModeWakeUp(void);
+
+
 uint32_t exFLASH_ReadDeviceID(void);
 void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
 

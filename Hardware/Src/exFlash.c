@@ -253,14 +253,32 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
 		*pBuffer |= 0x8000;
 }
 
-uint32_t flashDeviceID = 0;
 /*******************************************************************************
- *
+ * ·¢ËÍflash Í£»ú
  */
-void exFLASH_Init(void)
+void exFLASH_ModePwrDown(void)
 {
-//	exFLASH_ChipErase();
-	flashDeviceID = exFLASH_ReadDeviceID();
+	uint8_t modePwrDown = exFLASH_CMD_POWER_DOWN;
+
+	exFLASH_CS_ENABLE();
+
+	HAL_SPI_Transmit(&exFLASH_SPI, &modePwrDown, 1, 100);
+
+	exFLASH_CS_DISABLE();
+}
+
+/*******************************************************************************
+ * ·¢ËÍflash»½ÐÑ
+ */
+void exFLASH_ModeWakeUp(void)
+{
+	uint8_t modeWakeUp = exFLASH_CMD_RELEASE_POWER_DOWN;
+
+	exFLASH_CS_ENABLE();
+
+	HAL_SPI_Transmit(&exFLASH_SPI, &modeWakeUp, 1, 100);
+
+	exFLASH_CS_DISABLE();
 }
 
 /*******************************************************************************
