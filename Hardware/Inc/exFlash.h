@@ -89,13 +89,7 @@ typedef struct
 #pragma pack(pop)
 
 /******************************************************************************/
-extern exFLASH_InfoTypedef exFLASH_SaveInfo;
-
-/******************************************************************************/
 void exFLASH_Init(void);
-void exFLASH_SaveStructInfo(RT_TimeTypedef* realTime,
-							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum format);
 void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLength);
 void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength);
 
@@ -107,5 +101,9 @@ void exFLASH_ModeWakeUp(void);
 
 uint32_t exFLASH_ReadDeviceID(void);
 void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
+void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
+							RT_TimeTypedef* realTime,
+							ANALOG_ValueTypedef* analogValue,
+							EE_DataFormatEnum format);
 
 #endif

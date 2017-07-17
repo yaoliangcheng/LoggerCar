@@ -44,7 +44,7 @@ typedef struct
 	uint8_t overLimitInterval;								/* 超标间隔 */
 	uint8_t resever[6];										/* 预留 */
 	uint8_t analogChannelNumb;								/* 模拟量n通道数 */
-	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB];				/* n个通道参数 */
+	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB - 1];			/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
 	exFLASH_InfoTypedef dataPack[DATA_PACK_NUMB_MAX];		/* m条数据点 */
@@ -59,7 +59,9 @@ extern GPRS_BufferStatusTypedef GPRS_BufferStatus;
 
 /******************************************************************************/
 void GPRS_Init(void);
+void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
 void GPRS_SendCmd(char* str);
 void GPRS_UartIdleDeal(void);
+void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf);
 
 #endif
