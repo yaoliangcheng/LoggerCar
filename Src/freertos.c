@@ -74,6 +74,7 @@ osThreadId gprsprocessTaskHandle;
 
 /* ╤сап╬Д╠З */
 osMessageQId realtimeMessageQId;
+osMessageQId infoMessageQId;
 
 /* USER CODE END Variables */
 
@@ -129,16 +130,20 @@ void MX_FREERTOS_Init(void) {
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 
-//  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityNormal, 0, 128);
-//  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
+  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityNormal, 0, 512);
+  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
+  osThreadSuspend(gprsprocessTaskHandle);
 
 
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  osMessageQDef(REALTIME_MESSAGE, 5, sizeof(uint32_t*));
+  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
   realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
+
+  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
+  infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
   /* USER CODE END RTOS_QUEUES */
 }
 

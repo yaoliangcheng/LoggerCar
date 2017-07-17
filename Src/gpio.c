@@ -80,7 +80,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPRS_PWRKEY_CTRL_Pin|EE_WP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, GPRS_PWRKEY_CTRL_Pin|VBAT_CTRL_Pin|EE_WP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_SET);
@@ -94,11 +94,17 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_CS_FLASH_GPIO_Port, SPI_CS_FLASH_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : PEPin PEPin PEPin */
-  GPIO_InitStruct.Pin = GPRS_PWRKEY_CTRL_Pin|GPRS_RST_CTRL_Pin|EE_WP_Pin;
+  /*Configure GPIO pins : PEPin PEPin PEPin PEPin */
+  GPIO_InitStruct.Pin = GPRS_PWRKEY_CTRL_Pin|GPRS_RST_CTRL_Pin|VBAT_CTRL_Pin|EE_WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = PWR_ON_CHECK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(PWR_ON_CHECK_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PBPin PBPin */
   GPIO_InitStruct.Pin = SENSOR_PWR_CTRL_Pin|LED_Pin;

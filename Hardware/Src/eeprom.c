@@ -6,7 +6,7 @@
 uint8_t EE_DeviceInit = 0xAA;							/* EE储存标志位 */
 char 	EE_deviceSN[10] = "1707041010";					/* 设备SN号 */
 uint8_t EE_firmwareVersion = 10;						/* 固件版本号 */
-uint8_t EE_recordInterval = 1;							/* 记录间隔 */
+uint8_t EE_recordInterval = 2;							/* 记录间隔 */
 uint8_t EE_overLimitRecordInterval = 2;					/* 超标记录间隔 */
 uint8_t EE_exitAnalogChannelNumb = 8;					/* 外部模拟量通道数 */
 EE_ParamTypedef EE_Param[ANALOG_CHANNEL_NUMB_MAX];		/* 通道参数信息 */
@@ -130,7 +130,7 @@ void DEVICE_Init(void)
 
 		exFLASH_ChipErase();
 //		exFLASH_SectorErase(0x0000);
-//		exFLASH_SectorErase(0x1000);
+
 		/* flash储存地址归零，擦除flash整片 */
 		EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR,
 				(uint8_t*)&EE_FlashInfoSaveAddr, sizeof(EE_FlashInfoSaveAddr));
@@ -138,7 +138,7 @@ void DEVICE_Init(void)
 				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 
 		/* 测试阶段，每次开机都重新写eeprom和exflash */
-		EE_DeviceInit = 0xBB;
+//		EE_DeviceInit = 0xBB;
 		EEPROM_WriteBytes(EE_ADDR_DEVICE_INIT, &EE_DeviceInit,
 				sizeof(EE_DeviceInit));
 	}
@@ -181,7 +181,7 @@ void DEVICE_Init(void)
 				(uint8_t*)&EE_FlashInfoReadAddr, sizeof(EE_FlashInfoReadAddr));
 	}
 
-//	EE_FlashDeviceID = exFLASH_ReadDeviceID();
+	EE_FlashDeviceID = exFLASH_ReadDeviceID();
 }
 
 

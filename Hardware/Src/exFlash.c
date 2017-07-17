@@ -1,6 +1,6 @@
 #include "exFlash.h"
 
-
+#include "input.h"
 
 
 /*******************************************************************************
@@ -253,67 +253,84 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
 		*pBuffer |= 0x8000;
 }
 
-uint32_t flashDeviceID = 0;
 /*******************************************************************************
- *
+ * 发送flash 停机
  */
-void exFLASH_Init(void)
+void exFLASH_ModePwrDown(void)
 {
-//	exFLASH_ChipErase();
-	flashDeviceID = exFLASH_ReadDeviceID();
+	uint8_t modePwrDown = exFLASH_CMD_POWER_DOWN;
+
+	exFLASH_CS_ENABLE();
+
+	HAL_SPI_Transmit(&exFLASH_SPI, &modePwrDown, 1, 100);
+
+	exFLASH_CS_DISABLE();
+}
+
+/*******************************************************************************
+ * 发送flash唤醒
+ */
+void exFLASH_ModeWakeUp(void)
+{
+	uint8_t modeWakeUp = exFLASH_CMD_RELEASE_POWER_DOWN;
+
+	exFLASH_CS_ENABLE();
+
+	HAL_SPI_Transmit(&exFLASH_SPI, &modeWakeUp, 1, 100);
+
+	exFLASH_CS_DISABLE();
 }
 
 /*******************************************************************************
  *
  */
-void exFLASH_SaveStructInfo(RT_TimeTypedef* realTime,
+void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
+							RT_TimeTypedef* realTime,
 							ANALOG_ValueTypedef* analogValue,
 							EE_DataFormatEnum format)
 {
-	exFLASH_InfoTypedef exFLASH_SaveInfo;
-
 	/* 结构体复位，避免数据出错 */
-	memset(&exFLASH_SaveInfo, 0, sizeof(exFLASH_SaveInfo));
+	memset(saveInfo, 0, sizeof(exFLASH_InfoTypedef));
 
 	/* 获取时钟 */
-	exFLASH_SaveInfo.realTime.year = realTime->date.Year;
-	exFLASH_SaveInfo.realTime.month = realTime->date.Month;
-	exFLASH_SaveInfo.realTime.day = realTime->date.Date;
-	exFLASH_SaveInfo.realTime.hour = realTime->time.Hours;
-	exFLASH_SaveInfo.realTime.min = realTime->time.Minutes;
+	saveInfo->realTime.year  = realTime->date.Year;
+	saveInfo->realTime.month = realTime->date.Month;
+	saveInfo->realTime.day   = realTime->date.Date;
+	saveInfo->realTime.hour  = realTime->time.Hours;
+	saveInfo->realTime.min   = realTime->time.Minutes;
 	/* 为了数据的整齐，将秒置位0 */
-	exFLASH_SaveInfo.realTime.sec = 0;
+	saveInfo->realTime.sec = 0;
 
 	/* 储存电池电量 */
-	exFLASH_SaveInfo.batteryLevel = analogValue->batVoltage;
+	saveInfo->batteryLevel = analogValue->batVoltage;
 
 	/* 外部电池状态 */
-	exFLASH_SaveInfo.externalPowerStatus = 1;
+	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();;
 
 	/* 模拟数据格式转换 */
 	exFLASH_DataFormatConvert(analogValue->temp1, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.temp1);
+			(uint8_t*)&saveInfo->analogValue.temp1);
 	exFLASH_DataFormatConvert(analogValue->humi1, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.humi1);
+			(uint8_t*)&saveInfo->analogValue.humi1);
 	exFLASH_DataFormatConvert(analogValue->temp2, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.temp2);
+			(uint8_t*)&saveInfo->analogValue.temp2);
 	exFLASH_DataFormatConvert(analogValue->humi2, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.humi2);
+			(uint8_t*)&saveInfo->analogValue.humi2);
 	exFLASH_DataFormatConvert(analogValue->temp3, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.temp3);
+			(uint8_t*)&saveInfo->analogValue.temp3);
 	exFLASH_DataFormatConvert(analogValue->humi3, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.humi3);
+			(uint8_t*)&saveInfo->analogValue.humi3);
 	exFLASH_DataFormatConvert(analogValue->temp4, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.temp4);
+			(uint8_t*)&saveInfo->analogValue.temp4);
 	exFLASH_DataFormatConvert(analogValue->humi4, format,
-			(uint8_t*)&exFLASH_SaveInfo.analogValue.humi4);
+			(uint8_t*)&saveInfo->analogValue.humi4);
 
-	exFLASH_WriteBuffer(EE_FlashInfoSaveAddr, (uint8_t*)&exFLASH_SaveInfo,
-			sizeof(exFLASH_InfoTypedef));
-
-	EE_FlashInfoSaveAddr += sizeof(exFLASH_InfoTypedef);
-	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR, &EE_FlashInfoSaveAddr,
-			sizeof(EE_FlashInfoSaveAddr));
+//	exFLASH_WriteBuffer(EE_FlashInfoSaveAddr, (uint8_t*)&exFLASH_SaveInfo,
+//			sizeof(exFLASH_InfoTypedef));
+//
+//	EE_FlashInfoSaveAddr += sizeof(exFLASH_InfoTypedef);
+//	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_SAVE_ADDR, &EE_FlashInfoSaveAddr,
+//			sizeof(EE_FlashInfoSaveAddr));
 }
 
 /*******************************************************************************

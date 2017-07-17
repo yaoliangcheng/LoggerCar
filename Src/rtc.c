@@ -83,7 +83,7 @@ void HAL_RTC_MspInit(RTC_HandleTypeDef* rtcHandle)
     HAL_PWR_EnableBkUpAccess();
     /* Enable BKP CLK enable for backup registers */
     __HAL_RCC_BKP_CLK_ENABLE();
-    /* Peripheral clock enable */
+    /* RTC clock enable */
     __HAL_RCC_RTC_ENABLE();
 
     /* RTC interrupt Init */
