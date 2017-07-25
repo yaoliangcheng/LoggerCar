@@ -2,17 +2,48 @@
 
 #include "input.h"
 
+/*******************************************************************************
+ * 读写一个字节数据
+ */
+static uint8_t exFLASH_WriteReadByte(uint8_t byte)
+{
+	while(!__HAL_SPI_GET_FLAG(&exFLASH_SPI, SPI_FLAG_TXE));
+	exFLASH_SPI.Instance->DR = byte;
+
+	while(!__HAL_SPI_GET_FLAG(&exFLASH_SPI, SPI_FLAG_RXNE));
+	return exFLASH_SPI.Instance->DR;
+}
+
+/******************************************************************************/
+uint32_t exFLASH_ReadDeviceID(void)
+{
+	uint32_t temp = RESET;
+	uint8_t temp1 = RESET, temp2 = RESET, temp3 = RESET;
+
+	exFLASH_CS_ENABLE();
+
+	exFLASH_WriteReadByte(exFLASH_CMD_JEDEC_DIVICE_ID);
+
+	/* 读数据 */
+	temp1 = exFLASH_WriteReadByte(DUMMY_BYTE);
+	temp2 = exFLASH_WriteReadByte(DUMMY_BYTE);
+	temp3 = exFLASH_WriteReadByte(DUMMY_BYTE);
+
+	exFLASH_CS_DISABLE();
+
+	temp = (temp1 << 16) | (temp2 << 8) | temp3;
+
+	return temp;
+}
 
 /*******************************************************************************
  * 发送flash写使能指令
  */
 static void exFLASH_WriteEnable(void)
 {
-	uint8_t enableCmd = exFLASH_CMD_WRITE_ENABLE;
-
 	exFLASH_CS_ENABLE();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &enableCmd, 1, 100);
+	exFLASH_WriteReadByte(exFLASH_CMD_WRITE_ENABLE);
 
 	exFLASH_CS_DISABLE();
 }
@@ -23,35 +54,14 @@ static void exFLASH_WriteEnable(void)
  */
 static void exFLASH_WaitForIdle(void)
 {
-	uint8_t readRegStatus = exFLASH_CMD_READ_STATUS_REG;
-	uint8_t sendByte = DUMMY_BYTE;
-	uint8_t readByte = 0x01;
-
 	exFLASH_CS_ENABLE();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &readRegStatus, 1, 100);
+	exFLASH_WriteReadByte(exFLASH_CMD_READ_STATUS_REG);
 
 	/* flash正忙，等待，寄存器的最后一位为BUSY位 */
-	while(readByte & 0x01)
-	{
-		HAL_SPI_TransmitReceive(&exFLASH_SPI, &sendByte, &readByte, 1, 100);
-	}
+	while(exFLASH_WriteReadByte(DUMMY_BYTE) & 0x01);
 
 	exFLASH_CS_DISABLE();
-}
-
-/*******************************************************************************
- *
- */
-static void exFLASH_SendCmdAddr(uint8_t cmd, uint32_t addr)
-{
-	/* 发送扇区擦除指令，和扇区地址（高位在前） */
-	uint8_t sendBytes[4] = {cmd,
-							(addr & 0xFF0000 >> 16),
-							(addr & 0x00FF00 >> 8),
-							(addr & 0x0000FF)};
-
-	HAL_SPI_Transmit(&exFLASH_SPI, sendBytes, sizeof(sendBytes), 100);
 }
 
 /*******************************************************************************
@@ -64,8 +74,36 @@ void exFLASH_SectorErase(uint32_t sectorAddr)
 
 	exFLASH_CS_ENABLE();
 
-	/* 发送扇区擦除命令和地址 */
-	exFLASH_SendCmdAddr(exFLASH_CMD_SECTOR_ERASE, sectorAddr);
+	/* 发送扇区擦除命令 */
+	exFLASH_WriteReadByte(exFLASH_CMD_SECTOR_ERASE);
+
+	/* 发送扇区地址，高位在前 */
+	exFLASH_WriteReadByte(sectorAddr & 0xFF0000 >> 16);
+	exFLASH_WriteReadByte(sectorAddr & 0x00FF00 >> 8);
+	exFLASH_WriteReadByte(sectorAddr & 0x0000FF);
+
+	exFLASH_CS_DISABLE();
+
+	exFLASH_WaitForIdle();
+}
+
+/*******************************************************************************
+ * 注意：地址对齐64KB
+ */
+void exFLASH_BlockErase(uint32_t blockAddr)
+{
+	exFLASH_WriteEnable();
+	exFLASH_WaitForIdle();
+
+	exFLASH_CS_ENABLE();
+
+	/* 发送扇区擦除命令 */
+	exFLASH_WriteReadByte(exFLASH_CMD_BLOCK_ERASE);
+
+	/* 发送扇区地址，高位在前 */
+	exFLASH_WriteReadByte(blockAddr & 0xFF0000 >> 16);
+	exFLASH_WriteReadByte(blockAddr & 0x00FF00 >> 8);
+	exFLASH_WriteReadByte(blockAddr & 0x0000FF);
 
 	exFLASH_CS_DISABLE();
 
@@ -77,39 +115,17 @@ void exFLASH_SectorErase(uint32_t sectorAddr)
  */
 void exFLASH_ChipErase(void)
 {
-	/* 发送扇区擦除指令，和扇区地址（高位在前） */
-	uint8_t chipEraseCmd = exFLASH_CMD_CHIP_ERASE;
-
 	exFLASH_WriteEnable();
 	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &chipEraseCmd, 1, 100);
+	/* 发送扇区擦除命令 */
+	exFLASH_WriteReadByte(exFLASH_CMD_CHIP_ERASE);
 
 	exFLASH_CS_DISABLE();
 
 	exFLASH_WaitForIdle();
-}
-
-/******************************************************************************/
-uint32_t exFLASH_ReadDeviceID(void)
-{
-	uint8_t temp[4] = {exFLASH_CMD_JEDEC_DIVICE_ID,
-					   DUMMY_BYTE, DUMMY_BYTE, DUMMY_BYTE};
-
-	uint32_t deviceID;
-
-//	exFLASH_WaitForIdle();
-
-	exFLASH_CS_ENABLE();
-
-	HAL_SPI_TransmitReceive(&exFLASH_SPI, temp, temp, sizeof(temp), 1000);
-
-	exFLASH_CS_DISABLE();
-
-	deviceID = (temp[1] << 16) | (temp[2] << 8) | temp[3];
-	return deviceID;
 }
 
 /*******************************************************************************
@@ -123,14 +139,20 @@ static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
 		return;
 
 	exFLASH_WriteEnable();
+	exFLASH_WaitForIdle();
 
 	exFLASH_CS_ENABLE();
 
-	/* 发送命令和地址 */
-	exFLASH_SendCmdAddr(exFLASH_CMD_PAGE_PROGRAM, writeAddr);
+	/* 发送扇区写命令 */
+	exFLASH_WriteReadByte(exFLASH_CMD_PAGE_PROGRAM);
 
-	/* 发送数据 */
-	HAL_SPI_Transmit(&exFLASH_SPI, pBuffer, dataLength, 100);
+	/* 发送扇区地址，高位在前 */
+	exFLASH_WriteReadByte((writeAddr & 0xFF0000) >> 16);
+	exFLASH_WriteReadByte((writeAddr & 0xFF00) >> 8);
+	exFLASH_WriteReadByte(writeAddr & 0xFF);
+
+	while (dataLength--)
+		exFLASH_WriteReadByte(*pBuffer++);
 
 	exFLASH_CS_DISABLE();
 
@@ -206,13 +228,24 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
  */
 void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength)
 {
+	exFLASH_WaitForIdle();
+
 	exFLASH_CS_ENABLE();
 
-	exFLASH_SendCmdAddr(exFLASH_CMD_READ_DATA, readAddr);
+	/* 发送扇区读命令 */
+	exFLASH_WriteReadByte(exFLASH_CMD_READ_DATA);
 
-	HAL_SPI_Receive(&exFLASH_SPI, pBuffer, dataLength, 100);
+	/* 发送扇区地址，高位在前 */
+	exFLASH_WriteReadByte((readAddr & 0xFF0000) >> 16);
+	exFLASH_WriteReadByte((readAddr & 0xFF00) >> 8);
+	exFLASH_WriteReadByte(readAddr & 0xFF);
+
+	while (dataLength--)
+		*pBuffer++ = exFLASH_WriteReadByte(DUMMY_BYTE);
 
 	exFLASH_CS_DISABLE();
+
+	exFLASH_WaitForIdle();
 }
 
 /*******************************************************************************
@@ -258,11 +291,9 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
  */
 void exFLASH_ModePwrDown(void)
 {
-	uint8_t modePwrDown = exFLASH_CMD_POWER_DOWN;
-
 	exFLASH_CS_ENABLE();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &modePwrDown, 1, 100);
+	exFLASH_WriteReadByte(exFLASH_CMD_POWER_DOWN);
 
 	exFLASH_CS_DISABLE();
 }
@@ -272,11 +303,9 @@ void exFLASH_ModePwrDown(void)
  */
 void exFLASH_ModeWakeUp(void)
 {
-	uint8_t modeWakeUp = exFLASH_CMD_RELEASE_POWER_DOWN;
-
 	exFLASH_CS_ENABLE();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &modeWakeUp, 1, 100);
+	exFLASH_WriteReadByte(exFLASH_CMD_RELEASE_POWER_DOWN);
 
 	exFLASH_CS_DISABLE();
 }

@@ -17,11 +17,11 @@ void MAINPROCESS_Task(void)
 	osEvent signal;
 	ANALOG_ValueTypedef AnalogValue;
 	RT_TimeTypedef *time;
-	exFLASH_InfoTypedef sendInfo;
+//	exFLASH_InfoTypedef sendInfo;
+
 
 	while(1)
-	{
-
+	{		
 		signal = osMessageGet(realtimeMessageQId, 100);
 		time = (RT_TimeTypedef*)signal.value.v;
 
@@ -55,6 +55,7 @@ void MAINPROCESS_Task(void)
 		printf("湿度4 = %f\r\n", AnalogValue.humi4);
 		printf("电池电量 = %d\r\n", AnalogValue.batVoltage);
 
+#if 0
 		/* 获取外部电源状态 */
 		/* todo */
 
@@ -84,10 +85,9 @@ void MAINPROCESS_Task(void)
 			osThreadSuspend(NULL);
 		}
 
-
+#endif
 		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);
-
 	}
 }
 

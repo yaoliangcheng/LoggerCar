@@ -51,6 +51,7 @@
 #include "cmsis_os.h"
 #include "adc.h"
 #include "dma.h"
+#include "fatfs.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
@@ -116,8 +117,7 @@ int main(void)
   MX_USART2_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  HAL_Delay(1000);
-  
+  __HAL_SPI_ENABLE(&exFLASH_SPI);
 
   /* USER CODE END 2 */
 

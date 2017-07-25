@@ -45,6 +45,10 @@
 
 #define exFLASH_PAGE_SIZE_BYTES						(256)
 #define exFLASH_SECTOR_SIZE_BYTES					(4096)
+#define exFLASH_SECTOR_COUNT						(1024)
+//#define exFLASH_BLOCK_SIZE							(65536)
+//#define exFLASH_BLOCK_COUNT							(128)
+#define exFLASH_BLOCK_SIZE							(1)		/* ÉÈÇøÊý */
 
 /******************************************************************************/
 #pragma pack(push)
