@@ -1,6 +1,6 @@
 #include "exFlash.h"
 
-#include "input.h"
+
 
 /*******************************************************************************
  * 读写一个字节数据
@@ -287,6 +287,30 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
 }
 
 /*******************************************************************************
+ *
+ */
+static void exFLASH_LocationFormatConvert(float value, uint8_t* pBuffer)
+{
+	BOOL negative = FALSE;
+	uint32_t temp;
+
+	if (value < 0)
+		negative = TRUE;
+
+	/* 获取整数部分 */
+	*pBuffer = abs((int)value);
+
+	temp = (uint32_t)((value - (*pBuffer)) * 1000000);
+
+	if (negative)
+		temp |= 0x800000;
+
+	*(pBuffer + 1) = (uint8_t)((temp & 0x00FF0000) >> 16);
+	*(pBuffer + 2) = (uint8_t)((temp & 0x0000FF00) >> 8);
+	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
+}
+
+/*******************************************************************************
  * 发送flash 停机
  */
 void exFLASH_ModePwrDown(void)
@@ -314,9 +338,10 @@ void exFLASH_ModeWakeUp(void)
  *
  */
 void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
-							RT_TimeTypedef* realTime,
+							RT_TimeTypedef*      realTime,
 							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum format)
+							EE_DataFormatEnum    format,
+							GPS_LocationTypedef* location)
 {
 	/* 结构体复位，避免数据出错 */
 	memset(saveInfo, 0, sizeof(exFLASH_InfoTypedef));
@@ -334,7 +359,13 @@ void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
 	saveInfo->batteryLevel = analogValue->batVoltage;
 
 	/* 外部电池状态 */
-	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();;
+	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();
+
+	location->latitude = 87.452136;
+	location->longitude = 123.698745;
+
+	exFLASH_LocationFormatConvert(location->latitude,  (uint8_t*)&saveInfo->latitude);
+	exFLASH_LocationFormatConvert(location->longitude, (uint8_t*)&saveInfo->longitude);
 
 	/* 模拟数据格式转换 */
 	exFLASH_DataFormatConvert(analogValue->temp1, format,

@@ -1,5 +1,6 @@
 #include "GPRSProcess.h"
 #include "gprs.h"
+#include "gps.h"
 
 #include "osConfig.h"
 #include "MainProcess.h"
@@ -14,6 +15,7 @@ void GPRSPROCESS_Task(void)
 	char* expectString;						/* 预期收到的字符串 */
 	char* str;
 	GPRS_StructTypedef sendStruct;			/* 发送结构 */
+	GPS_LocationTypedef location;
 	BOOL isLoop = FALSE;
 
 	GPRS_Init();
@@ -115,6 +117,31 @@ void GPRSPROCESS_Task(void)
 				moduleStatus = GET_SELF_IP_ADDR_FINISH;
 				break;
 
+			/* 使能GPS功能 */
+			case ENABLE_GPS:
+				printf("使能GPS功能\r\n");
+				GPRS_SendCmd(AT_CMD_GPS_ENABLE);
+				expectString = AT_CMD_GPS_ENABLE_RESPOND;
+				moduleStatus = ENABLE_GPS_FINISH;
+				break;
+
+			/* 获取GNRMC定位值 */
+			case GET_GPS_GNRMC:
+				printf("获取GNRMC定位值\r\n");
+				/* GPS功能使能比较慢，需要先延时一段时间 */
+				GPRS_SendCmd(AT_CMD_GPS_GET_GNRMC);
+				expectString = AT_CMD_GPS_GET_GNRMC_RESPOND;
+				moduleStatus = GET_GPS_GNRMC_FINISH;
+				break;
+
+			/* 失能GPS功能 */
+			case DISABLE_GPS:
+				printf("失能GPS功能\r\n");
+				GPRS_SendCmd(AT_CMD_GPS_DISABLE);
+				expectString = AT_CMD_GPS_DISABLE_RESPOND;
+				moduleStatus = DISABLE_GPS_FINISH;
+				break;
+
 			/* 设置服务器地址 */
 			case SET_SERVER_IP_ADDR:
 				printf("获取服务器地址\r\n");
@@ -160,7 +187,7 @@ void GPRSPROCESS_Task(void)
 				break;
 			}
 
-			signal = osSignalWait(GPRS_PROCESS_TASK_RECV_ENABLE, 5000);
+			signal = osSignalWait(GPRS_PROCESS_TASK_RECV_ENABLE, 10000);
 			/* 发送超时 */
 			if (signal.status == osEventTimeout)
 			{
@@ -170,8 +197,12 @@ void GPRSPROCESS_Task(void)
 				{
 					/* 放弃本次数据发送，将模式切换到退出透传模式 */
 					moduleStatus = EXTI_SERIANET_MODE;
+
+					/* 数据发送失败，记录，等待下次发送 */
+					/* todo */
 				}
-				else /* 其他命令没有收到预期答复，则重复发送 */
+				/* 其他命令没有收到预期答复，则重复发送 */
+				else
 				{
 					/* 模式切换到前一步再次触发发送 */
 					moduleStatus--;
@@ -253,7 +284,36 @@ void GPRSPROCESS_Task(void)
 						/* 获取本机IP地址完成 */
 					case GET_SELF_IP_ADDR_FINISH:
 						printf("获取本机IP地址完成\r\n");
+						moduleStatus = ENABLE_GPS;
+						break;
+
+						/* 使能GPS功能完成 */
+					case ENABLE_GPS_FINISH:
+						printf("使能GPS功能完成\r\n");
+						moduleStatus = GET_GPS_GNRMC;
+						break;
+
+						/* 获取GNRMC定位值完成 */
+					case GET_GPS_GNRMC_FINISH:
+						printf("获取GNRMC定位值完成\r\n");
+						GPS_GetLocation(GPRS_BufferStatus.recvBuffer, &location);
+						/* 把指针传递回原函数 */
+						/* todo */
+						moduleStatus = DISABLE_GPS;
+						
+						break;
+
+						/* 失能GPS功能完成 */
+					case DISABLE_GPS_FINISH:
+						printf("失能GPS功能完成\r\n");
 						moduleStatus = SET_SERVER_IP_ADDR;
+
+						isLoop = FALSE;
+						/* 传递定位信息 */
+						osMessagePut(infoMessageQId, (uint32_t)&location, 100);
+						osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPS_CONVERT_FINISH);
+						/* GPS定位成功，将自己挂起 */
+						osThreadSuspend(NULL);
 						break;
 
 						/* 设置服务器地址完成 */
@@ -264,7 +324,7 @@ void GPRSPROCESS_Task(void)
 
 						/* 数据发送完成 */
 					case DATA_SEND_FINISH:
-						printf("数据发送完成\r\n");
+						printf("数据发送成功\r\n");
 						moduleStatus = EXTI_SERIANET_MODE;
 						break;
 
@@ -283,8 +343,8 @@ void GPRSPROCESS_Task(void)
 						/* 关闭移动场景完成 */
 					case SHUT_MODULE_FINISH:
 						printf("关闭移动场景完成\r\n");
-						/* 模块发送完成，把状态设置成连接服务器地址，下次启动直接连接服务器地址即可发送 */
-						moduleStatus = SET_SERVER_IP_ADDR;
+						/* 模块发送完成，把状态设置成使能GPS定位，下次启动直接连接服务器地址即可发送 */
+						moduleStatus = ENABLE_GPS;
 
 						/* GPRS发送完成 */
 						osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPRS_SEND_FINISHED);
@@ -298,7 +358,8 @@ void GPRSPROCESS_Task(void)
 						break;
 					}
 				}
-				else if (moduleStatus != DATA_SEND_FINISH) /* 接收的数据没有与预期的相同 */
+				/* 不是接收数据，并且不是获取GPS的GNRMC */
+				else if (moduleStatus != DATA_SEND_FINISH)
 				{
 					/* 判断接收的数据是否错误 */
 					str = strstr((char*)GPRS_BufferStatus.recvBuffer, "Error");

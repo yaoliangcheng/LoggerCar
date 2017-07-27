@@ -47,7 +47,6 @@
   */
 
 #include "fatfs.h"
-#include "exFlash.h"
 
 uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
@@ -69,7 +68,8 @@ void MX_FATFS_Init(void)
   retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
 
   /* USER CODE BEGIN Init */
-  /* additional user code for init */   
+  /* additional user code for init */
+#if 0
   if (0 == retUSER)
   {
 	  printf("硬件层连接成功\r\n");
@@ -128,6 +128,7 @@ void MX_FATFS_Init(void)
 
   }
   FATFS_UnLinkDriver(USER_Path);
+#endif
   /* USER CODE END Init */
 }
 

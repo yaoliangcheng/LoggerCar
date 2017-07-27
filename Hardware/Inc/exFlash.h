@@ -8,6 +8,8 @@
 
 #include "spi.h"
 #include "eeprom.h"
+#include "input.h"
+#include "gps.h"
 
 #include "RealTime.h"
 
@@ -82,11 +84,11 @@ typedef struct
 typedef struct
 {
 	exFLASH_RealTime realTime;					/* 时间 */
-	uint8_t batteryLevel;						/* 电池电量 */
-	uint8_t externalPowerStatus;				/* 外部电池状态 */
-	int longitude;								/* 经度 */
-	int latitude;								/* 纬度 */
-	uint8_t resever;							/* 保留 */
+	uint8_t  batteryLevel;						/* 电池电量 */
+	uint8_t  externalPowerStatus;				/* 外部电池状态 */
+	uint32_t longitude;							/* 经度 */
+	uint32_t latitude;							/* 纬度 */
+	uint8_t  resever;							/* 保留 */
 	exFLASH_AnalogValueTypedef analogValue;		/* 模拟量值 */
 } exFLASH_InfoTypedef;
 
@@ -106,8 +108,9 @@ void exFLASH_ModeWakeUp(void);
 uint32_t exFLASH_ReadDeviceID(void);
 void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
 void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
-							RT_TimeTypedef* realTime,
+							RT_TimeTypedef*      realTime,
 							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum format);
+							EE_DataFormatEnum    format,
+							GPS_LocationTypedef* location);
 
 #endif

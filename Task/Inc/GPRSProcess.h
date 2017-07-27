@@ -34,6 +34,12 @@
 #define AT_CMD_ACTIVE_PDP_RESPOND		  (AT_CMD_RESPOND_OK)
 #define AT_CMD_GET_SELF_IP_ADDR			  ("AT+CIFSR\r\n")		 /* 获取本机IP地址 */
 #define AT_CMD_GET_SELF_IP_ADDR_RESPOND   (AT_CMD_RESPOND_OK)
+#define AT_CMD_GPS_ENABLE				  ("AT+EGPSC=1\r\n")		/* 使能GPS功能 */
+#define AT_CMD_GPS_ENABLE_RESPOND		  ("+MGPSSTATUS:1,1,0")
+#define AT_CMD_GPS_GET_GNRMC			  ("AT+GETGPS=\"GNRMC\"\r\n")	/* 获取GNRMC */
+#define AT_CMD_GPS_GET_GNRMC_RESPOND	  ("$GNRMC,")
+#define AT_CMD_GPS_DISABLE				  ("AT+EGPSC=0\r\n")		/* 失能GPS功能 */
+#define AT_CMD_GPS_DISABLE_RESPOND		  (AT_CMD_RESPOND_OK)
 #define AT_CMD_SET_SERVER_IP_ADDR		  ("AT+CIPSTART=\"TCP\",\"112.124.106.188\",\"8090\"\r\n")/* 连接服务器 */
 #define AT_CMD_SET_SERVER_IP_ADDR_RESPOND ("CONNECT OK")
 #define AT_CMD_DATA_SEND_SUCCESS_RESPOND  ("Save Data")
@@ -76,6 +82,12 @@ typedef enum
 	ACTIVE_PDP_FINISH,								/* 激活PDP场景完成 */
 	GET_SELF_IP_ADDR,								/* 获取本机IP地址 */
 	GET_SELF_IP_ADDR_FINISH,						/* 获取本机IP地址完成 */
+	ENABLE_GPS,										/* 使能GPS功能 */
+	ENABLE_GPS_FINISH,								/* 使能GPS功能完成 */
+	GET_GPS_GNRMC,									/* 获取GNRMC定位值 */
+	GET_GPS_GNRMC_FINISH,							/* 获取GNRMC定位值完成 */
+	DISABLE_GPS,									/* 失能GPS功能 */
+	DISABLE_GPS_FINISH,								/* 失能GPS功能完成 */
 	SET_SERVER_IP_ADDR,								/* 设置服务器地址 */
 	SET_SERVER_IP_ADDR_FINISH,						/* 设置服务器地址完成 */
 	READY,											/* 模块准备好 */
