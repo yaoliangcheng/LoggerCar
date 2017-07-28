@@ -22,6 +22,6 @@ typedef enum {FALSE = 0, TRUE = !FALSE} BOOL;
 uint8_t HalfWord_GetHighByte(uint16_t value);
 uint8_t HalfWord_GetLowByte(uint16_t value);
 HAL_StatusTypeDef UART_DMAIdleConfig(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
-
+void str2numb(uint8_t* buf, uint8_t* info, uint8_t size);
 
 #endif

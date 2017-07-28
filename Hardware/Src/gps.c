@@ -1,26 +1,17 @@
 #include "gps.h"
 #include "exFlash.h"
 
-/*******************************************************************************
- *
- */
-static void str2numb(uint8_t* buf, uint8_t* info, uint8_t size)
-{
-	while(size--)
-	{
-		*info++ = (*buf++) - '0';
-	}
-}
+
 
 /*******************************************************************************
  *
  */
-static float GPS_ValueConvert(uint8_t* buf, GPS_LocationTypeEnum loc)
+static double GPS_ValueConvert(uint8_t* buf, GPS_LocationTypeEnum loc)
 {
 	/* 格式：abcde.fghi
 	 * 计算方式： abc + (de / 60) + (fghi / 600000) */
 
-	uint16_t abc  = 0;
+	uint8_t  abc  = 0;
 	float 	 de   = 0;
 	float    fghi = 0;
 
@@ -40,13 +31,13 @@ static float GPS_ValueConvert(uint8_t* buf, GPS_LocationTypeEnum loc)
 		break;
 	}
 
-	return abc + de + fghi;
+	return (double)(abc + de + fghi);
 }
 
 /*******************************************************************************
  * 获取定位数据
  */
-void GPS_GetLocation(uint8_t* buf, GPS_LocationTypedef* info)
+void GPS_GetLocation(uint8_t* buf, GPS_LocateTypedef* info)
 {
 	uint8_t latitude[8]  = {0};
 	uint8_t longitude[9] = {0};

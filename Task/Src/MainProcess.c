@@ -19,7 +19,7 @@ void MAINPROCESS_Task(void)
 	ANALOG_ValueTypedef AnalogValue;
 	RT_TimeTypedef *time;
 	exFLASH_InfoTypedef sendInfo;
-	GPS_LocationTypedef* location;
+	GPS_LocateTypedef* location;
 
 	while(1)
 	{		
@@ -74,10 +74,10 @@ void MAINPROCESS_Task(void)
 
 		/* 获取定位值 */
 		signal = osMessageGet(infoMessageQId, 100);
-		location = (GPS_LocationTypedef*)signal.value.v;
+		location = (GPS_LocateTypedef*)signal.value.v;
 
 		/* 记录数值 */
-		exFLASH_SaveStructInfo(&sendInfo, time, &AnalogValue, FORMAT_ONE_DECIMAL, location);
+		exFLASH_SaveStructInfo(&sendInfo, time, &AnalogValue, location);
 
 		/* 读取数值 */
 //		exFLASH_ReadStructInfo(&flashInfo);
@@ -85,6 +85,10 @@ void MAINPROCESS_Task(void)
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
 		osMessagePut(infoMessageQId, (uint32_t)&sendInfo, 100);
+
+		/* 把当前时间传递到GPRS进程，根据回文校准时间 */
+		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);
+
 		/* 激活MainProcess任务 */
 		osThreadResume(gprsprocessTaskHandle);
 

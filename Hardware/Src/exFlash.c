@@ -1,5 +1,6 @@
 #include "exFlash.h"
 
+#include "gps.h"
 
 
 /*******************************************************************************
@@ -248,6 +249,32 @@ void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength
 	exFLASH_WaitForIdle();
 }
 
+
+
+/*******************************************************************************
+ * 发送flash 停机
+ */
+void exFLASH_ModePwrDown(void)
+{
+	exFLASH_CS_ENABLE();
+
+	exFLASH_WriteReadByte(exFLASH_CMD_POWER_DOWN);
+
+	exFLASH_CS_DISABLE();
+}
+
+/*******************************************************************************
+ * 发送flash唤醒
+ */
+void exFLASH_ModeWakeUp(void)
+{
+	exFLASH_CS_ENABLE();
+
+	exFLASH_WriteReadByte(exFLASH_CMD_RELEASE_POWER_DOWN);
+
+	exFLASH_CS_DISABLE();
+}
+
 /*******************************************************************************
  * 模拟量数据格式转换
  */
@@ -289,7 +316,7 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
 /*******************************************************************************
  *
  */
-static void exFLASH_LocationFormatConvert(float value, uint8_t* pBuffer)
+static void exFLASH_LocationFormatConvert(double value, uint8_t* pBuffer)
 {
 	BOOL negative = FALSE;
 	uint32_t temp;
@@ -310,29 +337,6 @@ static void exFLASH_LocationFormatConvert(float value, uint8_t* pBuffer)
 	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
 }
 
-/*******************************************************************************
- * 发送flash 停机
- */
-void exFLASH_ModePwrDown(void)
-{
-	exFLASH_CS_ENABLE();
-
-	exFLASH_WriteReadByte(exFLASH_CMD_POWER_DOWN);
-
-	exFLASH_CS_DISABLE();
-}
-
-/*******************************************************************************
- * 发送flash唤醒
- */
-void exFLASH_ModeWakeUp(void)
-{
-	exFLASH_CS_ENABLE();
-
-	exFLASH_WriteReadByte(exFLASH_CMD_RELEASE_POWER_DOWN);
-
-	exFLASH_CS_DISABLE();
-}
 
 /*******************************************************************************
  *
@@ -340,8 +344,7 @@ void exFLASH_ModeWakeUp(void)
 void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
 							RT_TimeTypedef*      realTime,
 							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum    format,
-							GPS_LocationTypedef* location)
+							GPS_LocateTypedef* location)
 {
 	/* 结构体复位，避免数据出错 */
 	memset(saveInfo, 0, sizeof(exFLASH_InfoTypedef));
@@ -361,28 +364,25 @@ void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
 	/* 外部电池状态 */
 	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();
 
-	location->latitude = 87.452136;
-	location->longitude = 123.698745;
-
 	exFLASH_LocationFormatConvert(location->latitude,  (uint8_t*)&saveInfo->latitude);
 	exFLASH_LocationFormatConvert(location->longitude, (uint8_t*)&saveInfo->longitude);
 
 	/* 模拟数据格式转换 */
-	exFLASH_DataFormatConvert(analogValue->temp1, format,
+	exFLASH_DataFormatConvert(analogValue->temp1, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp1);
-	exFLASH_DataFormatConvert(analogValue->humi1, format,
+	exFLASH_DataFormatConvert(analogValue->humi1, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi1);
-	exFLASH_DataFormatConvert(analogValue->temp2, format,
+	exFLASH_DataFormatConvert(analogValue->temp2, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp2);
-	exFLASH_DataFormatConvert(analogValue->humi2, format,
+	exFLASH_DataFormatConvert(analogValue->humi2, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi2);
-	exFLASH_DataFormatConvert(analogValue->temp3, format,
+	exFLASH_DataFormatConvert(analogValue->temp3, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp3);
-	exFLASH_DataFormatConvert(analogValue->humi3, format,
+	exFLASH_DataFormatConvert(analogValue->humi3, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi3);
-	exFLASH_DataFormatConvert(analogValue->temp4, format,
+	exFLASH_DataFormatConvert(analogValue->temp4, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp4);
-	exFLASH_DataFormatConvert(analogValue->humi4, format,
+	exFLASH_DataFormatConvert(analogValue->humi4, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi4);
 
 //	exFLASH_WriteBuffer(EE_FlashInfoSaveAddr, (uint8_t*)&exFLASH_SaveInfo,

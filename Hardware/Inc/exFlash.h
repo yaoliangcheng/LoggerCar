@@ -81,6 +81,8 @@ typedef struct
 	uint16_t humi4;
 } exFLASH_AnalogValueTypedef;
 
+#define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
+
 typedef struct
 {
 	exFLASH_RealTime realTime;					/* Ê±¼ä */
@@ -110,7 +112,6 @@ void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
 void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
 							RT_TimeTypedef*      realTime,
 							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum    format,
-							GPS_LocationTypedef* location);
+							GPS_LocateTypedef*   location);
 
 #endif

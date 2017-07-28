@@ -5,7 +5,6 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "exFlash.h"
 
 #include "osConfig.h"
 
@@ -30,11 +29,11 @@ typedef enum
 
 typedef struct
 {
-	float latitude;
-	float longitude;
-} GPS_LocationTypedef;
+	double latitude;
+	double longitude;
+} GPS_LocateTypedef;
 
 /******************************************************************************/
-void GPS_GetLocation(uint8_t* buf, GPS_LocationTypedef* info);
+void GPS_GetLocation(uint8_t* buf, GPS_LocateTypedef* info);
 
 #endif
