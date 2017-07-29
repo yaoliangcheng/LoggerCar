@@ -60,6 +60,8 @@
 #define GPRS_PWRKEY_CTRL_GPIO_Port GPIOE
 #define GPRS_RST_CTRL_Pin GPIO_PIN_3
 #define GPRS_RST_CTRL_GPIO_Port GPIOE
+#define VGPRS_CTRL_Pin GPIO_PIN_4
+#define VGPRS_CTRL_GPIO_Port GPIOE
 #define PWR_ON_CHECK_Pin GPIO_PIN_5
 #define PWR_ON_CHECK_GPIO_Port GPIOE
 #define VBAT_CTRL_Pin GPIO_PIN_6
@@ -104,6 +106,10 @@
 #define EE_SDA_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_12
 #define LED_GPIO_Port GPIOB
+#define PRINT_RX_Pin GPIO_PIN_8
+#define PRINT_RX_GPIO_Port GPIOD
+#define GPS_TX_Pin GPIO_PIN_9
+#define GPS_TX_GPIO_Port GPIOD
 #define GPRS_RX_Pin GPIO_PIN_5
 #define GPRS_RX_GPIO_Port GPIOD
 #define GPRS_TX_Pin GPIO_PIN_6

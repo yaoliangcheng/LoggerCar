@@ -81,6 +81,7 @@ osMessageQId infoMessageQId;
 /* Function prototypes -------------------------------------------------------*/
 void StartDefaultTask(void const * argument);
 
+extern void MX_FATFS_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
@@ -126,11 +127,11 @@ void MX_FREERTOS_Init(void) {
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityRealtime, 0, 128);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 128);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 
-  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityNormal, 0, 512);
+  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 512);
   gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
   osThreadSuspend(gprsprocessTaskHandle);
 
@@ -150,6 +151,8 @@ void MX_FREERTOS_Init(void) {
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
+  /* init code for FATFS */
+  MX_FATFS_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */

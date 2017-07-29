@@ -1,8 +1,7 @@
 /**
   ******************************************************************************
-  * File Name          : USART.h
-  * Description        : This file provides code for the configuration
-  *                      of the USART instances.
+  * @file   fatfs.c
+  * @brief  Code for fatfs applications
   ******************************************************************************
   * This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
@@ -46,50 +45,80 @@
   *
   ******************************************************************************
   */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __usart_H
-#define __usart_H
-#ifdef __cplusplus
- extern "C" {
-#endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
-#include "main.h"
+#include "fatfs.h"
 
-/* USER CODE BEGIN Includes */
+uint8_t retUSER;    /* Return value for USER */
+char USER_Path[4];  /* USER logical drive path */
 
-/* USER CODE END Includes */
+/* USER CODE BEGIN Variables */
+FATFS fs;													/* FatFs文件系统对象 */
+FIL fnew;													/* 文件对象 */
+FRESULT res_flash;                /* 文件操作结果 */
+UINT fnum;            					  /* 文件成功读写数量 */
+BYTE ReadBuffer[100]={0};        /* 读缓冲区 */
+BYTE WriteBuffer[] =              /* 写缓冲区*/
+"This is a stm32 fatfs test\r\n";
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+/* USER CODE END Variables */    
 
-/* USER CODE BEGIN Private defines */
+void MX_FATFS_Init(void) 
+{
+  /*## FatFS: Link the USER driver ###########################*/
+  retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
 
-/* USER CODE END Private defines */
+  /* USER CODE BEGIN Init */
+  /* additional user code for init */
+  if (0 == retUSER)
+  {
+	  /* 挂载spi flash */
+	  res_flash = f_mount(&fs, USER_Path, 1);
 
-extern void _Error_Handler(char *, int);
+	  /* 如果没有文件系统就格式化创建创建文件系统 */
+	  if(res_flash == FR_NO_FILESYSTEM)
+	  {
+		  /* 格式化 */
+		  res_flash=f_mkfs(USER_Path, 0, 0);
+		  if(res_flash == FR_OK)
+		  {
+			  /* 格式化后，先取消挂载 */
+			  res_flash = f_mount(NULL, USER_Path, 1);
+			  /* 重新挂载	*/
+			  res_flash = f_mount(&fs, USER_Path, 1);
+		  }
+	  }
 
-void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(void);
-void MX_USART3_UART_Init(void);
+	  /*----------------------- 文件系统测试：写测试 -------------------*/
+	  /* 打开文件，每次都以新建的形式打开，属性为可写 */
+	  res_flash = f_open(&fnew, "FatFs.txt",FA_CREATE_ALWAYS | FA_WRITE );
+	  if ( res_flash == FR_OK )
+	  {
+		  /* 将指定存储区内容写入到文件内 */
+		  res_flash=f_write(&fnew,WriteBuffer,sizeof(WriteBuffer),&fnum);
 
-/* USER CODE BEGIN Prototypes */
+		  /* 不再读写，关闭文件 */
+		  f_close(&fnew);
+	  }
+  }
 
-/* USER CODE END Prototypes */
+  /*------------------- 文件系统测试：读测试 --------------------------*/
+  res_flash = f_open(&fnew, "FatFs.txt",FA_OPEN_EXISTING | FA_READ);
+  if (res_flash == FR_OK)
+  {
+	  res_flash = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
 
-#ifdef __cplusplus
+	  /* 不再读写，关闭文件 */
+	  f_close(&fnew);
+  }
+
+  /* 不再使用文件系统，取消挂载文件系统 */
+  f_mount(NULL,USER_Path,1);
+
+  /* USER CODE END Init */
 }
-#endif
-#endif /*__ usart_H */
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+/* USER CODE BEGIN Application */
+     
+/* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

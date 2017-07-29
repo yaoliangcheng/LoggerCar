@@ -11,13 +11,16 @@
 #define RT_RTC						(hrtc)
 
 /******************************************************************************/
-#define RTC_BKUP_DATA			(0xA0A0)
+#define RTC_BKUP_DATA				(0xA0A1)
 
-#define RTC_BKUP_REG_DATA		(RTC_BKP_DR2)
-#define RTC_BKUP_REG_YEAR		(RTC_BKP_DR3)
-#define RTC_BKUP_REG_MONTH		(RTC_BKP_DR4)
-#define RTC_BKUP_REG_DAY		(RTC_BKP_DR5)
-#define RTC_BKUP_REG_WEEK		(RTC_BKP_DR6)
+#define RTC_BKUP_REG_DATA			(RTC_BKP_DR2)
+#define RTC_BKUP_REG_YEAR			(RTC_BKP_DR3)
+#define RTC_BKUP_REG_MONTH			(RTC_BKP_DR4)
+#define RTC_BKUP_REG_DAY			(RTC_BKP_DR5)
+#define RTC_BKUP_REG_WEEK			(RTC_BKP_DR6)
+
+/******************************************************************************/
+#define RT_OFFSET_CLOUD_TIME		(8)
 
 /******************************************************************************/
 #pragma pack(push)
@@ -34,9 +37,9 @@ typedef struct
 
 /******************************************************************************/
 void RT_BKUP_UpdateDate(RT_TimeTypedef* time);
-static void RT_BKUP_ReadDate(void);
 void RT_SetRealTime(RT_TimeTypedef* time);
 void RT_Init(RT_TimeTypedef* time);
+void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time);
 
 #endif
 

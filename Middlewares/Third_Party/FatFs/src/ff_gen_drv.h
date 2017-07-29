@@ -1,17 +1,14 @@
 /**
   ******************************************************************************
-  * File Name          : USART.h
-  * Description        : This file provides code for the configuration
-  *                      of the USART instances.
+  * @file    ff_gen_drv.h 
+  * @author  MCD Application Team
+  * @version V1.4.1
+  * @date    14-February-2017
+  * @brief   Header for ff_gen_drv.c module.
   ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
+  * @attention
   *
-  * Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; COPYRIGHT 2017 STMicroelectronics</center></h2>
   *
   * Redistribution and use in source and binary forms, with or without 
   * modification, are permitted, provided that the following conditions are met:
@@ -46,50 +43,65 @@
   *
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __usart_H
-#define __usart_H
+#ifndef __FF_GEN_DRV_H
+#define __FF_GEN_DRV_H
+
 #ifdef __cplusplus
  extern "C" {
-#endif
+#endif 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
-#include "main.h"
+#include "diskio.h"
+#include "ff.h"
 
-/* USER CODE BEGIN Includes */
+/* Exported types ------------------------------------------------------------*/
 
-/* USER CODE END Includes */
+/** 
+  * @brief  Disk IO Driver structure definition  
+  */ 
+typedef struct
+{
+  DSTATUS (*disk_initialize) (BYTE);                     /*!< Initialize Disk Drive                     */
+  DSTATUS (*disk_status)     (BYTE);                     /*!< Get Disk Status                           */
+  DRESULT (*disk_read)       (BYTE, BYTE*, DWORD, UINT);       /*!< Read Sector(s)                            */
+#if _USE_WRITE == 1 
+  DRESULT (*disk_write)      (BYTE, const BYTE*, DWORD, UINT); /*!< Write Sector(s) when _USE_WRITE = 0       */
+#endif /* _USE_WRITE == 1 */
+#if _USE_IOCTL == 1  
+  DRESULT (*disk_ioctl)      (BYTE, BYTE, void*);              /*!< I/O control operation when _USE_IOCTL = 1 */
+#endif /* _USE_IOCTL == 1 */
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
+}Diskio_drvTypeDef;
 
-/* USER CODE BEGIN Private defines */
+/** 
+  * @brief  Global Disk IO Drivers structure definition  
+  */ 
+typedef struct
+{ 
+  uint8_t                 is_initialized[_VOLUMES];
+  Diskio_drvTypeDef       *drv[_VOLUMES];
+  uint8_t                 lun[_VOLUMES];
+  __IO uint8_t            nbr;
 
-/* USER CODE END Private defines */
+}Disk_drvTypeDef;
 
-extern void _Error_Handler(char *, int);
-
-void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(void);
-void MX_USART3_UART_Init(void);
-
-/* USER CODE BEGIN Prototypes */
-
-/* USER CODE END Prototypes */
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
+uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun);
+uint8_t FATFS_LinkDriver(Diskio_drvTypeDef *drv, char *path);
+uint8_t FATFS_UnLinkDriver(char *path);
+uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, BYTE lun);
+uint8_t FATFS_UnLinkDriverEx(char *path, BYTE lun);
+uint8_t FATFS_GetAttachedDriversNbr(void);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ usart_H */
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+#endif /* __FF_GEN_DRV_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

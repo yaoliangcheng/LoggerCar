@@ -1,218 +1,414 @@
 #include "exFlash.h"
 
-#include "input.h"
-
+#include "gps.h"
 
 /*******************************************************************************
- * 发送flash写使能指令
+ * @brief  擦除FLASH扇区
+ * @param  SectorAddr：要擦除的扇区地址
+ * @retval 无
  */
-static void exFLASH_WriteEnable(void)
+void SPI_FLASH_SectorErase(uint32_t SectorAddr)
 {
-	uint8_t enableCmd = exFLASH_CMD_WRITE_ENABLE;
+	/* 发送FLASH写使能命令 */
+	SPI_FLASH_WriteEnable();
+	SPI_FLASH_WaitForWriteEnd();
 
-	exFLASH_CS_ENABLE();
+	/* 擦除扇区 */
+	/* 选择FLASH: CS低电平 */
+	SPI_FLASH_CS_LOW();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &enableCmd, 1, 100);
+	/* 发送扇区擦除指令*/
+	SPI_FLASH_SendByte(W25X_SectorErase);
 
-	exFLASH_CS_DISABLE();
+	/*发送擦除扇区地址的高位*/
+	SPI_FLASH_SendByte((SectorAddr & 0xFF0000) >> 16);
+	SPI_FLASH_SendByte((SectorAddr & 0xFF00) >> 8);
+	SPI_FLASH_SendByte(SectorAddr & 0xFF);
+
+	/* 停止信号 FLASH: CS 高电平 */
+	SPI_FLASH_CS_HIGH();
+
+	/* 等待擦除完毕*/
+	SPI_FLASH_WaitForWriteEnd();
 }
 
 /*******************************************************************************
- * FLASH 芯片向内部存储矩阵写入数据需要消耗一定的时间，并不是在总线通讯结束的一瞬间完成的，所以在写操作
- * 后需要确认FLASH芯片“空闲”时才能再次写入
+ * @brief  擦除FLASH扇区，整片擦除
+ * @param  无
+ * @retval 无
  */
-static void exFLASH_WaitForIdle(void)
+void SPI_FLASH_BulkErase(void)
 {
-	uint8_t readRegStatus = exFLASH_CMD_READ_STATUS_REG;
-	uint8_t sendByte = DUMMY_BYTE;
-	uint8_t readByte = 0x01;
+	/* 发送FLASH写使能命令 */
+	SPI_FLASH_WriteEnable();
 
-	exFLASH_CS_ENABLE();
+	/* 整块 Erase */
+	/* 选择FLASH: CS低电平 */
+	SPI_FLASH_CS_LOW();
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &readRegStatus, 1, 100);
+	/* 发送整块擦除指令*/
+	SPI_FLASH_SendByte(W25X_ChipErase);
 
-	/* flash正忙，等待，寄存器的最后一位为BUSY位 */
-	while(readByte & 0x01)
+	/* 停止信号 FLASH: CS 高电平 */
+	SPI_FLASH_CS_HIGH();
+
+	/* 等待擦除完毕*/
+	SPI_FLASH_WaitForWriteEnd();
+}
+
+/*******************************************************************************
+ * @brief  对FLASH按页写入数据，调用本函数写入数据前需要先擦除扇区
+ * @param	pBuffer，要写入数据的指针
+ * @param WriteAddr，写入地址
+ * @param  NumByteToWrite，写入数据长度，必须小于等于SPI_FLASH_PerWritePageSize
+ * @retval 无
+ */
+void SPI_FLASH_PageWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+	/* 发送FLASH写使能命令 */
+	SPI_FLASH_WriteEnable();
+
+	/* 选择FLASH: CS低电平 */
+	SPI_FLASH_CS_LOW();
+
+	/* 写页写指令*/
+	SPI_FLASH_SendByte(W25X_PageProgram);
+
+	/*发送写地址*/
+	SPI_FLASH_SendByte((WriteAddr & 0xFF0000) >> 16);
+	SPI_FLASH_SendByte((WriteAddr & 0xFF00) >> 8);
+	SPI_FLASH_SendByte(WriteAddr & 0xFF);
+
+	if(NumByteToWrite > SPI_FLASH_PerWritePageSize)
 	{
-		HAL_SPI_TransmitReceive(&exFLASH_SPI, &sendByte, &readByte, 1, 100);
+		NumByteToWrite = SPI_FLASH_PerWritePageSize;
 	}
 
-	exFLASH_CS_DISABLE();
-}
-
-/*******************************************************************************
- *
- */
-static void exFLASH_SendCmdAddr(uint8_t cmd, uint32_t addr)
-{
-	/* 发送扇区擦除指令，和扇区地址（高位在前） */
-	uint8_t sendBytes[4] = {cmd,
-							(addr & 0xFF0000 >> 16),
-							(addr & 0x00FF00 >> 8),
-							(addr & 0x0000FF)};
-
-	HAL_SPI_Transmit(&exFLASH_SPI, sendBytes, sizeof(sendBytes), 100);
-}
-
-/*******************************************************************************
- * 注意：地址对齐4KB
- */
-void exFLASH_SectorErase(uint32_t sectorAddr)
-{
-	exFLASH_WriteEnable();
-	exFLASH_WaitForIdle();
-
-	exFLASH_CS_ENABLE();
-
-	/* 发送扇区擦除命令和地址 */
-	exFLASH_SendCmdAddr(exFLASH_CMD_SECTOR_ERASE, sectorAddr);
-
-	exFLASH_CS_DISABLE();
-
-	exFLASH_WaitForIdle();
-}
-
-/*******************************************************************************
- *
- */
-void exFLASH_ChipErase(void)
-{
-	/* 发送扇区擦除指令，和扇区地址（高位在前） */
-	uint8_t chipEraseCmd = exFLASH_CMD_CHIP_ERASE;
-
-	exFLASH_WriteEnable();
-	exFLASH_WaitForIdle();
-
-	exFLASH_CS_ENABLE();
-
-	HAL_SPI_Transmit(&exFLASH_SPI, &chipEraseCmd, 1, 100);
-
-	exFLASH_CS_DISABLE();
-
-	exFLASH_WaitForIdle();
-}
-
-/******************************************************************************/
-uint32_t exFLASH_ReadDeviceID(void)
-{
-	uint8_t temp[4] = {exFLASH_CMD_JEDEC_DIVICE_ID,
-					   DUMMY_BYTE, DUMMY_BYTE, DUMMY_BYTE};
-
-	uint32_t deviceID;
-
-//	exFLASH_WaitForIdle();
-
-	exFLASH_CS_ENABLE();
-
-	HAL_SPI_TransmitReceive(&exFLASH_SPI, temp, temp, sizeof(temp), 1000);
-
-	exFLASH_CS_DISABLE();
-
-	deviceID = (temp[1] << 16) | (temp[2] << 8) | temp[3];
-	return deviceID;
-}
-
-/*******************************************************************************
- *
- */
-static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
-								 uint16_t dataLength)
-{
-	/* 写数据的长度不能大于flash的页字节 */
-	if (dataLength > exFLASH_PAGE_SIZE_BYTES)
-		return;
-
-	exFLASH_WriteEnable();
-
-	exFLASH_CS_ENABLE();
-
-	/* 发送命令和地址 */
-	exFLASH_SendCmdAddr(exFLASH_CMD_PAGE_PROGRAM, writeAddr);
-
-	/* 发送数据 */
-	HAL_SPI_Transmit(&exFLASH_SPI, pBuffer, dataLength, 100);
-
-	exFLASH_CS_DISABLE();
-
-	exFLASH_WaitForIdle();
-}
-
-/*******************************************************************************
- *
- */
-void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLength)
-{
-	uint8_t pageBytesRemainder;				/* 该页剩余可写字节数 */
-	uint8_t pageWriteNumb;					/* 需要写页数 */
-	uint8_t dataBytesRemainder;				/* 最后一页还剩字节数 */
-
-	/* 写地址与flash页地址对齐 */
-	if (0 == (writeAddr % exFLASH_PAGE_SIZE_BYTES))
+	/* 写入数据*/
+	while (NumByteToWrite--)
 	{
-		/* 字节长度<=页字节长度 */
-		if (dataLength <=  exFLASH_PAGE_SIZE_BYTES)
-			exFLASH_WritePageBytes(writeAddr, pBuffer, dataLength);
-		else
-		{
-			/* 需要写的页数 */
-			pageWriteNumb = dataLength / exFLASH_PAGE_SIZE_BYTES;
-			/* 写完页，还需写的字节数 */
-			dataBytesRemainder = dataLength % exFLASH_PAGE_SIZE_BYTES;
+		/* 发送当前要写入的字节数据 */
+		SPI_FLASH_SendByte(*pBuffer);
+		/* 指向下一字节数据 */
+		pBuffer++;
+	}
 
-			while (pageWriteNumb--)
+	/* 停止信号 FLASH: CS 高电平 */
+	SPI_FLASH_CS_HIGH();
+
+	/* 等待写入完毕*/
+	SPI_FLASH_WaitForWriteEnd();
+}
+
+/*******************************************************************************
+ * @brief  对FLASH写入数据，调用本函数写入数据前需要先擦除扇区
+ * @param	pBuffer，要写入数据的指针
+ * @param  WriteAddr，写入地址
+ * @param  NumByteToWrite，写入数据长度
+ * @retval 无
+ */
+void SPI_FLASH_BufferWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+	uint8_t NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0, temp = 0;
+
+	/*mod运算求余，若writeAddr是SPI_FLASH_PageSize整数倍，运算结果Addr值为0*/
+	Addr = WriteAddr % SPI_FLASH_PageSize;
+
+	/*差count个数据值，刚好可以对齐到页地址*/
+	count = SPI_FLASH_PageSize - Addr;
+	/*计算出要写多少整数页*/
+	NumOfPage =  NumByteToWrite / SPI_FLASH_PageSize;
+	/*mod运算求余，计算出剩余不满一页的字节数*/
+	NumOfSingle = NumByteToWrite % SPI_FLASH_PageSize;
+
+	/* Addr=0,则WriteAddr 刚好按页对齐 aligned  */
+	if (Addr == 0)
+	{
+		/* NumByteToWrite < SPI_FLASH_PageSize */
+		if (NumOfPage == 0)
+		{
+			SPI_FLASH_PageWrite(pBuffer, WriteAddr, NumByteToWrite);
+		}
+		else /* NumByteToWrite > SPI_FLASH_PageSize */
+		{
+			/*先把整数页都写了*/
+			while (NumOfPage--)
 			{
-				exFLASH_WritePageBytes(writeAddr, pBuffer, exFLASH_PAGE_SIZE_BYTES);
-				writeAddr += exFLASH_PAGE_SIZE_BYTES;
-				pBuffer += exFLASH_PAGE_SIZE_BYTES;
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, SPI_FLASH_PageSize);
+				WriteAddr +=  SPI_FLASH_PageSize;
+				pBuffer += SPI_FLASH_PageSize;
 			}
-			exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
+			/*若有多余的不满一页的数据，把它写完*/
+			SPI_FLASH_PageWrite(pBuffer, WriteAddr, NumOfSingle);
 		}
 	}
+	/* 若地址与 SPI_FLASH_PageSize 不对齐  */
 	else
 	{
-		/* 当前页可写入字节数 */
-		pageBytesRemainder = exFLASH_PAGE_SIZE_BYTES - (writeAddr % exFLASH_PAGE_SIZE_BYTES);
-
-		/* 当前页可以写完 */
-		if (dataLength <= pageBytesRemainder)
-			exFLASH_WritePageBytes(writeAddr, pBuffer, dataLength);
-		else
+		/* NumByteToWrite < SPI_FLASH_PageSize */
+		if (NumOfPage == 0)
 		{
-			/* 先把当前页写满 */
-			exFLASH_WritePageBytes(writeAddr, pBuffer, pageBytesRemainder);
-			writeAddr += pageBytesRemainder;
-			pBuffer += pageBytesRemainder;
-			dataLength -= pageBytesRemainder;
-
-			/* 需要写的页数 */
-			pageWriteNumb = dataLength / exFLASH_PAGE_SIZE_BYTES;
-			while (pageWriteNumb--)
+			/*当前页剩余的count个位置比NumOfSingle小，一页写不完*/
+			if (NumOfSingle > count)
 			{
-				exFLASH_WritePageBytes(writeAddr, pBuffer, exFLASH_PAGE_SIZE_BYTES);
-				writeAddr += exFLASH_PAGE_SIZE_BYTES;
-				pBuffer += exFLASH_PAGE_SIZE_BYTES;
-			}
+				temp = NumOfSingle - count;
+				/*先写满当前页*/
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, count);
 
-			/* 写完页，还需写的字节数 */
-			dataBytesRemainder = dataLength % exFLASH_PAGE_SIZE_BYTES;
-			if (dataBytesRemainder > 0)
-				exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
+				WriteAddr +=  count;
+				pBuffer += count;
+				/*再写剩余的数据*/
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, temp);
+			}
+			else /*当前页剩余的count个位置能写完NumOfSingle个数据*/
+			{
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, NumByteToWrite);
+			}
+		}
+		else /* NumByteToWrite > SPI_FLASH_PageSize */
+		{
+			/*地址不对齐多出的count分开处理，不加入这个运算*/
+			NumByteToWrite -= count;
+			NumOfPage =  NumByteToWrite / SPI_FLASH_PageSize;
+			NumOfSingle = NumByteToWrite % SPI_FLASH_PageSize;
+
+			/* 先写完count个数据，为的是让下一次要写的地址对齐 */
+			SPI_FLASH_PageWrite(pBuffer, WriteAddr, count);
+
+			/* 接下来就重复地址对齐的情况 */
+			WriteAddr +=  count;
+			pBuffer += count;
+			/*把整数页都写了*/
+			while (NumOfPage--)
+			{
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, SPI_FLASH_PageSize);
+				WriteAddr +=  SPI_FLASH_PageSize;
+				pBuffer += SPI_FLASH_PageSize;
+			}
+			/*若有多余的不满一页的数据，把它写完*/
+			if (NumOfSingle != 0)
+			{
+				SPI_FLASH_PageWrite(pBuffer, WriteAddr, NumOfSingle);
+			}
 		}
 	}
 }
 
 /*******************************************************************************
- *
+ * @brief  读取FLASH数据
+ * @param 	pBuffer，存储读出数据的指针
+ * @param   ReadAddr，读取地址
+ * @param   NumByteToRead，读取数据长度
+ * @retval 无
  */
-void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength)
+void SPI_FLASH_BufferRead(uint8_t* pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead)
 {
-	exFLASH_CS_ENABLE();
+	/* 选择FLASH: CS低电平 */
+	SPI_FLASH_CS_LOW();
 
-	exFLASH_SendCmdAddr(exFLASH_CMD_READ_DATA, readAddr);
+	/* 发送 读 指令 */
+	SPI_FLASH_SendByte(W25X_ReadData);
 
-	HAL_SPI_Receive(&exFLASH_SPI, pBuffer, dataLength, 100);
+	/* 发送 读 地址高位 */
+	SPI_FLASH_SendByte((ReadAddr & 0xFF0000) >> 16);
+	SPI_FLASH_SendByte((ReadAddr& 0xFF00) >> 8);
+	SPI_FLASH_SendByte(ReadAddr & 0xFF);
 
-	exFLASH_CS_DISABLE();
+	/* 读取数据 */
+	while (NumByteToRead--) /* while there is data to be read */
+	{
+		/* 读取一个字节*/
+		*pBuffer = SPI_FLASH_SendByte(Dummy_Byte);
+		/* 指向下一个字节缓冲区 */
+		pBuffer++;
+	}
+
+	/* 停止信号 FLASH: CS 高电平 */
+	SPI_FLASH_CS_HIGH();
+}
+
+/*******************************************************************************
+ * @brief  读取FLASH ID
+ * @param 	无
+ * @retval FLASH ID
+ */
+uint32_t SPI_FLASH_ReadID(void)
+{
+	uint32_t Temp = 0, Temp0 = 0, Temp1 = 0, Temp2 = 0;
+
+	/* 开始通讯：CS低电平 */
+	SPI_FLASH_CS_LOW();
+
+	/* 发送JEDEC指令，读取ID */
+	SPI_FLASH_SendByte(W25X_JedecDeviceID);
+
+	/* 读取一个字节数据 */
+	Temp0 = SPI_FLASH_SendByte(Dummy_Byte);
+	Temp1 = SPI_FLASH_SendByte(Dummy_Byte);
+	Temp2 = SPI_FLASH_SendByte(Dummy_Byte);
+
+	/* 停止通讯：CS高电平 */
+	SPI_FLASH_CS_HIGH();
+
+	/*把数据组合起来，作为函数的返回值*/
+	Temp = (Temp0 << 16) | (Temp1 << 8) | Temp2;
+
+	return Temp;
+}
+
+/*******************************************************************************
+ * @brief  读取FLASH Device ID
+ * @param 	无
+ * @retval FLASH Device ID
+ */
+uint32_t SPI_FLASH_ReadDeviceID(void)
+{
+	uint32_t Temp = 0;
+
+	/* Select the FLASH: Chip Select low */
+	SPI_FLASH_CS_LOW();
+
+	/* Send "RDID " instruction */
+	SPI_FLASH_SendByte(W25X_DeviceID);
+	SPI_FLASH_SendByte(Dummy_Byte);
+	SPI_FLASH_SendByte(Dummy_Byte);
+	SPI_FLASH_SendByte(Dummy_Byte);
+
+	/* Read a byte from the FLASH */
+	Temp = SPI_FLASH_SendByte(Dummy_Byte);
+
+	/* Deselect the FLASH: Chip Select high */
+	SPI_FLASH_CS_HIGH();
+
+	return Temp;
+}
+
+/*******************************************************************************
+* Function Name  : SPI_FLASH_StartReadSequence
+* Description    : Initiates a read data byte (READ) sequence from the Flash.
+*                  This is done by driving the /CS line low to select the device,
+*                  then the READ instruction is transmitted followed by 3 bytes
+*                  address. This function exit and keep the /CS line low, so the
+*                  Flash still being selected. With this technique the whole
+*                  content of the Flash is read with a single READ instruction.
+* Input          : - ReadAddr : FLASH's internal address to read from.
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void SPI_FLASH_StartReadSequence(uint32_t ReadAddr)
+{
+	/* Select the FLASH: Chip Select low */
+	SPI_FLASH_CS_LOW();
+
+	/* Send "Read from Memory " instruction */
+	SPI_FLASH_SendByte(W25X_ReadData);
+
+	/* Send the 24-bit address of the address to read from -------------------*/
+	/* Send ReadAddr high nibble address byte */
+	SPI_FLASH_SendByte((ReadAddr & 0xFF0000) >> 16);
+	/* Send ReadAddr medium nibble address byte */
+	SPI_FLASH_SendByte((ReadAddr& 0xFF00) >> 8);
+	/* Send ReadAddr low nibble address byte */
+	SPI_FLASH_SendByte(ReadAddr & 0xFF);
+}
+
+
+/*******************************************************************************
+ * @brief  使用SPI读取一个字节的数据
+ * @param  无
+ * @retval 返回接收到的数据
+ */
+uint8_t SPI_FLASH_ReadByte(void)
+{
+	return (SPI_FLASH_SendByte(Dummy_Byte));
+}
+
+/*******************************************************************************
+ * @brief  使用SPI发送一个字节的数据
+ * @param  byte：要发送的数据
+ * @retval 返回接收到的数据
+ */
+uint8_t SPI_FLASH_SendByte(uint8_t byte)
+{
+	while(!__HAL_SPI_GET_FLAG(&exFLASH_SPI, SPI_FLAG_TXE));
+	exFLASH_SPI.Instance->DR = byte;
+
+	while(!__HAL_SPI_GET_FLAG(&exFLASH_SPI, SPI_FLAG_RXNE));
+	return exFLASH_SPI.Instance->DR;
+}
+
+/*******************************************************************************
+ * @brief  向FLASH发送 写使能 命令
+ * @param  none
+ * @retval none
+ */
+void SPI_FLASH_WriteEnable(void)
+{
+	/* 通讯开始：CS低 */
+	SPI_FLASH_CS_LOW();
+
+	/* 发送写使能命令*/
+	SPI_FLASH_SendByte(W25X_WriteEnable);
+
+	/*通讯结束：CS高 */
+	SPI_FLASH_CS_HIGH();
+}
+
+/*******************************************************************************
+ * @brief  等待WIP(BUSY)标志被置0，即等待到FLASH内部数据写入完毕
+ * @param  none
+ * @retval none
+ */
+void SPI_FLASH_WaitForWriteEnd(void)
+{
+	uint8_t FLASH_Status = 0;
+
+	/* 选择 FLASH: CS 低 */
+	SPI_FLASH_CS_LOW();
+
+	/* 发送 读状态寄存器 命令 */
+	SPI_FLASH_SendByte(W25X_ReadStatusReg);
+
+	/* 若FLASH忙碌，则等待 */
+	do
+	{
+		/* 读取FLASH芯片的状态寄存器 */
+		FLASH_Status = SPI_FLASH_SendByte(Dummy_Byte);
+	}
+	while ((FLASH_Status & WIP_Flag) == SET);  /* 正在写入标志 */
+
+	/* 停止信号  FLASH: CS 高 */
+	SPI_FLASH_CS_HIGH();
+}
+
+/*******************************************************************************
+ * 进入掉电模式
+ */
+void SPI_Flash_PowerDown(void)
+{
+	/* 通讯开始：CS低 */
+	SPI_FLASH_CS_LOW();
+
+	/* 发送 掉电 命令 */
+	SPI_FLASH_SendByte(W25X_PowerDown);
+
+	/*通讯结束：CS高 */
+	SPI_FLASH_CS_HIGH();
+}
+
+/*******************************************************************************
+ * 唤醒
+ */
+void SPI_Flash_WAKEUP(void)
+{
+	/*选择 FLASH: CS 低 */
+	SPI_FLASH_CS_LOW();
+
+	/* 发送 上电 命令 */
+	SPI_FLASH_SendByte(W25X_ReleasePowerDown);
+
+	/* 停止信号 FLASH: CS 高 */
+	SPI_FLASH_CS_HIGH();
 }
 
 /*******************************************************************************
@@ -254,40 +450,37 @@ static void exFLASH_DataFormatConvert(float value, EE_DataFormatEnum format,
 }
 
 /*******************************************************************************
- * 发送flash 停机
+ *
  */
-void exFLASH_ModePwrDown(void)
+static void exFLASH_LocationFormatConvert(double value, uint8_t* pBuffer)
 {
-	uint8_t modePwrDown = exFLASH_CMD_POWER_DOWN;
+	BOOL negative = FALSE;
+	uint32_t temp;
 
-	exFLASH_CS_ENABLE();
+	if (value < 0)
+		negative = TRUE;
 
-	HAL_SPI_Transmit(&exFLASH_SPI, &modePwrDown, 1, 100);
+	/* 获取整数部分 */
+	*pBuffer = abs((int)value);
 
-	exFLASH_CS_DISABLE();
+	temp = (uint32_t)((value - (*pBuffer)) * 1000000);
+
+	if (negative)
+		temp |= 0x800000;
+
+	*(pBuffer + 1) = (uint8_t)((temp & 0x00FF0000) >> 16);
+	*(pBuffer + 2) = (uint8_t)((temp & 0x0000FF00) >> 8);
+	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
 }
 
-/*******************************************************************************
- * 发送flash唤醒
- */
-void exFLASH_ModeWakeUp(void)
-{
-	uint8_t modeWakeUp = exFLASH_CMD_RELEASE_POWER_DOWN;
-
-	exFLASH_CS_ENABLE();
-
-	HAL_SPI_Transmit(&exFLASH_SPI, &modeWakeUp, 1, 100);
-
-	exFLASH_CS_DISABLE();
-}
 
 /*******************************************************************************
  *
  */
 void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
-							RT_TimeTypedef* realTime,
+							RT_TimeTypedef*      realTime,
 							ANALOG_ValueTypedef* analogValue,
-							EE_DataFormatEnum format)
+							GPS_LocateTypedef* location)
 {
 	/* 结构体复位，避免数据出错 */
 	memset(saveInfo, 0, sizeof(exFLASH_InfoTypedef));
@@ -305,24 +498,27 @@ void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
 	saveInfo->batteryLevel = analogValue->batVoltage;
 
 	/* 外部电池状态 */
-	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();;
+	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();
+
+	exFLASH_LocationFormatConvert(location->latitude,  (uint8_t*)&saveInfo->latitude);
+	exFLASH_LocationFormatConvert(location->longitude, (uint8_t*)&saveInfo->longitude);
 
 	/* 模拟数据格式转换 */
-	exFLASH_DataFormatConvert(analogValue->temp1, format,
+	exFLASH_DataFormatConvert(analogValue->temp1, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp1);
-	exFLASH_DataFormatConvert(analogValue->humi1, format,
+	exFLASH_DataFormatConvert(analogValue->humi1, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi1);
-	exFLASH_DataFormatConvert(analogValue->temp2, format,
+	exFLASH_DataFormatConvert(analogValue->temp2, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp2);
-	exFLASH_DataFormatConvert(analogValue->humi2, format,
+	exFLASH_DataFormatConvert(analogValue->humi2, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi2);
-	exFLASH_DataFormatConvert(analogValue->temp3, format,
+	exFLASH_DataFormatConvert(analogValue->temp3, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp3);
-	exFLASH_DataFormatConvert(analogValue->humi3, format,
+	exFLASH_DataFormatConvert(analogValue->humi3, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi3);
-	exFLASH_DataFormatConvert(analogValue->temp4, format,
+	exFLASH_DataFormatConvert(analogValue->temp4, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.temp4);
-	exFLASH_DataFormatConvert(analogValue->humi4, format,
+	exFLASH_DataFormatConvert(analogValue->humi4, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi4);
 
 //	exFLASH_WriteBuffer(EE_FlashInfoSaveAddr, (uint8_t*)&exFLASH_SaveInfo,
@@ -338,12 +534,12 @@ void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
  */
 void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info)
 {
-	exFLASH_ReadBuffer(EE_FlashInfoReadAddr, (uint8_t*)info,
-			sizeof(exFLASH_InfoTypedef));
+//	exFLASH_ReadBuffer(EE_FlashInfoReadAddr, (uint8_t*)info,
+//			sizeof(exFLASH_InfoTypedef));
 
-	EE_FlashInfoReadAddr += sizeof(exFLASH_InfoTypedef);
-	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_READ_ADDR, &EE_FlashInfoReadAddr,
-			sizeof(exFLASH_InfoTypedef));
+//	EE_FlashInfoReadAddr += sizeof(exFLASH_InfoTypedef);
+//	EEPROM_WriteBytes(EE_ADDR_FLASH_INFO_READ_ADDR, &EE_FlashInfoReadAddr,
+//			sizeof(exFLASH_InfoTypedef));
 }
 
 

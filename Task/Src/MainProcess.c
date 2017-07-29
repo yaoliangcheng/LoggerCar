@@ -3,6 +3,7 @@
 #include "exFlash.h"
 #include "analog.h"
 #include "input.h"
+#include "gps.h"
 
 #include "osConfig.h"
 #include "RealTime.h"
@@ -18,10 +19,10 @@ void MAINPROCESS_Task(void)
 	ANALOG_ValueTypedef AnalogValue;
 	RT_TimeTypedef *time;
 	exFLASH_InfoTypedef sendInfo;
+	GPS_LocateTypedef* location;
 
 	while(1)
-	{
-
+	{		
 		signal = osMessageGet(realtimeMessageQId, 100);
 		time = (RT_TimeTypedef*)signal.value.v;
 
@@ -29,9 +30,9 @@ void MAINPROCESS_Task(void)
 		ANALOG_ConvertEnable();
 
 		/* 等待ADC采样完成 */
-		signal = osSignalWait(MAINPROCESS_GET_SENSOR_ENABLE, 1000);
-		if ((signal.value.signals & MAINPROCESS_GET_SENSOR_ENABLE)
-						!= MAINPROCESS_GET_SENSOR_ENABLE)
+		signal = osSignalWait(MAINPROCESS_SENSOR_CONVERT_FINISH, MAINPROCESS_TICKS_TO_TIMEOUT);
+		if ((signal.value.signals & MAINPROCESS_SENSOR_CONVERT_FINISH)
+						!= MAINPROCESS_SENSOR_CONVERT_FINISH)
 		{
 			printf("MainProcess等待ADC采样完成信号等待失败,超时\r\n");
 			/* 将自己挂起 */
@@ -58,12 +59,25 @@ void MAINPROCESS_Task(void)
 		/* 获取外部电源状态 */
 		/* todo */
 
-
 		/* 获取定位数据 */
-		/* todo */
+		/* 激活GPRSProcess任务，启动GPS转换 */
+		osThreadResume(gprsprocessTaskHandle);
+		/* 等待GPS完成 */
+		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, osWaitForever);
+		if ((signal.value.signals & MAINPROCESS_GPS_CONVERT_FINISH)
+						!= MAINPROCESS_GPS_CONVERT_FINISH)
+		{
+			printf("GPS定位失败\r\n");
+			/* 将自己挂起 */
+			osThreadSuspend(NULL);
+		}
+
+		/* 获取定位值 */
+		signal = osMessageGet(infoMessageQId, 100);
+		location = (GPS_LocateTypedef*)signal.value.v;
 
 		/* 记录数值 */
-		exFLASH_SaveStructInfo(&sendInfo, time, &AnalogValue, FORMAT_ONE_DECIMAL);
+		exFLASH_SaveStructInfo(&sendInfo, time, &AnalogValue, location);
 
 		/* 读取数值 */
 //		exFLASH_ReadStructInfo(&flashInfo);
@@ -71,6 +85,10 @@ void MAINPROCESS_Task(void)
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
 		osMessagePut(infoMessageQId, (uint32_t)&sendInfo, 100);
+
+		/* 把当前时间传递到GPRS进程，根据回文校准时间 */
+		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);
+
 		/* 激活MainProcess任务 */
 		osThreadResume(gprsprocessTaskHandle);
 
@@ -84,10 +102,8 @@ void MAINPROCESS_Task(void)
 			osThreadSuspend(NULL);
 		}
 
-
 		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);
-
 	}
 }
 

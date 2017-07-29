@@ -6,10 +6,10 @@
 #include "cmsis_os.h"
 
 /******************************************************************************/
-#define MAINPROCESS_TICKS_TO_TIMEOUT		(20000)
-#define MAINPROCESS_ENABLE_EVENT			(1 << 0)
-#define MAINPROCESS_GET_SENSOR_ENABLE		(1 << 1)
-#define MAINPROCESS_GPRS_SEND_FINISHED		(1 << 2)
+#define MAINPROCESS_TICKS_TO_TIMEOUT			(20000)		/* 信号量等待超时 */
+#define MAINPROCESS_SENSOR_CONVERT_FINISH		(1 << 0)	/* 传感器转换完成 */
+#define MAINPROCESS_GPS_CONVERT_FINISH			(1 << 1)	/* GPS转换完成 */
+#define MAINPROCESS_GPRS_SEND_FINISHED			(1 << 2)	/* GPRS数据发送完成 */
 
 
 
