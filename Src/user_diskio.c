@@ -64,7 +64,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "ff_gen_drv.h"
-
 #include "exFlash.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,8 +72,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* Disk status */
 static volatile DSTATUS Stat = STA_NOINIT;
-
-#define FATFS_DEVICE_exFLASH		(0)
 
 /* USER CODE END DECL */
 
@@ -115,17 +112,22 @@ DSTATUS USER_initialize (
 )
 {
   /* USER CODE BEGIN INIT */
-    Stat = STA_NOINIT;
-    uint16_t i;
+	uint16_t i;
 
+    Stat = STA_NOINIT;
+
+	/* 使能SPI Flash */
 	__HAL_SPI_ENABLE(&exFLASH_SPI);
 
 	/* 延时一小段时间 */
 	i = 500;
 	while(--i);
 
-	exFLASH_ModeWakeUp();
-	Stat = USER_status(0);
+	/* 唤醒SPI Flash */
+	SPI_Flash_WAKEUP();
+
+	/* 获取SPI Flash芯片状态 */
+	Stat=USER_status(0);
 
     return Stat;
   /* USER CODE END INIT */
@@ -143,8 +145,12 @@ DSTATUS USER_status (
   /* USER CODE BEGIN STATUS */
     Stat = STA_NOINIT;
 
-	if (exFLASH_ID == exFLASH_ReadDeviceID())
+	/* SPI Flash状态检测：读取SPI Flash 设备ID */
+	if(sFLASH_ID == SPI_FLASH_ReadID())
+	{
+		/* 设备ID读取结果正确 */
 		Stat &= ~STA_NOINIT;
+	}
 
     return Stat;
   /* USER CODE END STATUS */
@@ -166,8 +172,8 @@ DRESULT USER_read (
 )
 {
   /* USER CODE BEGIN READ */
-	exFLASH_ReadBuffer(sector << 12, (uint8_t*)buff, count << 12);
-	return RES_OK;
+	SPI_FLASH_BufferRead(buff, sector <<12, count<<12);
+    return RES_OK;
   /* USER CODE END READ */
 }
 
@@ -191,10 +197,8 @@ DRESULT USER_write (
   /* USER CODE HERE */
 	uint32_t write_addr;
 
-	write_addr = sector << 12;
-
-	exFLASH_SectorErase(write_addr);
-//	exFLASH_WriteBuffer(write_addr, (uint8_t*)buff, count << 12);
+	write_addr = sector<<12;
+	SPI_FLASH_SectorErase(write_addr);
 	SPI_FLASH_BufferWrite((uint8_t *)buff,write_addr,count<<12);
 	return RES_OK;
   /* USER CODE END WRITE */
@@ -220,19 +224,22 @@ DRESULT USER_ioctl (
 
 	switch (cmd)
 	{
+	/* 扇区数量：1536*4096/1024/1024=6(MB) */
 	case GET_SECTOR_COUNT:
-		*(DWORD*)buff = exFLASH_SECTOR_COUNT;
-		break;
-	case GET_SECTOR_SIZE:
-		*(WORD*)buff = exFLASH_SECTOR_SIZE_BYTES;
-		break;
-	case GET_BLOCK_SIZE:
-		*(DWORD*)buff = exFLASH_BLOCK_SIZE;
-		break;
-	default:
-		break;
-	}
-	res = RES_OK;
+		*(DWORD * )buff = 1024;
+	break;
+
+	/* 扇区大小  */
+	case GET_SECTOR_SIZE :
+		*(WORD * )buff = 4096;
+	break;
+
+	/* 同时擦除扇区个数 */
+	case GET_BLOCK_SIZE :
+		*(DWORD * )buff = 1;
+	break;
+	 }
+	 res = RES_OK;
 
     return res;
   /* USER CODE END IOCTL */

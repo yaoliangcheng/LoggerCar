@@ -52,13 +52,13 @@ uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
-FATFS FATFS_exFlashObj;				/* 文件系统对象 */
-FIL   fileObj;						/* 文件对象 */
-FRESULT optStatus;					/* 操作状态 */
-UINT  optNumb;						/* 文件操作数量 */
-BYTE  readBuf[100];
-BYTE  writeBuf[] = {"hangzhoulugekejiyouxiangongsi"};
-BYTE  writeBuf2[] = {"Zhejiang.Hangzhou"};
+FATFS fs;													/* FatFs文件系统对象 */
+FIL fnew;													/* 文件对象 */
+FRESULT res_flash;                /* 文件操作结果 */
+UINT fnum;            					  /* 文件成功读写数量 */
+BYTE ReadBuffer[100]={0};        /* 读缓冲区 */
+BYTE WriteBuffer[] =              /* 写缓冲区*/
+"This is a stm32 fatfs test\r\n";
 
 /* USER CODE END Variables */    
 
@@ -69,63 +69,50 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-
   if (0 == retUSER)
   {
-	  printf("硬件层连接成功\r\n");
-	  optStatus = f_mount(&FATFS_exFlashObj, "0:", 1);
-	  if (optStatus == FR_NO_FILESYSTEM)
+	  /* 挂载spi flash */
+	  res_flash = f_mount(&fs, USER_Path, 1);
+
+	  /* 如果没有文件系统就格式化创建创建文件系统 */
+	  if(res_flash == FR_NO_FILESYSTEM)
 	  {
-		  printf("即将进行格式化\r\n");
-		  optStatus = f_mkfs("0:", 0, 0);
-		  if (optStatus == FR_OK)
+		  /* 格式化 */
+		  res_flash=f_mkfs(USER_Path, 0, 0);
+		  if(res_flash == FR_OK)
 		  {
-			  printf("格式化成功\r\n");
-			  f_mount(NULL, "0:", 1);
-			  f_mount(&FATFS_exFlashObj, "0:", 1);
-		  }
-		  else
-		  {
-			  printf("格式化失败\r\n");
+			  /* 格式化后，先取消挂载 */
+			  res_flash = f_mount(NULL, USER_Path, 1);
+			  /* 重新挂载	*/
+			  res_flash = f_mount(&fs, USER_Path, 1);
 		  }
 	  }
 
-	  optStatus = f_open(&fileObj, "0:stm32.txt", FA_CREATE_ALWAYS | FA_WRITE);
-	  if (optStatus == FR_OK)
+	  /*----------------------- 文件系统测试：写测试 -------------------*/
+	  /* 打开文件，每次都以新建的形式打开，属性为可写 */
+	  res_flash = f_open(&fnew, "FatFs.txt",FA_CREATE_ALWAYS | FA_WRITE );
+	  if ( res_flash == FR_OK )
 	  {
-		  printf("文件打开成功\r\n");
-		  optStatus = f_write(&fileObj, writeBuf, sizeof(writeBuf), &optNumb);
-		  if(optStatus == FR_OK)
-		  {
-			  printf("文件写入成功\r\n");
-		  }
-		  else
-		  {
-			  printf("文件写入失败\r\n");
-		  }
-//		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
-		  f_close(&fileObj);
-	  }
-	  else
-	  {
-		  printf("文件打开失败\r\n");
-	  }
+		  /* 将指定存储区内容写入到文件内 */
+		  res_flash=f_write(&fnew,WriteBuffer,sizeof(WriteBuffer),&fnum);
 
-	  optStatus = f_open(&fileObj, "0:stm32.txt", FA_OPEN_EXISTING | FA_READ);
-	  if (FR_OK == optStatus)
-	  {
-		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
-//		  optStatus = f_write(&fileObj, writeBuf2, sizeof(writeBuf2), &optNumb);
-//		  f_close(&fileObj);
-//
-//		  optStatus = f_open(&fileObj, "stm32.txt", FA_OPEN_EXISTING | FA_READ);
-//		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
-		  f_close(&fileObj);
+		  /* 不再读写，关闭文件 */
+		  f_close(&fnew);
 	  }
-
-
   }
-  FATFS_UnLinkDriver(USER_Path);
+
+  /*------------------- 文件系统测试：读测试 --------------------------*/
+  res_flash = f_open(&fnew, "FatFs.txt",FA_OPEN_EXISTING | FA_READ);
+  if (res_flash == FR_OK)
+  {
+	  res_flash = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
+
+	  /* 不再读写，关闭文件 */
+	  f_close(&fnew);
+  }
+
+  /* 不再使用文件系统，取消挂载文件系统 */
+  f_mount(NULL,USER_Path,1);
 
   /* USER CODE END Init */
 }
