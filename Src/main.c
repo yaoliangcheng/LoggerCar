@@ -118,7 +118,7 @@ int main(void)
   MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  __HAL_SPI_ENABLE(&exFLASH_SPI);
+
 
   /* USER CODE END 2 */
 

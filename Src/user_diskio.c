@@ -116,11 +116,16 @@ DSTATUS USER_initialize (
 {
   /* USER CODE BEGIN INIT */
     Stat = STA_NOINIT;
-    if (pdrv == FATFS_DEVICE_exFLASH)
-	{
-		exFLASH_ModeWakeUp();
-		Stat = USER_status(pdrv);
-	}
+    uint16_t i;
+
+	__HAL_SPI_ENABLE(&exFLASH_SPI);
+
+	/* 延时一小段时间 */
+	i = 500;
+	while(--i);
+
+	exFLASH_ModeWakeUp();
+	Stat = USER_status(0);
 
     return Stat;
   /* USER CODE END INIT */
@@ -138,11 +143,8 @@ DSTATUS USER_status (
   /* USER CODE BEGIN STATUS */
     Stat = STA_NOINIT;
 
-    if (pdrv == FATFS_DEVICE_exFLASH)
-    {
-    	if (exFLASH_ID == exFLASH_ReadDeviceID())
-    		Stat &= ~STA_NOINIT;
-    }
+	if (exFLASH_ID == exFLASH_ReadDeviceID())
+		Stat &= ~STA_NOINIT;
 
     return Stat;
   /* USER CODE END STATUS */
@@ -164,12 +166,8 @@ DRESULT USER_read (
 )
 {
   /* USER CODE BEGIN READ */
-	if (pdrv == FATFS_DEVICE_exFLASH)
-	{
-		exFLASH_ReadBuffer(sector << 12, (uint8_t*)buff, count << 12);
-		return RES_OK;
-	}
-    return RES_PARERR;
+	exFLASH_ReadBuffer(sector << 12, (uint8_t*)buff, count << 12);
+	return RES_OK;
   /* USER CODE END READ */
 }
 
@@ -191,13 +189,14 @@ DRESULT USER_write (
 { 
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
-	if (pdrv == FATFS_DEVICE_exFLASH)
-	{
-//		exFLASH_SectorErase(sector << 12);
-		exFLASH_WriteBuffer(sector << 12, (uint8_t*)buff, count << 12);
-		return RES_OK;
-	}
-    return RES_PARERR;
+	uint32_t write_addr;
+
+	write_addr = sector << 12;
+
+	exFLASH_SectorErase(write_addr);
+//	exFLASH_WriteBuffer(write_addr, (uint8_t*)buff, count << 12);
+	SPI_FLASH_BufferWrite((uint8_t *)buff,write_addr,count<<12);
+	return RES_OK;
   /* USER CODE END WRITE */
 }
 #endif /* _USE_WRITE == 1 */
@@ -219,24 +218,21 @@ DRESULT USER_ioctl (
   /* USER CODE BEGIN IOCTL */
     DRESULT res = RES_ERROR;
 
-    if (pdrv == FATFS_DEVICE_exFLASH)
+	switch (cmd)
 	{
-		switch (cmd)
-		{
-		case GET_SECTOR_COUNT:
-			*(DWORD*)buff = exFLASH_SECTOR_COUNT;
-			break;
-		case GET_SECTOR_SIZE:
-			*(WORD*)buff = exFLASH_SECTOR_SIZE_BYTES;
-			break;
-		case GET_BLOCK_SIZE:
-			*(DWORD*)buff = exFLASH_BLOCK_SIZE;
-			break;
-		default:
-			break;
-		}
-		res = RES_OK;
+	case GET_SECTOR_COUNT:
+		*(DWORD*)buff = exFLASH_SECTOR_COUNT;
+		break;
+	case GET_SECTOR_SIZE:
+		*(WORD*)buff = exFLASH_SECTOR_SIZE_BYTES;
+		break;
+	case GET_BLOCK_SIZE:
+		*(DWORD*)buff = exFLASH_BLOCK_SIZE;
+		break;
+	default:
+		break;
 	}
+	res = RES_OK;
 
     return res;
   /* USER CODE END IOCTL */

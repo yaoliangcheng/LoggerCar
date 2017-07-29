@@ -137,7 +137,7 @@ static void exFLASH_WritePageBytes(uint32_t writeAddr, uint8_t* pBuffer,
 {
 	/* 写数据的长度不能大于flash的页字节 */
 	if (dataLength > exFLASH_PAGE_SIZE_BYTES)
-		return;
+		dataLength = exFLASH_PAGE_SIZE_BYTES;
 
 	exFLASH_WriteEnable();
 	exFLASH_WaitForIdle();
@@ -186,7 +186,7 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 			{
 				exFLASH_WritePageBytes(writeAddr, pBuffer, exFLASH_PAGE_SIZE_BYTES);
 				writeAddr += exFLASH_PAGE_SIZE_BYTES;
-				pBuffer += exFLASH_PAGE_SIZE_BYTES;
+				pBuffer   += exFLASH_PAGE_SIZE_BYTES;
 			}
 			exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
 		}
@@ -203,8 +203,8 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 		{
 			/* 先把当前页写满 */
 			exFLASH_WritePageBytes(writeAddr, pBuffer, pageBytesRemainder);
-			writeAddr += pageBytesRemainder;
-			pBuffer += pageBytesRemainder;
+			writeAddr  += pageBytesRemainder;
+			pBuffer    += pageBytesRemainder;
 			dataLength -= pageBytesRemainder;
 
 			/* 需要写的页数 */
@@ -222,6 +222,97 @@ void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLeng
 				exFLASH_WritePageBytes(writeAddr, pBuffer, dataBytesRemainder);
 		}
 	}
+}
+
+
+/*******************************************************************************
+ *
+ */
+void SPI_FLASH_BufferWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+ uint8_t NumOfPage = 0, NumOfSingle = 0, Addr = 0, count = 0, temp = 0;
+
+	/*mod运算求余，若writeAddr是SPI_FLASH_PageSize整数倍，运算结果Addr值为0*/
+ Addr = WriteAddr % SPI_FLASH_PageSize;
+
+	/*差count个数据值，刚好可以对齐到页地址*/
+ count = SPI_FLASH_PageSize - Addr;
+	/*计算出要写多少整数页*/
+ NumOfPage =  NumByteToWrite / SPI_FLASH_PageSize;
+	/*mod运算求余，计算出剩余不满一页的字节数*/
+ NumOfSingle = NumByteToWrite % SPI_FLASH_PageSize;
+
+	/* Addr=0,则WriteAddr 刚好按页对齐 aligned  */
+ if (Addr == 0)
+ {
+		/* NumByteToWrite < SPI_FLASH_PageSize */
+   if (NumOfPage == 0)
+   {
+	   exFLASH_WritePageBytes(WriteAddr,pBuffer,  NumByteToWrite);
+   }
+   else /* NumByteToWrite > SPI_FLASH_PageSize */
+   {
+			/*先把整数页都写了*/
+     while (NumOfPage--)
+     {
+    	 exFLASH_WritePageBytes(WriteAddr,pBuffer,  SPI_FLASH_PageSize);
+       WriteAddr +=  SPI_FLASH_PageSize;
+       pBuffer += SPI_FLASH_PageSize;
+     }
+			/*若有多余的不满一页的数据，把它写完*/
+     exFLASH_WritePageBytes(WriteAddr,pBuffer,  NumOfSingle);
+   }
+ }
+	/* 若地址与 SPI_FLASH_PageSize 不对齐  */
+ else
+ {
+		/* NumByteToWrite < SPI_FLASH_PageSize */
+   if (NumOfPage == 0)
+   {
+			/*当前页剩余的count个位置比NumOfSingle小，一页写不完*/
+     if (NumOfSingle > count)
+     {
+       temp = NumOfSingle - count;
+				/*先写满当前页*/
+       exFLASH_WritePageBytes(WriteAddr,pBuffer,  count);
+
+       WriteAddr +=  count;
+       pBuffer += count;
+				/*再写剩余的数据*/
+       exFLASH_WritePageBytes(WriteAddr,pBuffer,  temp);
+     }
+     else /*当前页剩余的count个位置能写完NumOfSingle个数据*/
+     {
+    	 exFLASH_WritePageBytes(WriteAddr,pBuffer,  NumByteToWrite);
+     }
+   }
+   else /* NumByteToWrite > SPI_FLASH_PageSize */
+   {
+			/*地址不对齐多出的count分开处理，不加入这个运算*/
+     NumByteToWrite -= count;
+     NumOfPage =  NumByteToWrite / SPI_FLASH_PageSize;
+     NumOfSingle = NumByteToWrite % SPI_FLASH_PageSize;
+
+			/* 先写完count个数据，为的是让下一次要写的地址对齐 */
+     exFLASH_WritePageBytes(WriteAddr,pBuffer,  count);
+
+			/* 接下来就重复地址对齐的情况 */
+     WriteAddr +=  count;
+     pBuffer += count;
+			/*把整数页都写了*/
+     while (NumOfPage--)
+     {
+    	 exFLASH_WritePageBytes(WriteAddr,pBuffer,  SPI_FLASH_PageSize);
+       WriteAddr +=  SPI_FLASH_PageSize;
+       pBuffer += SPI_FLASH_PageSize;
+     }
+			/*若有多余的不满一页的数据，把它写完*/
+     if (NumOfSingle != 0)
+     {
+    	 exFLASH_WritePageBytes(WriteAddr,pBuffer,  NumOfSingle);
+     }
+   }
+ }
 }
 
 /*******************************************************************************

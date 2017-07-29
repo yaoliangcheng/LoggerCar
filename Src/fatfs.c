@@ -69,22 +69,20 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-#if 0
+
   if (0 == retUSER)
   {
 	  printf("硬件层连接成功\r\n");
-	  exFLASH_SectorErase(0);
-	  optStatus = f_mount(&FATFS_exFlashObj, USER_Path, 1);
+	  optStatus = f_mount(&FATFS_exFlashObj, "0:", 1);
 	  if (optStatus == FR_NO_FILESYSTEM)
 	  {
 		  printf("即将进行格式化\r\n");
-		  exFLASH_ChipErase();
-		  optStatus = f_mkfs(USER_Path, 1, 4096);
+		  optStatus = f_mkfs("0:", 0, 0);
 		  if (optStatus == FR_OK)
 		  {
 			  printf("格式化成功\r\n");
-			  f_mount(NULL, USER_Path, 1);
-			  f_mount(&FATFS_exFlashObj, USER_Path, 1);
+			  f_mount(NULL, "0:", 1);
+			  f_mount(&FATFS_exFlashObj, "0:", 1);
 		  }
 		  else
 		  {
@@ -92,7 +90,7 @@ void MX_FATFS_Init(void)
 		  }
 	  }
 
-	  optStatus = f_open(&fileObj, "stm32.txt", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+	  optStatus = f_open(&fileObj, "0:stm32.txt", FA_CREATE_ALWAYS | FA_WRITE);
 	  if (optStatus == FR_OK)
 	  {
 		  printf("文件打开成功\r\n");
@@ -105,7 +103,7 @@ void MX_FATFS_Init(void)
 		  {
 			  printf("文件写入失败\r\n");
 		  }
-		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
+//		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
 		  f_close(&fileObj);
 	  }
 	  else
@@ -113,7 +111,7 @@ void MX_FATFS_Init(void)
 		  printf("文件打开失败\r\n");
 	  }
 
-	  optStatus = f_open(&fileObj, "stm32.txt", FA_READ);
+	  optStatus = f_open(&fileObj, "0:stm32.txt", FA_OPEN_EXISTING | FA_READ);
 	  if (FR_OK == optStatus)
 	  {
 		  optStatus = f_read(&fileObj, readBuf, sizeof(readBuf), &optNumb);
@@ -128,20 +126,8 @@ void MX_FATFS_Init(void)
 
   }
   FATFS_UnLinkDriver(USER_Path);
-#endif
-  /* USER CODE END Init */
-}
 
-/**
-  * @brief  Gets Time from RTC 
-  * @param  None
-  * @retval Time in DWORD
-  */
-DWORD get_fattime(void)
-{
-  /* USER CODE BEGIN get_fattime */
-  return 0;
-  /* USER CODE END get_fattime */  
+  /* USER CODE END Init */
 }
 
 /* USER CODE BEGIN Application */

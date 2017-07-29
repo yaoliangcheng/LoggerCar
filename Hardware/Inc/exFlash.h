@@ -46,6 +46,7 @@
 #define DUMMY_BYTE									(uint8_t)(0xFF)
 
 #define exFLASH_PAGE_SIZE_BYTES						(256)
+#define SPI_FLASH_PageSize							(256)
 #define exFLASH_SECTOR_SIZE_BYTES					(4096)
 #define exFLASH_SECTOR_COUNT						(1024)
 //#define exFLASH_BLOCK_SIZE							(65536)
@@ -100,7 +101,7 @@ typedef struct
 void exFLASH_Init(void);
 void exFLASH_WriteBuffer(uint32_t writeAddr, uint8_t* pBuffer, uint16_t dataLength);
 void exFLASH_ReadBuffer(uint32_t readAddr, uint8_t* pBuffer, uint16_t dataLength);
-
+void SPI_FLASH_BufferWrite(uint8_t* pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 void exFLASH_SectorErase(uint32_t sectorAddr);
 void exFLASH_ChipErase(void);
 void exFLASH_ModePwrDown(void);
