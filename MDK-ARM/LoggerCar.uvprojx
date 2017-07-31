@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>0</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -708,6 +708,11 @@
               <FileName>gps.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hardware\Src\gps.c</FilePath>
+            </File>
+            <File>
+              <FileName>file.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\file.c</FilePath>
             </File>
           </Files>
         </Group>

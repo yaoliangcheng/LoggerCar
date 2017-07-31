@@ -47,7 +47,6 @@
   */
 
 #include "fatfs.h"
-#include "exFlash.h"
 
 uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
@@ -55,11 +54,7 @@ char USER_Path[4];  /* USER logical drive path */
 /* USER CODE BEGIN Variables */
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */
-FRESULT res_flash;
-UINT fnum;            					  /* 文件成功读写数量 */
-
-FATFS *pfs;
-DWORD freeClust, freeSect, totSect;
+DWORD freeClust, freeSect, totSect;	/* 空闲簇、空闲扇区、总扇区 */
 
 /*************************************************************************************/
 ErrorStatus FATFS_FileMake(void);
@@ -73,53 +68,6 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-
-  if (0 == retUSER)
-  {
-//	  SPI_FLASH_BulkErase();
-	  res_flash = f_mount(&objFileSystem, USER_Path, 1);
-	  if(res_flash == FR_NO_FILESYSTEM)	/* 如果没有文件系统就格式化创建创建文件系统 */
-		{
-			/* 格式化 */
-			res_flash = f_mkfs(USER_Path, 0, 0);
-			if(res_flash == FR_OK)
-			{
-				/* 格式化后，先取消挂载 */
-				res_flash = f_mount(NULL,           USER_Path, 1);
-				/* 重新挂载	*/
-				res_flash = f_mount(&objFileSystem, USER_Path, 1);
-			}
-		}
-
-	  /* 获取设备信息和空簇大小 */
-	  res_flash = f_getfree(USER_Path, &freeClust, &pfs);
-
-	  totSect = (pfs->n_fatent - 2) * pfs->csize;
-	  freeSect = freeClust * pfs->csize;
-	  printf("设备总空间：%u KB   可用空间：%u KB\r\n", totSect * 4, freeSect * 4);
-
-	  res_flash = f_open(&objFile, "stm33.txt", FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
-	  if ( res_flash == FR_OK )
-	  {
-		  res_flash=f_write(&objFile, WriteBuffer,sizeof(WriteBuffer), &fnum);
-		  if (res_flash == FR_OK)
-		  {
-			  /* 写指针移动到文件末尾 */
-			  res_flash = f_lseek(&objFile, objFile.fsize - 1);
-			  res_flash=f_write(&objFile, "this is the second write test!",30, &fnum);
-
-			  res_flash = f_lseek(&objFile, 0);
-			  res_flash = f_read(&objFile, ReadBuffer, objFile.fsize, &fnum);
-			  printf("读出的内容是：%s", ReadBuffer);
-
-			  f_close(&objFile);
-		  }
-	  }
-
-  }
-
-  /* 不再使用文件系统，取消挂载文件系统 */
-  f_mount(NULL,USER_Path,1);
 
   /* USER CODE END Init */
 }
@@ -266,20 +214,21 @@ ErrorStatus FATFS_FileClose(void)
 /*******************************************************************************
  *
  */
-ErrorStatus FATFS_GetSpaceInfo(DWORD* totSpace, DWORD* freeSpace)
+ErrorStatus FATFS_GetSpaceInfo(void)
 {
 	FATFS* pfs;
 
 	/* 获取设备信息和空簇大小 */
-	if (FR_OK == f_getfree(USER_Path, freeSpace, &pfs))
+	if (FR_OK == f_getfree(USER_Path, &freeClust, &pfs))
 	{
 		/* 单位为KB */
-		*totSpace  = (pfs->n_fatent - 2) * pfs->csize * 4;
-		*freeSpace = freeClust * pfs->csize * 4;
-		printf("设备总空间：%ulKB 可用空间：%ulKB\r\n", (*totSpace), (*freeSpace));
+		freeSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
+		totSect   = freeClust           * pfs->csize * 4;
+
+		printf("设备总空间：%ulKB 可用空间：%ulKB\r\n", freeSect, totSect);
 
 		/* 没有空间可写 */
-		if (*freeSpace == 0)
+		if (freeSect == 0)
 		{
 			printf("无可用空间！！请备份好数据，格式化磁盘\r\n");
 			return ERROR;

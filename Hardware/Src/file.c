@@ -31,7 +31,10 @@ ErrorStatus FILE_SaveReadInfo(FILE_InfoTypedef* saveInfo,
 		return ERROR;
 
 	/* 获取总空间和空闲空间 */
-	/* todo */
+	if (ERROR == FATFS_GetSpaceInfo())
+	{
+		printf("数据空间获取失败\r\n");
+	}
 
 	/* 根据时间获取文件名 */
 	FILE_GetFileNameDependOnTime(&saveInfo->realTime);
