@@ -127,7 +127,7 @@ void MX_FREERTOS_Init(void) {
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 128);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 2048);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 

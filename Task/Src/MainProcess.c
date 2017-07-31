@@ -7,6 +7,7 @@
 
 #include "osConfig.h"
 #include "RealTime.h"
+#include "file.h"
 
 
 
@@ -16,10 +17,17 @@
 void MAINPROCESS_Task(void)
 {
 	osEvent signal;
-	ANALOG_ValueTypedef AnalogValue;
+
 	RT_TimeTypedef *time;
-	exFLASH_InfoTypedef sendInfo;
 	GPS_LocateTypedef* location;
+	ANALOG_ValueTypedef AnalogValue;
+
+	FILE_InfoTypedef saveInfo;
+	FILE_InfoTypedef readInfo[5];
+
+
+	/* 文件名格式初始化 */
+	FILE_Init();
 
 	while(1)
 	{		
@@ -56,9 +64,6 @@ void MAINPROCESS_Task(void)
 		printf("湿度4 = %f\r\n", AnalogValue.humi4);
 		printf("电池电量 = %d\r\n", AnalogValue.batVoltage);
 
-		/* 获取外部电源状态 */
-		/* todo */
-
 		/* 获取定位数据 */
 		/* 激活GPRSProcess任务，启动GPS转换 */
 		osThreadResume(gprsprocessTaskHandle);
@@ -76,15 +81,16 @@ void MAINPROCESS_Task(void)
 		signal = osMessageGet(infoMessageQId, 100);
 		location = (GPS_LocateTypedef*)signal.value.v;
 
-		/* 记录数值 */
-		exFLASH_SaveStructInfo(&sendInfo, time, &AnalogValue, location);
+		/* 将数据格式转换成协议格式 */
+		FILE_InfoFormatConvert(&saveInfo, time, location, &AnalogValue);
 
-		/* 读取数值 */
-//		exFLASH_ReadStructInfo(&flashInfo);
+		/* 储存并读取数据 */
+		FILE_SaveReadInfo(&saveInfo, readInfo, 1);
 
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
-		osMessagePut(infoMessageQId, (uint32_t)&sendInfo, 100);
+		osMessagePut(infoMessageQId, (uint32_t)&readInfo, 100);
+//		osMessagePut(infoMessageQId, (uint32_t)&saveInfo, 100);
 
 		/* 把当前时间传递到GPRS进程，根据回文校准时间 */
 		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);

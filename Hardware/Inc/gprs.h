@@ -7,6 +7,7 @@
 
 #include "eeprom.h"
 #include "exFlash.h"
+#include "file.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart2)
@@ -47,7 +48,7 @@ typedef struct
 	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB - 1];			/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
-	exFLASH_InfoTypedef dataPack[DATA_PACK_NUMB_MAX];		/* m条数据点 */
+	FILE_InfoTypedef dataPack[DATA_PACK_NUMB_MAX];			/* m条数据点 */
 	uint8_t tail;											/* 数据尾 */
 	uint8_t verifyData;										/* 校验数据 */
 } GPRS_StructTypedef;

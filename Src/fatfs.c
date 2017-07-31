@@ -47,18 +47,22 @@
   */
 
 #include "fatfs.h"
+#include "exFlash.h"
 
 uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
-FATFS fs;													/* FatFs文件系统对象 */
-FIL fnew;													/* 文件对象 */
-FRESULT res_flash;                /* 文件操作结果 */
+FATFS objFileSystem;			/* FatFs文件系统对象 */
+FIL   objFile;					/* 文件对象 */
+FRESULT res_flash;
 UINT fnum;            					  /* 文件成功读写数量 */
-BYTE ReadBuffer[100]={0};        /* 读缓冲区 */
-BYTE WriteBuffer[] =              /* 写缓冲区*/
-"This is a stm32 fatfs test\r\n";
+
+FATFS *pfs;
+DWORD freeClust, freeSect, totSect;
+
+/*************************************************************************************/
+ErrorStatus FATFS_FileMake(void);
 
 /* USER CODE END Variables */    
 
@@ -69,46 +73,49 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
+
   if (0 == retUSER)
   {
-	  /* 挂载spi flash */
-	  res_flash = f_mount(&fs, USER_Path, 1);
+//	  SPI_FLASH_BulkErase();
+	  res_flash = f_mount(&objFileSystem, USER_Path, 1);
+	  if(res_flash == FR_NO_FILESYSTEM)	/* 如果没有文件系统就格式化创建创建文件系统 */
+		{
+			/* 格式化 */
+			res_flash = f_mkfs(USER_Path, 0, 0);
+			if(res_flash == FR_OK)
+			{
+				/* 格式化后，先取消挂载 */
+				res_flash = f_mount(NULL,           USER_Path, 1);
+				/* 重新挂载	*/
+				res_flash = f_mount(&objFileSystem, USER_Path, 1);
+			}
+		}
 
-	  /* 如果没有文件系统就格式化创建创建文件系统 */
-	  if(res_flash == FR_NO_FILESYSTEM)
+	  /* 获取设备信息和空簇大小 */
+	  res_flash = f_getfree(USER_Path, &freeClust, &pfs);
+
+	  totSect = (pfs->n_fatent - 2) * pfs->csize;
+	  freeSect = freeClust * pfs->csize;
+	  printf("设备总空间：%u KB   可用空间：%u KB\r\n", totSect * 4, freeSect * 4);
+
+	  res_flash = f_open(&objFile, "stm33.txt", FA_OPEN_ALWAYS | FA_WRITE | FA_READ);
+	  if ( res_flash == FR_OK )
 	  {
-		  /* 格式化 */
-		  res_flash=f_mkfs(USER_Path, 0, 0);
-		  if(res_flash == FR_OK)
+		  res_flash=f_write(&objFile, WriteBuffer,sizeof(WriteBuffer), &fnum);
+		  if (res_flash == FR_OK)
 		  {
-			  /* 格式化后，先取消挂载 */
-			  res_flash = f_mount(NULL, USER_Path, 1);
-			  /* 重新挂载	*/
-			  res_flash = f_mount(&fs, USER_Path, 1);
+			  /* 写指针移动到文件末尾 */
+			  res_flash = f_lseek(&objFile, objFile.fsize - 1);
+			  res_flash=f_write(&objFile, "this is the second write test!",30, &fnum);
+
+			  res_flash = f_lseek(&objFile, 0);
+			  res_flash = f_read(&objFile, ReadBuffer, objFile.fsize, &fnum);
+			  printf("读出的内容是：%s", ReadBuffer);
+
+			  f_close(&objFile);
 		  }
 	  }
 
-	  /*----------------------- 文件系统测试：写测试 -------------------*/
-	  /* 打开文件，每次都以新建的形式打开，属性为可写 */
-	  res_flash = f_open(&fnew, "FatFs.txt",FA_CREATE_ALWAYS | FA_WRITE );
-	  if ( res_flash == FR_OK )
-	  {
-		  /* 将指定存储区内容写入到文件内 */
-		  res_flash=f_write(&fnew,WriteBuffer,sizeof(WriteBuffer),&fnum);
-
-		  /* 不再读写，关闭文件 */
-		  f_close(&fnew);
-	  }
-  }
-
-  /*------------------- 文件系统测试：读测试 --------------------------*/
-  res_flash = f_open(&fnew, "FatFs.txt",FA_OPEN_EXISTING | FA_READ);
-  if (res_flash == FR_OK)
-  {
-	  res_flash = f_read(&fnew, ReadBuffer, sizeof(ReadBuffer), &fnum);
-
-	  /* 不再读写，关闭文件 */
-	  f_close(&fnew);
   }
 
   /* 不再使用文件系统，取消挂载文件系统 */
@@ -118,7 +125,205 @@ void MX_FATFS_Init(void)
 }
 
 /* USER CODE BEGIN Application */
-     
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_FileLink(void)
+{
+	FRESULT status;
+
+	/* 挂载spi flash */
+	status = f_mount(&objFileSystem, USER_Path, 1);
+
+	if (status == FR_OK)
+		return SUCCESS;
+	else if(status == FR_NO_FILESYSTEM)	/* 如果没有文件系统就格式化创建创建文件系统 */
+	{
+		/* 格式化 */
+		if (SUCCESS == FATFS_FileMake())
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_FileUnlink(void)
+{
+	/* 不再使用文件系统，取消挂载文件系统 */
+	 if (FR_OK == f_mount(NULL, USER_Path, 1))
+		 return SUCCESS;
+	 else
+		 return ERROR;
+}
+
+/*******************************************************************************
+ * function:文件系统格式化
+ */
+ErrorStatus FATFS_FileMake(void)
+{
+	if (FR_OK == f_mkfs(USER_Path, 0, 0))
+	{
+		/* 格式化后，先取消挂载 */
+		f_mount(NULL, USER_Path, 1);
+
+		/* 重新挂载	*/
+		if (FR_OK == f_mount(&objFileSystem, USER_Path, 1))
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode)
+{
+	FRESULT status;
+
+	switch (mode)
+	{
+	case FATFS_MODE_OPEN_ALWAYS_WRITE:
+		status = f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE);
+		break;
+
+	case FATFS_MODE_OPEN_EXISTING_READ:
+		status = f_open(&objFile, fileName, FA_OPEN_EXISTING | FA_READ);
+		break;
+
+	default:
+		break;
+	}
+
+	if (status == FR_OK)
+		return SUCCESS;
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ * @pBuffer:要写入的数据指针
+ * @size：要写入数据的长度
+ */
+ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size)
+{
+	uint32_t byteWrite;
+
+	if (FR_OK == f_write(&objFile, pBuffer, size, &byteWrite))
+	{
+		printf("写入%d字节\r\n", byteWrite);
+		/* 要写入的和实际写入的必须相同 */
+		if (byteWrite == size)
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ ** @pBuffer:要读出的数据指针
+ * @size：要读出数据的长度
+ */
+ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size)
+{
+	uint32_t byteRead;
+
+	if (FR_OK == f_read(&objFile, pBuffer, size, &byteRead))
+	{
+		printf("读出%d字节\r\n", byteRead);
+		/* 要读出的和实际读出的必须相同 */
+		if (byteRead == size)
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_FileClose(void)
+{
+	if (FR_OK == f_close(&objFile))
+		return SUCCESS;
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_GetSpaceInfo(DWORD* totSpace, DWORD* freeSpace)
+{
+	FATFS* pfs;
+
+	/* 获取设备信息和空簇大小 */
+	if (FR_OK == f_getfree(USER_Path, freeSpace, &pfs))
+	{
+		/* 单位为KB */
+		*totSpace  = (pfs->n_fatent - 2) * pfs->csize * 4;
+		*freeSpace = freeClust * pfs->csize * 4;
+		printf("设备总空间：%ulKB 可用空间：%ulKB\r\n", (*totSpace), (*freeSpace));
+
+		/* 没有空间可写 */
+		if (*freeSpace == 0)
+		{
+			printf("无可用空间！！请备份好数据，格式化磁盘\r\n");
+			return ERROR;
+		}
+		else
+			return SUCCESS;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ * function:将读、写指针移动到文件的末尾
+ */
+ErrorStatus FATFS_FileSeekEnd(void)
+{
+	if (objFile.fsize != 0)
+	{
+		if (FR_OK == f_lseek(&objFile, objFile.fsize - 1))
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+
+	return SUCCESS;
+}
+
+/*******************************************************************************
+ * function：将读写指针移动到文件末尾的后腿指定字节
+ * @backwardByt:要后腿的字节数
+ */
+ErrorStatus FATFS_FileSeekBackward(WORD backwardByte)
+{
+	if (objFile.fsize != 0)
+	{
+		if (FR_OK == f_lseek(&objFile, objFile.fsize - backwardByte))
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+
+	return SUCCESS;
+}
+
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

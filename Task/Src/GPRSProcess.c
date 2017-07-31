@@ -31,7 +31,7 @@ void GPRSPROCESS_Task(void)
 	{
 		/* 获取模拟量信息 */
 		signal = osMessageGet(infoMessageQId, 100);
-		memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v, sizeof(exFLASH_InfoTypedef));
+		memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v, sizeof(FILE_InfoTypedef));
 
 		/* 获取当前时间 */
 		signal = osMessageGet(realtimeMessageQId, 100);
