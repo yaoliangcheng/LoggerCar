@@ -10,9 +10,6 @@
 #include "RealTime.h"
 #include "GPRSProcess.h"
 
-
-
-
 /*******************************************************************************
  *
  */
@@ -26,7 +23,6 @@ void MAINPROCESS_Task(void)
 
 	FILE_InfoTypedef saveInfo;
 	FILE_InfoTypedef readInfo[5];
-
 
 	/* 文件名格式初始化 */
 	FILE_Init();

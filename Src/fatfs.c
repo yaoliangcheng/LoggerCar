@@ -47,6 +47,7 @@
   */
 
 #include "fatfs.h"
+#include "exFlash.h"
 
 uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
@@ -68,7 +69,7 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-
+	SPI_FLASH_BulkErase();
   /* USER CODE END Init */
 }
 
@@ -114,7 +115,7 @@ ErrorStatus FATFS_FileUnlink(void)
  */
 ErrorStatus FATFS_FileMake(void)
 {
-	if (FR_OK == f_mkfs(USER_Path, 0, 0))
+	if (FR_OK == f_mkfs(USER_Path, 0, 4096))
 	{
 		/* 格式化后，先取消挂载 */
 		f_mount(NULL, USER_Path, 1);
