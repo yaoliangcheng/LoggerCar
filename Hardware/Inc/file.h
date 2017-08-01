@@ -57,6 +57,16 @@ typedef struct
 	FILE_AnalogValueTypedef analogValue;		/* 模拟量值 */
 } FILE_InfoTypedef;
 
+typedef struct
+{
+	uint16_t patchPackNumb;						/* 补传数据条数 */
+	uint16_t patchPackOver_2;					/* 补传超过2条 */
+	uint16_t patchPackOver_4;					/* 补传超过2条 */
+	uint16_t patchPackOver_8;					/* 补传超过2条 */
+	uint16_t patchPackOver_16;					/* 补传超过2条 */
+	uint16_t patchPackOver_32;					/* 补传超过2条 */
+} FILE_PatchPackTypedef;
+
 #pragma pack(pop)
 
 /******************************************************************************/

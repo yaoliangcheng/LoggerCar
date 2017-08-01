@@ -1,6 +1,7 @@
 #include "file.h"
 
 char FILE_FileName[10];
+FILE_PatchPackTypedef FILE_PatchPack;
 
 /******************************************************************************/
 static ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* info);

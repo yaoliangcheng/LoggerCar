@@ -105,6 +105,16 @@ void GPRS_UartIdleDeal(void)
 }
 
 /*******************************************************************************
+ *
+ */
+void GPRS_RstModule(void)
+{
+	GPRS_RST_CTRL_ENABLE();
+	osDelay(100);
+	GPRS_RST_CTRL_DISABLE();
+}
+
+/*******************************************************************************
  * gprs数据校验
  */
 uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint8_t size)

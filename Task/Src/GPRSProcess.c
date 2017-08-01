@@ -14,13 +14,10 @@ void GPRSPROCESS_Task(void)
 	osEvent signal;
 	GPRS_ModuleStatusEnum moduleStatus = MODULE_INVALID;		/* GPRS模块状态 */
 	char* expectString;						/* 预期收到的字符串 */
-	char* str;
 
 	GPRS_StructTypedef sendStruct;			/* 发送结构 */
 	GPS_LocateTypedef location;
 	RT_TimeTypedef *etime;
-
-//	uint8_t buf[] = "&GNRMC,063651.729,A,2236.9141,N,11403.2466,E";
 
 	GPRS_Init();
 	/* 初始化发送结构体 */
@@ -138,18 +135,10 @@ void GPRSPROCESS_Task(void)
 			moduleStatus = GET_GPS_GNRMC_FINISH;
 			break;
 
-		/* 失能GPS功能 */
-		case DISABLE_GPS:
-			printf("失能GPS功能\r\n");
-			GPRS_SendCmd(AT_CMD_GPS_DISABLE);
-			expectString = AT_CMD_GPS_DISABLE_RESPOND;
-			moduleStatus = DISABLE_GPS_FINISH;
-			break;
-
 		/* 设置服务器地址 */
 		case SET_SERVER_IP_ADDR:
 			/* 等待发送使能信号 */
-			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, osWaitForever);
+			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 10000);
 			if ((signal.value.signals & GPRSPROCESS_SEND_DATA_ENABLE) == GPRSPROCESS_SEND_DATA_ENABLE)
 			{
 				/* 获取模拟量信息 */
@@ -235,8 +224,7 @@ void GPRSPROCESS_Task(void)
 				== GPRS_PROCESS_TASK_RECV_ENABLE)
 		{
 			/* 寻找预期接收的字符串是否在接收的数据中 */
-			str = strstr((char*)GPRS_BufferStatus.recvBuffer, expectString);
-			if (NULL != str)
+			if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, expectString))
 			{
 				switch (moduleStatus)
 				{
@@ -350,6 +338,9 @@ void GPRSPROCESS_Task(void)
 					RT_TimeAdjustWithCloud(GPRS_BufferStatus.recvBuffer, etime);
 
 					moduleStatus = EXTI_SERIANET_MODE;
+
+					/* GPRS发送完成 */
+					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPRS_SEND_FINISHED);
 					break;
 
 					/* 退出透传模式完成 */
@@ -370,8 +361,6 @@ void GPRSPROCESS_Task(void)
 					/* 模块发送完成，把状态设置成使能GPS定位，下次启动直接连接服务器地址即可发送 */
 					moduleStatus = GET_GPS_GNRMC;
 
-					/* GPRS发送完成 */
-					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPRS_SEND_FINISHED);
 					printf("数据发送完成\r\n");
 					/* 将自己挂起 */
 					osThreadSuspend(NULL);
@@ -381,21 +370,42 @@ void GPRSPROCESS_Task(void)
 					break;
 				}
 			}
-			/* 不是接收数据，并且不是获取GPS的GNRMC */
+			/* 不是接收数据，数据格式错误不会发生 */
 			else if (moduleStatus != DATA_SEND_FINISH)
 			{
-				/* 判断接收的数据是否错误 */
-				str = strstr((char*)GPRS_BufferStatus.recvBuffer, "Error");
-
-				/* 数据错误，必须重新初始化模块 */
-				if (str != NULL)
+				switch (moduleStatus)
 				{
-					moduleStatus = SET_BAUD_RATE;
-					printf("数据发送错误\r\n");
+				case DATA_SEND_FINISH:
+					break;
+
+				case SET_SERVER_IP_ADDR_FINISH:
+					/* 链接服务器地址出现“FAIL”或者“ERROR”，不能链接上服务器 */
+					if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, "FAIL ERROR"))
+					{
+						/* 放弃本次发送 */
+						moduleStatus = GET_GPS_GNRMC;
+
+						printf("不能链接上服务器，放弃本次发送\r\n");
+						/* 将自己挂起 */
+						osThreadSuspend(NULL);
+					}
+					break;
+
+				default:
+					/* 判断接收的数据是否错误 */
+					/* 数据错误，必须重新初始化模块 */
+					if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, "Error"))
+					{
+						/* 复位模块 */
+						GPRS_RstModule();
+
+						moduleStatus = SET_BAUD_RATE;
+						printf("模块配置错误，重新配置\r\n");
+					}
+					break;
 				}
 			}
 			memset(GPRS_BufferStatus.recvBuffer, 0, GPRS_BufferStatus.bufferSize);
-//			osDelay(1000);
 		}
 	}
 }

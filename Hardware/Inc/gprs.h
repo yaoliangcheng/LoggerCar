@@ -16,6 +16,11 @@
 #define GPRS_PWR_CTRL_DISABLE() \
 		HAL_GPIO_WritePin(GPRS_PWRKEY_CTRL_GPIO_Port, GPRS_PWRKEY_CTRL_Pin, GPIO_PIN_RESET);
 
+#define GPRS_RST_CTRL_ENABLE() \
+		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_RESET);
+#define GPRS_RST_CTRL_DISABLE() \
+		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_SET);
+
 /******************************************************************************/
 #define DATA_PACK_NUMB_MAX				  (10)				/* 最多支持补传数据组数 */
 #define GPRS_PACK_HEAD					  (uint8_t)(0X31)
@@ -64,5 +69,5 @@ void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
 void GPRS_SendCmd(char* str);
 void GPRS_UartIdleDeal(void);
 void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf);
-
+void GPRS_RstModule(void);
 #endif

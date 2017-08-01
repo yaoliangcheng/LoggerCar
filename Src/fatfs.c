@@ -69,7 +69,7 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-	SPI_FLASH_BulkErase();
+
   /* USER CODE END Init */
 }
 
@@ -226,7 +226,7 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 		freeSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
 		totSect   = freeClust           * pfs->csize * 4;
 
-		printf("设备总空间：%ulKB 可用空间：%ulKB\r\n", freeSect, totSect);
+		printf("设备总空间：%uKB 可用空间：%uKB\r\n", freeSect, totSect);
 
 		/* 没有空间可写 */
 		if (freeSect == 0)
@@ -248,8 +248,11 @@ ErrorStatus FATFS_FileSeekEnd(void)
 {
 	if (objFile.fsize != 0)
 	{
-		if (FR_OK == f_lseek(&objFile, objFile.fsize - 1))
+		if (FR_OK == f_lseek(&objFile, objFile.fsize))
+		{
+			printf("文件写入指针地址偏移：%d\r\n", objFile.fsize);
 			return SUCCESS;
+		}
 		else
 			return ERROR;
 	}
