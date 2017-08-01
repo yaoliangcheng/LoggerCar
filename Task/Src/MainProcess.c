@@ -4,10 +4,12 @@
 #include "analog.h"
 #include "input.h"
 #include "gps.h"
+#include "file.h"
 
 #include "osConfig.h"
 #include "RealTime.h"
-#include "file.h"
+#include "GPRSProcess.h"
+
 
 
 
@@ -67,6 +69,8 @@ void MAINPROCESS_Task(void)
 		/* 获取定位数据 */
 		/* 激活GPRSProcess任务，启动GPS转换 */
 		osThreadResume(gprsprocessTaskHandle);
+ 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
+		
 		/* 等待GPS完成 */
 		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, osWaitForever);
 		if ((signal.value.signals & MAINPROCESS_GPS_CONVERT_FINISH)
@@ -96,7 +100,8 @@ void MAINPROCESS_Task(void)
 		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);
 
 		/* 激活MainProcess任务 */
-		osThreadResume(gprsprocessTaskHandle);
+//		osThreadResume(gprsprocessTaskHandle);
+		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
 
 		/* 等待GPRSProcess完成 */
 		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, osWaitForever);
