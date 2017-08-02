@@ -74,6 +74,7 @@ osThreadId gprsprocessTaskHandle;
 
 /* 队列句柄 */
 osMessageQId realtimeMessageQId;
+osMessageQId analogMessageQId;
 osMessageQId infoMessageQId;
 osMessageQId infoCntMessageQId;
 
@@ -141,13 +142,18 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
+  osMessageQDef(REALTIME_MESSAGE, 1, sizeof(uint32_t*));
   realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
 
-  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
+  osMessageQDef(ANALOG_MESSAGE, 1, sizeof(uint32_t*));
+  analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
+
+
+  osMessageQDef(INFO_MESSAGE, 1, sizeof(uint32_t*));
   infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
 
-  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
+  /* 数据条数传递的是值本身 */
+  osMessageQDef(INFO_CNT_MESSAGE, 1, sizeof(uint16_t));
   infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
 
   /* USER CODE END RTOS_QUEUES */

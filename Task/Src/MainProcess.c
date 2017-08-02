@@ -17,9 +17,9 @@ void MAINPROCESS_Task(void)
 {
 	osEvent signal;
 
-	RT_TimeTypedef *time;
+	RT_TimeTypedef time;
 	GPS_LocateTypedef* location;
-	ANALOG_ValueTypedef AnalogValue;
+	ANALOG_ValueTypedef* AnalogValue;
 
 	FILE_InfoTypedef saveInfo;
 	FILE_InfoTypedef readInfo[GPRS_PATCH_PACK_NUMB_MAX];
@@ -32,36 +32,28 @@ void MAINPROCESS_Task(void)
 
 	while(1)
 	{		
+		/* 获取时间 */
 		signal = osMessageGet(realtimeMessageQId, 100);
-		time = (RT_TimeTypedef*)signal.value.v;
+		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
-		/* 触发ADC采样 */
-		ANALOG_ConvertEnable();
+		/* 获取模拟量数据 */
+		signal = osMessageGet(analogMessageQId, 100);
+		AnalogValue = (ANALOG_ValueTypedef*)signal.value.v;
 
-		/* 等待ADC采样完成 */
-		signal = osSignalWait(MAINPROCESS_SENSOR_CONVERT_FINISH, MAINPROCESS_TICKS_TO_TIMEOUT);
-		if ((signal.value.signals & MAINPROCESS_SENSOR_CONVERT_FINISH)
-						!= MAINPROCESS_SENSOR_CONVERT_FINISH)
-		{
-			printf("MainProcess等待ADC采样完成信号等待失败,超时\r\n");
-		}
-		
-		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time->date.Year,
-				time->date.Month, time->date.Date,
-				time->time.Hours,time->time.Minutes,
-				time->time.Seconds);
+		printf("当前时间是%02X.%02X.%02X %02X:%02X:%02X\r\n", time.date.Year,
+				time.date.Month, time.date.Date,
+				time.time.Hours,time.time.Minutes,
+				time.time.Seconds);
 
-		/* 获取传感器的值 */
-		ANALOG_GetSensorValue(&AnalogValue);
-		printf("温度1 = %f\r\n", AnalogValue.temp1);
-		printf("温度2 = %f\r\n", AnalogValue.temp2);
-		printf("温度3 = %f\r\n", AnalogValue.temp3);
-		printf("温度4 = %f\r\n", AnalogValue.temp4);
-		printf("湿度1 = %f\r\n", AnalogValue.humi1);
-		printf("湿度2 = %f\r\n", AnalogValue.humi2);
-		printf("湿度3 = %f\r\n", AnalogValue.humi3);
-		printf("湿度4 = %f\r\n", AnalogValue.humi4);
-		printf("电池电量 = %d\r\n", AnalogValue.batVoltage);
+		printf("温度1 = %f\r\n", AnalogValue->temp1);
+		printf("温度2 = %f\r\n", AnalogValue->temp2);
+		printf("温度3 = %f\r\n", AnalogValue->temp3);
+		printf("温度4 = %f\r\n", AnalogValue->temp4);
+		printf("湿度1 = %f\r\n", AnalogValue->humi1);
+		printf("湿度2 = %f\r\n", AnalogValue->humi2);
+		printf("湿度3 = %f\r\n", AnalogValue->humi3);
+		printf("湿度4 = %f\r\n", AnalogValue->humi4);
+		printf("电池电量 = %d\r\n", AnalogValue->batVoltage);
 
 		/* 获取定位数据 */
 		/* 激活GPRSProcess任务，启动GPS转换 */
@@ -74,8 +66,6 @@ void MAINPROCESS_Task(void)
 						!= MAINPROCESS_GPS_CONVERT_FINISH)
 		{
 			printf("GPS定位失败\r\n");
-			/* GPS定位失败，标志位要清空，避免下次直接触发 */
-//			osSignalClear(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
 		}
 		else
 		{
@@ -85,7 +75,7 @@ void MAINPROCESS_Task(void)
 		}
 
 		/* 将数据格式转换成协议格式 */
-		FILE_InfoFormatConvert(&saveInfo, time, location, &AnalogValue);
+		FILE_InfoFormatConvert(&saveInfo, &time, location, AnalogValue);
 
 		/* 读取补传数据条数 */
 		FILE_ReadPatchPackFile(&patchPack);
@@ -120,7 +110,7 @@ void MAINPROCESS_Task(void)
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 100);
 
 		/* 把当前时间传递到GPRS进程，根据回文校准时间 */
-		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);
+		osMessagePut(realtimeMessageQId, (uint32_t)&time, 100);
 
 		/* 使能MainProcess任务发送数据 */
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
