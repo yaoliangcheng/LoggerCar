@@ -110,6 +110,8 @@
 #define SCREEN_RX_GPIO_Port GPIOC
 #define SCREEN_TX_Pin GPIO_PIN_11
 #define SCREEN_TX_GPIO_Port GPIOC
+#define FLASH_WP_Pin GPIO_PIN_4
+#define FLASH_WP_GPIO_Port GPIOD
 #define GPRS_RX_Pin GPIO_PIN_5
 #define GPRS_RX_GPIO_Port GPIOD
 #define GPRS_TX_Pin GPIO_PIN_6

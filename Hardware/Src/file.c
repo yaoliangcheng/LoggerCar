@@ -1,6 +1,6 @@
 #include "file.h"
 
-char FILE_FileName[10];
+char FILE_FileName[11];
 FILE_PatchPackTypedef FILE_PatchPack;
 
 /******************************************************************************/
@@ -18,7 +18,7 @@ static void LocationFormatConvert(double value, uint8_t* pBuffer);
 void FILE_Init(void)
 {
 	/* 向文件名添加固定的后缀名 */
-	memcpy(&FILE_FileName[6], ".txt", 4);
+	memcpy(&FILE_FileName[6], ".txt\0", 5);
 
 	/* 创建补传文件 */
 	FATFS_MakeFile(PATCH_PACK_FILE_NAME);
