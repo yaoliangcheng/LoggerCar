@@ -57,6 +57,7 @@
 #include "RealTime.h"
 #include "MainProcess.h"
 #include "GPRSProcess.h"
+#include "TFTLCDProcess.h"
 
 /* USER CODE END Includes */
 
@@ -69,6 +70,7 @@ osThreadId defaultTaskHandle;
 osThreadId ledTaskHandle;
 osThreadId debugTaskHandle;
 osThreadId realtimeTaskHandle;
+osThreadId tftlcdTaskHandle;
 osThreadId mainprocessTaskHandle;
 osThreadId gprsprocessTaskHandle;
 
@@ -128,6 +130,9 @@ void MX_FREERTOS_Init(void) {
   realtimeTaskHandle = osThreadCreate(osThread(REALTIME), NULL);
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
+
+  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
+  tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
 
   osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 2048);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);

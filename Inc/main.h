@@ -106,6 +106,10 @@
 #define EE_SDA_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_12
 #define LED_GPIO_Port GPIOB
+#define SCREEN_RX_Pin GPIO_PIN_10
+#define SCREEN_RX_GPIO_Port GPIOC
+#define SCREEN_TX_Pin GPIO_PIN_11
+#define SCREEN_TX_GPIO_Port GPIOC
 #define GPRS_RX_Pin GPIO_PIN_5
 #define GPRS_RX_GPIO_Port GPIOD
 #define GPRS_TX_Pin GPIO_PIN_6

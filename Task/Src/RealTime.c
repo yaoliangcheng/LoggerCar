@@ -3,6 +3,8 @@
 #include "osConfig.h"
 #include "analog.h"
 #include "eeprom.h"
+#include "analog.h"
+#include "tftlcd.h"
 
 /******************************************************************************/
 void REALTIME_Task(void)
@@ -30,6 +32,7 @@ void REALTIME_Task(void)
 				/* 日期更新到备份 */
 				RT_BKUP_UpdateDate(&realTime);
 			}
+			TFTLCD_RealtimeRefresh(&realTime);
 
 			/* 每分钟温湿度采样一次 */
 			if (realTime.time.Seconds == 0)
@@ -50,9 +53,6 @@ void REALTIME_Task(void)
 					ANALOG_GetSensorValue(&AnalogValue);
 					printf("模拟量转换完成！！！\r\n");
 
-					/* 更新液晶屏显示 */
-					/* todo */
-
 					/* 如果记录间隔时间到，则触发记录 */
 					if (realTime.time.Minutes % EE_recordInterval == 0)
 					{
@@ -65,6 +65,10 @@ void REALTIME_Task(void)
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
 					}
+
+					/* 更新液晶屏显示 */
+					/* todo */
+					TFTLCD_AnalogDataRefresh(&AnalogValue);
 				}
 			}
 		}
