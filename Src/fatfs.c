@@ -277,6 +277,22 @@ ErrorStatus FATFS_FileSeekBackward(WORD backwardByte)
 	return SUCCESS;
 }
 
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_MakeFile(char* fileName)
+{
+	if (FR_OK == f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE))
+	{
+		if (FR_OK == f_close(NULL))
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

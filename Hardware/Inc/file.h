@@ -16,6 +16,7 @@
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
+#define PATCH_PACK_FILE_NAME					("patch.txt")
 
 /******************************************************************************/
 #pragma pack(push)
@@ -60,11 +61,10 @@ typedef struct
 typedef struct
 {
 	uint16_t patchPackNumb;						/* 补传数据条数 */
-	uint16_t patchPackOver_2;					/* 补传超过2条 */
-	uint16_t patchPackOver_4;					/* 补传超过2条 */
-	uint16_t patchPackOver_8;					/* 补传超过2条 */
-	uint16_t patchPackOver_16;					/* 补传超过2条 */
-	uint16_t patchPackOver_32;					/* 补传超过2条 */
+	uint16_t patchPackOver_5;					/* 补传超过5条 */
+	uint16_t patchPackOver_10;					/* 补传超过10条 */
+	uint16_t patchPackOver_20;					/* 补传超过20条 */
+	uint16_t patchPackOver_30;					/* 补传超过30条 */
 } FILE_PatchPackTypedef;
 
 #pragma pack(pop)
@@ -77,6 +77,8 @@ void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
 							RT_TimeTypedef*      realTime,
 							GPS_LocateTypedef*   location,
 							ANALOG_ValueTypedef* analogValue);
+ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer);
+ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer);
 
 
 #endif

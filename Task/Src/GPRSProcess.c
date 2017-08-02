@@ -19,6 +19,9 @@ void GPRSPROCESS_Task(void)
 	GPS_LocateTypedef location;
 	RT_TimeTypedef *etime;
 
+	uint8_t moduleTimeoutCnt;				/* 模块超时计数 */
+	uint16_t curPatchPack;					/* 本次上传条数 */
+
 	GPRS_Init();
 	/* 初始化发送结构体 */
 	GPRS_StructInit(&sendStruct);
@@ -141,9 +144,14 @@ void GPRSPROCESS_Task(void)
 			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 10000);
 			if ((signal.value.signals & GPRSPROCESS_SEND_DATA_ENABLE) == GPRSPROCESS_SEND_DATA_ENABLE)
 			{
+				/* 获取本次发送的条数 */
+				signal = osMessageGet(infoCntMessageQId, 100);
+				curPatchPack = signal.value.v;
+
 				/* 获取模拟量信息 */
 				signal = osMessageGet(infoMessageQId, 100);
-				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v, sizeof(FILE_InfoTypedef));
+				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
+						curPatchPack * sizeof(FILE_InfoTypedef));
 
 				/* 获取当前时间 */
 				signal = osMessageGet(realtimeMessageQId, 100);
@@ -160,7 +168,7 @@ void GPRSPROCESS_Task(void)
 		case READY:
 			printf("模块准备好了，发送数据\r\n");
 			/* 发送数据到平台 */
-			GPRS_SendProtocol(&sendStruct);
+			GPRS_SendProtocol(&sendStruct, curPatchPack);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
@@ -197,32 +205,45 @@ void GPRSPROCESS_Task(void)
 		/* 发送超时 */
 		if (signal.status == osEventTimeout)
 		{
-			printf("等待接收超时\r\n");
-			/* 发送到平台的数据没有收到答复 */
-			if (DATA_SEND_FINISH == moduleStatus)
+			printf("GMS模块指令接收等待超时\r\n");
+			switch (moduleStatus)
 			{
-				/* 放弃本次数据发送，将模式切换到退出透传模式 */
+			/* 发送到平台的数据没有收到答复,放弃本次数据发送，将模式切换到退出透传模式 */
+			case DATA_SEND_FINISH:
 				moduleStatus = EXTI_SERIANET_MODE;
+				break;
 
-				/* 数据发送失败，记录，等待下次发送 */
-				/* todo */
-			}
-			/* 其他命令没有收到预期答复，则重复发送 */
-			else
-			{
-				/* 可能因为看门狗等因素，导致单片机重启 */
-				if (MODULE_VALID == moduleStatus)
+			/* GPS启动过程比较慢，暂时忽略超时等待 */
+			case ENABLE_GPS_FINISH:
+				break;
+
+			default:
+				/* 可能因为看门狗等因素，导致单片机重启，也需要重启模块 */
+				if (moduleStatus == MODULE_VALID)
 				{
 					GPRS_PWR_CTRL_DISABLE();
 					osDelay(1000);
 				}
 				/* 模式切换到前一步再次触发发送 */
 				moduleStatus--;
+
+				/* 模块超时计数,如果超过3次，放弃本次发送，挂起任务 */
+				moduleTimeoutCnt++;
+				if (moduleTimeoutCnt > 3)
+				{
+					moduleTimeoutCnt = 0;
+					printf("模块启动失败，放弃本次发送！\r\n");
+					osThreadSuspend(NULL);
+				}
+				break;
 			}
 		}
 		else if ((signal.value.signals & GPRS_PROCESS_TASK_RECV_ENABLE)
 				== GPRS_PROCESS_TASK_RECV_ENABLE)
 		{
+			/* 接收到任意数据，则将超时计数清空，否则出错 */
+			moduleTimeoutCnt = 0;
+
 			/* 寻找预期接收的字符串是否在接收的数据中 */
 			if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, expectString))
 			{
@@ -233,8 +254,10 @@ void GPRSPROCESS_Task(void)
 					printf("模块可用\r\n");
 					/* 开机完成，断开power控制引脚 */
 					GPRS_PWR_CTRL_DISABLE();
-					expectString = AT_CMD_MODULE_START_RESPOND;
-					moduleStatus = MODULE_START;
+
+					/* 模块开机适当延时 */
+					osDelay(500);
+					moduleStatus = SET_BAUD_RATE;
 					break;
 
 					/* 模块启动 */
@@ -360,8 +383,6 @@ void GPRSPROCESS_Task(void)
 					printf("关闭移动场景完成\r\n");
 					/* 模块发送完成，把状态设置成使能GPS定位，下次启动直接连接服务器地址即可发送 */
 					moduleStatus = GET_GPS_GNRMC;
-
-					printf("数据发送完成\r\n");
 					/* 将自己挂起 */
 					osThreadSuspend(NULL);
 					break;

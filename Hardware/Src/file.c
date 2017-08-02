@@ -19,6 +19,9 @@ void FILE_Init(void)
 {
 	/* 向文件名添加固定的后缀名 */
 	memcpy(&FILE_FileName[6], ".txt", 4);
+
+	/* 创建补传文件 */
+	FATFS_MakeFile(PATCH_PACK_FILE_NAME);
 }
 
 /*******************************************************************************
@@ -105,6 +108,56 @@ void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
 			(uint8_t*)&saveInfo->analogValue.temp4);
 	AnalogDataFormatConvert(analogValue->humi4, ANALOG_VALUE_FORMAT,
 			(uint8_t*)&saveInfo->analogValue.humi4);
+}
+
+/*******************************************************************************
+ * function：读补传文件patch.txt
+ * pBuffer：接收指针
+ */
+ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer)
+{
+	/* 挂载文件系统 */
+	if (ERROR == FATFS_FileLink())
+		return ERROR;
+
+	if (FATFS_FileOpen(PATCH_PACK_FILE_NAME, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
+		return ERROR;
+
+	/* 把结构体写入文件 */
+	if (FATFS_FileRead((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef)) == ERROR)
+		return ERROR;
+
+	if (FATFS_FileClose() == ERROR)
+		return ERROR;
+
+	FATFS_FileUnlink();
+
+	return SUCCESS;
+}
+
+/*******************************************************************************
+ * function：写补传文件patch.txt
+ * pBuffer：写入指针
+ */
+ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
+{
+	/* 挂载文件系统 */
+	if (ERROR == FATFS_FileLink())
+		return ERROR;
+
+	if (FATFS_FileOpen(PATCH_PACK_FILE_NAME, FATFS_MODE_OPEN_ALWAYS_WRITE) == ERROR)
+		return ERROR;
+
+	/* 把结构体写入文件 */
+	if (FATFS_FileWrite((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef)) == ERROR)
+		return ERROR;
+
+	if (FATFS_FileClose() == ERROR)
+		return ERROR;
+
+	FATFS_FileUnlink();
+
+	return SUCCESS;
 }
 
 /*******************************************************************************

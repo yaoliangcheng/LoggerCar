@@ -75,6 +75,7 @@ osThreadId gprsprocessTaskHandle;
 /* ╤сап╬Д╠З */
 osMessageQId realtimeMessageQId;
 osMessageQId infoMessageQId;
+osMessageQId infoCntMessageQId;
 
 /* USER CODE END Variables */
 
@@ -145,6 +146,10 @@ void MX_FREERTOS_Init(void) {
 
   osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
   infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
+
+  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
+  infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
+
   /* USER CODE END RTOS_QUEUES */
 }
 

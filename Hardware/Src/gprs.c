@@ -132,40 +132,40 @@ uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint8_t size)
 /*******************************************************************************
  *
  */
-void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf)
+void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 {
 	uint16_t dataSize = 0;
-	uint16_t packNum  = 0;
-
-	/* 需要发送的数据包数 = 本次发送的包 + 增加发送的数据包数 */
-//	packNum = GPRS_Status.addSendPackNumb + 1;
-	packNum = 1;
 
 	/* 数据长度计算方法：m=数据包数； n=通道数
 	 * 数据长度 = m(17+2n)+3n+23 */
-//	dataSize = packNum * (17 + 2 * ANALOG_CHANNEL_NUMB)
+//	dataSize = patchPack * (17 + 2 * ANALOG_CHANNEL_NUMB)
 //				+ sizeof(GPRS_ParamTypedef) * ANALOG_CHANNEL_NUMB
 //				+ 23;
-	dataSize = 80;
+	dataSize = patchPack * 33 + 47;
 
 	/* 获取数据长度 */
 	sendBuf->dateSizeH = HalfWord_GetHighByte(dataSize);
 	sendBuf->dateSizeL = HalfWord_GetLowByte(dataSize);
 
 	/* 获取数据包数 */
-	sendBuf->dataPackNumbH = HalfWord_GetHighByte(packNum);
-	sendBuf->dataPackNumbL = HalfWord_GetLowByte(packNum);
+	sendBuf->dataPackNumbH = HalfWord_GetHighByte(patchPack);
+	sendBuf->dataPackNumbL = HalfWord_GetLowByte(patchPack);
 
-	/* 在数据的结尾，添加上帧尾 */
-	memcpy(&sendBuf->dataPack[packNum], &sendBuf->tail, 1);
+	if (patchPack < GPRS_PATCH_PACK_NUMB_MAX)
+	{
+		/* 在数据的结尾，添加上帧尾 */
+		memcpy(&sendBuf->dataPack[patchPack], &sendBuf->tail, 1);
+	}
 
 	/* 计算校验 */
 	sendBuf->verifyData =
 			GPRS_VerifyCalculate(&sendBuf->head, dataSize + 4);
-	/* 数据最后添加上校验 */
-	memcpy((void*)
-		   (&(sendBuf->dataPack[packNum].realTime.month)),
-			&sendBuf->verifyData, 1);
+	if (patchPack < GPRS_PATCH_PACK_NUMB_MAX)
+	{
+		/* 数据最后添加上校验 */
+		memcpy((void*)(&(sendBuf->dataPack[patchPack].realTime.month)),
+					&sendBuf->verifyData, 1);
+	}
 
 	/* 发送数据，发送的总字节数 = 5+数据长度 */
 	GPRS_SendData(&sendBuf->head, dataSize + 5);

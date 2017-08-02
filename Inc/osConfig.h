@@ -13,5 +13,6 @@ extern osThreadId gprsprocessTaskHandle;
 
 extern osMessageQId realtimeMessageQId;
 extern osMessageQId infoMessageQId;
+extern osMessageQId infoCntMessageQId;
 
 #endif

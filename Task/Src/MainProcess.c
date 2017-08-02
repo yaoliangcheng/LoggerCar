@@ -22,7 +22,10 @@ void MAINPROCESS_Task(void)
 	ANALOG_ValueTypedef AnalogValue;
 
 	FILE_InfoTypedef saveInfo;
-	FILE_InfoTypedef readInfo[5];
+	FILE_InfoTypedef readInfo[GPRS_PATCH_PACK_NUMB_MAX];
+
+	FILE_PatchPackTypedef patchPack;
+	uint16_t curPatchPack;			/* 本次补传数据 */
 
 	/* 文件名格式初始化 */
 	FILE_Init();
@@ -65,12 +68,14 @@ void MAINPROCESS_Task(void)
 		osThreadResume(gprsprocessTaskHandle);
  		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
 		
-		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，100s */
-		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, 100000);
+		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，60s */
+		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, 60000);
 		if ((signal.value.signals & MAINPROCESS_GPS_CONVERT_FINISH)
 						!= MAINPROCESS_GPS_CONVERT_FINISH)
 		{
 			printf("GPS定位失败\r\n");
+			/* GPS定位失败，标志位要清空，避免下次直接触发 */
+//			osSignalClear(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
 		}
 		else
 		{
@@ -83,14 +88,36 @@ void MAINPROCESS_Task(void)
 		FILE_InfoFormatConvert(&saveInfo, time, location, &AnalogValue);
 
 		/* 读取补传数据条数 */
-		/* todo */
+		FILE_ReadPatchPackFile(&patchPack);
+		/* 补传数据不为0，也不是磁盘格式化后全FFFF */
+		if ((patchPack.patchPackNumb != 0) && (patchPack.patchPackNumb != 0xFFFF))
+		{
+			/* 补传的数据大于等于最大补传条数 */
+			if (patchPack.patchPackNumb >= GPRS_PATCH_PACK_NUMB_MAX)
+				curPatchPack = GPRS_PATCH_PACK_NUMB_MAX;
+			else
+				/* 小于最大补传条数，则把当前这条数据也上传上去 */
+				curPatchPack = patchPack.patchPackNumb + 1;
+		}
+		else
+		{
+			/* 没有需要补传的数据，发送的条数为1 */
+			curPatchPack = 1;
+
+			/* 避免patchPack.patchPackNumb的值为0xFFFF */
+			patchPack.patchPackNumb = 0;
+		}
+		printf("本次需要补传的数据为%d条", patchPack.patchPackNumb);
 
 		/* 储存并读取数据 */
-		FILE_SaveReadInfo(&saveInfo, readInfo, 1);
+		FILE_SaveReadInfo(&saveInfo, readInfo, curPatchPack);
 
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
 		osMessagePut(infoMessageQId, (uint32_t)&readInfo, 100);
+
+		/* 传递本次发送的数据条数，注意：curPatchPack是以数据形式传递，不是传递指针 */
+		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 100);
 
 		/* 把当前时间传递到GPRS进程，根据回文校准时间 */
 		osMessagePut(realtimeMessageQId, (uint32_t)time, 100);
@@ -99,13 +126,50 @@ void MAINPROCESS_Task(void)
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
 
 		/* 等待GPRSProcess完成 */
-		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 60000);
+		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 10000);
 		if ((signal.value.signals & MAINPROCESS_GPRS_SEND_FINISHED)
 						!= MAINPROCESS_GPRS_SEND_FINISHED)
 		{
 			printf("发送数据超时，说明数据发送失败，记录数据等待补传\r\n");
+
+			/* 数据上传失败，标志位要清空，避免下次直接触发 */
+//			osSignalClear(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
+
 			/* 记录补传数据条数 */
-			/* todo */
+			/* 发送失败，则补传数据+本次记录的一条数据 */
+			patchPack.patchPackNumb++;
+
+			FILE_WritePatchPackFile(&patchPack);
+		}
+		else
+		{
+			/* 数据发送成功 */
+			printf("数据发送到平台成功！！\r\n");
+
+			/* 有补传数据 */
+			if (curPatchPack > 1)
+			{
+				if (curPatchPack >= GPRS_PATCH_PACK_NUMB_MAX)
+				{
+					/* 补传30条数据次数 */
+					patchPack.patchPackOver_30++;
+					patchPack.patchPackNumb -= curPatchPack;
+				}
+				else
+				{
+					if (curPatchPack >= 20)
+						patchPack.patchPackOver_20++;
+					else if (curPatchPack >= 10)
+						patchPack.patchPackOver_10++;
+					else if (curPatchPack >= 5)
+						patchPack.patchPackOver_5++;
+
+					/* 已经补传全部数据 */
+					patchPack.patchPackNumb = 0;
+				}
+
+				FILE_WritePatchPackFile(&patchPack);
+			}
 		}
 
 		/* 任务运行完毕，一定要将自己挂起 */
