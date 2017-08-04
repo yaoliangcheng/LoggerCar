@@ -1,14 +1,20 @@
 #include "tftlcd.h"
 
+#include "file.h"
+
+#include "osConfig.h"
+#include "TFTLCDProcess.h"
+
 TFTLCD_SendBufferTypedef TFTLCD_SendBuffer;
-TFTLCD_BufferStatusTypedef TFTLCD_BufferStatus;
-uint8_t TFTLCD_RecvBuffer[TFTLCD_UART_RX_DATA_SIZE_MAX];
+TFTLCD_RecvBufferTypedef TFTLCD_RecvBuffer;
+uint8_t TFTLCD_RecvBuf[TFTLCD_UART_RX_DATA_SIZE_MAX];
 
 /******************************************************************************/
 static void TFTLCD_StructInit(void);
 static void TFTLCD_UartInit(void);
 static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, BatchUpdateTypedef* batch);
 static void TFTLCD_SendBuf(uint8_t* pBuffer, uint8_t size);
+static void TFTLCD_ScreenStart(void);
 
 /*******************************************************************************
  *
@@ -17,6 +23,7 @@ void TFTLCD_Init(void)
 {
 	TFTLCD_StructInit();
 	TFTLCD_UartInit();
+	TFTLCD_ScreenStart();
 }
 
 /*******************************************************************************
@@ -55,7 +62,7 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
  */
 void TFTLCD_RealtimeRefresh(RT_TimeTypedef* rt)
 {
-	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TIME_UPDATE;
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
 	/* 界面ID */
 	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_CUR_DATA);
@@ -88,6 +95,43 @@ void TFTLCD_RealtimeRefresh(RT_TimeTypedef* rt)
 }
 
 /*******************************************************************************
+ * function:打印时间更新
+ */
+void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl)
+{
+	if ((ctrl != PRINT_CTRL_ID_START_TIME) && (ctrl != PRINT_CTRL_ID_END_TIME))
+		return;
+
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
+
+	/* 界面ID */
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_PRINT);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_PRINT);
+
+	TFTLCD_SendBuffer.buf.data.ctrlIdH = HalfWord_GetHighByte(ctrl);
+	TFTLCD_SendBuffer.buf.data.ctrlIdL = HalfWord_GetLowByte(ctrl);
+
+	/* 在年的前面添加上“20” */
+	TFTLCD_SendBuffer.buf.data.value.time.year[0] = '2';
+	TFTLCD_SendBuffer.buf.data.value.time.year[1] = '0';
+	sprintf(&TFTLCD_SendBuffer.buf.data.value.time.year[2], "%2d", rt->year);
+	TFTLCD_SendBuffer.buf.data.value.time.str1 = '.';
+	sprintf(&TFTLCD_SendBuffer.buf.data.value.time.month[0], "%2d", rt->month);
+	TFTLCD_SendBuffer.buf.data.value.time.str2 = '.';
+	sprintf(&TFTLCD_SendBuffer.buf.data.value.time.day[0], "%2d", rt->day);
+	TFTLCD_SendBuffer.buf.data.value.time.str3 = ' ';
+	sprintf(&TFTLCD_SendBuffer.buf.data.value.time.hour[0], "%2d", rt->hour);
+	TFTLCD_SendBuffer.buf.data.value.time.str4 = ':';
+	sprintf(&TFTLCD_SendBuffer.buf.data.value.time.min[0], "%2d", rt->min);
+
+	/* 长度少了“：05”，秒位 */
+	memcpy(&TFTLCD_SendBuffer.buf.data.value.date[sizeof(TFTLCD_TimeUpdateTypedef) - 3],
+			TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf((uint8_t*)&TFTLCD_SendBuffer.head, sizeof(TFTLCD_TimeUpdateTypedef) + 11);
+}
+
+/*******************************************************************************
  * Uart接收中断函数
  */
 void TFTLCD_UartIdleDeal(void)
@@ -104,17 +148,48 @@ void TFTLCD_UartIdleDeal(void)
 		/* Clear Uart IDLE Flag */
 		__HAL_UART_CLEAR_IDLEFLAG(&TFTLCD_UART);
 
-		TFTLCD_BufferStatus.bufferSize = TFTLCD_UART_RX_DATA_SIZE_MAX
+		TFTLCD_RecvBuffer.bufferSize = TFTLCD_UART_RX_DATA_SIZE_MAX
 						- __HAL_DMA_GET_COUNTER(TFTLCD_UART.hdmarx);
 
-		memcpy(TFTLCD_BufferStatus.recvBuffer, TFTLCD_RecvBuffer, TFTLCD_BufferStatus.bufferSize);
-		memset(TFTLCD_RecvBuffer, 0, TFTLCD_BufferStatus.bufferSize);
+		memcpy(&TFTLCD_RecvBuffer.date.buf[0], TFTLCD_RecvBuf, TFTLCD_RecvBuffer.bufferSize);
+		memset(TFTLCD_RecvBuf, 0, TFTLCD_RecvBuffer.bufferSize);
 
-//		osSignalSet(gprsprocessTaskHandle, GPRS_PROCESS_TASK_RECV_ENABLE);
+		osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_RECV_ENABLE);
 
 		TFTLCD_UART.hdmarx->Instance->CNDTR = TFTLCD_UART.RxXferSize;
 		__HAL_DMA_ENABLE(TFTLCD_UART.hdmarx);
 	}
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus TFTLCD_CheckHeadTail(void)
+{
+	if (TFTLCD_RecvBuffer.date.recvBuf.head == TFTLCD_CMD_HEAD)
+	{
+		if ((TFTLCD_RecvBuffer.date.buf[TFTLCD_RecvBuffer.bufferSize - 4] == TFTLCD_CMD_TAIL1)
+			&& (TFTLCD_RecvBuffer.date.buf[TFTLCD_RecvBuffer.bufferSize - 3] == TFTLCD_CMD_TAIL2)
+			&& (TFTLCD_RecvBuffer.date.buf[TFTLCD_RecvBuffer.bufferSize - 2] == TFTLCD_CMD_TAIL3)
+			&& (TFTLCD_RecvBuffer.date.buf[TFTLCD_RecvBuffer.bufferSize - 1] == TFTLCD_CMD_TAIL4))
+		{
+			return SUCCESS;
+		}
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+
+
+/*******************************************************************************
+ *
+ */
+static void TFTLCD_SendBuf(uint8_t* pBuffer, uint8_t size)
+{
+	HAL_UART_Transmit_DMA(&TFTLCD_UART, pBuffer, size);
 }
 
 /*******************************************************************************
@@ -135,7 +210,7 @@ static void TFTLCD_StructInit(void)
  */
 static void TFTLCD_UartInit(void)
 {
-	UART_DMAIdleConfig(&TFTLCD_UART, TFTLCD_RecvBuffer, TFTLCD_UART_RX_DATA_SIZE_MAX);
+	UART_DMAIdleConfig(&TFTLCD_UART, TFTLCD_RecvBuf, TFTLCD_UART_RX_DATA_SIZE_MAX);
 }
 
 /*******************************************************************************
@@ -147,7 +222,7 @@ static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, BatchUpdateTypede
 
 	batch->ctrlIdH = HalfWord_GetHighByte(typeID);
 	batch->ctrlIdL = HalfWord_GetLowByte(typeID);
-	/* %4.1表示有效数据长度为4，小数1位 */
+	/* %4.1表示有效数据长度为5，小数1位 */
 	size = sprintf((char*)&batch->value[0], "%5.1f", analog);
 	batch->sizeH = HalfWord_GetHighByte(size);
 	batch->sizeL = HalfWord_GetLowByte(size);
@@ -156,16 +231,26 @@ static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, BatchUpdateTypede
 /*******************************************************************************
  *
  */
-static void TFTLCD_SendBuf(uint8_t* pBuffer, uint8_t size)
+static void TFTLCD_SetScreenID(uint16_t id)
 {
-	HAL_UART_Transmit_DMA(&TFTLCD_UART, pBuffer, size);
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(id);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(id);
+
+	memcpy(&TFTLCD_SendBuffer.buf.data.value.date[0], &TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf((uint8_t*)&TFTLCD_SendBuffer.head, 9);
 }
 
+/*******************************************************************************
+ *
+ */
+static void TFTLCD_ScreenStart(void)
+{
+	osDelay(3000);
 
-
-
-
-
+	TFTLCD_SetScreenID(SCREEN_ID_CUR_DATA);
+}
 
 
 

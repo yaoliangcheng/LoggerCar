@@ -8,6 +8,7 @@
 #include "common.h"
 #include "analog.h"
 #include "rt.h"
+#include "file.h"
 
 #define TFTLCD_UART					(huart4)
 
@@ -32,26 +33,14 @@
 /*******************************************************************************
  * 指令格式
  */
-#define TFTLCD_CMD_BATCH_UPDATE				(0x12B1)
-#define TFTLCD_CMD_TIME_UPDATE				(0x10B1)
+#define TFTLCD_CMD_BATCH_UPDATE				(uint16_t)(0x12B1)
+#define TFTLCD_CMD_TEXT_UPDATE				(uint16_t)(0x10B1)		/* 更新文本 */
+#define TFTLCD_CMD_SET_SCREEN				(uint16_t)(0X00B1)
+#define TFTLCD_CMD_BUTTON					(uint16_t)(0x11B1)
+#define TFTLCD_CMD_BUTTON_SELECT			(uint16_t)(0x11B1)		/* 广州大彩，选择控件和按钮控件是同一个cmd */
+#define TFTLCD_CMD_SELECT					(uint16_t)(0x14B1)		/* 选择控件值上传 */
 
-/* 屏幕ID */
-#define SCREEN_ID_START						(uint16_t)(0)		/* 开机界面 */
-#define SCREEN_ID_MENU						(uint16_t)(1)		/* 主界面 */
-#define SCREEN_ID_CUR_DATA					(uint16_t)(2)		/* 当前数据 */
-#define SCREEN_ID_HIS_DATA					(uint16_t)(3)		/* 历史数据 */
-#define SCREEN_ID_DATA_EXPORT				(uint16_t)(4)		/* 数据导出 */
-#define SCREEN_ID_PRINT						(uint16_t)(5)		/* 打印界面 */
-#define SCREEN_ID_ABOUT						(uint16_t)(6)		/* 关于 */
-#define SCREEN_ID_ADD_DEVICES				(uint16_t)(7)		/* 添加设备 */
-#define SCREEN_ID_SETTING					(uint16_t)(8)		/* 密码 */
-#define SCREEN_ID_SETTING_MENU				(uint16_t)(9)		/* 设置菜单 */
-#define SCREEN_ID_PRINT_SETTING				(uint16_t)(10)	/* 打印设置 */
-#define SCREEN_ID_SETTING_ALARM				(uint16_t)(11)	/* 温湿度上下限报警设置 */
-#define SCREEN_ID_SETTING_ALARM_CODE		(uint16_t)(12)	/* 报警号码设置 */
-#define SCREEN_ID_UPDATE					(uint16_t)(13)	/* 系统更新 */
-#define SCREEN_ID_CURVE						(uint16_t)(14)	/* 曲线 */
-#define SCREEN_ID_PRINT_TIME_SELECT			(uint16_t)(15)	/* 打印时间选择 */
+
 
 /* 控件ID */
 #define CTRL_TYPE_ID_TEMP1					(uint16_t)(1)		/* 温度1 */
@@ -63,6 +52,56 @@
 #define CTRL_TYPE_ID_HUMI3					(uint16_t)(7)		/* 湿度3 */
 #define CTRL_TYPE_ID_HUMI4					(uint16_t)(8)		/* 湿度4 */
 #define CTRL_TYPE_ID_REAL_TIME				(uint16_t)(9)		/* 实时时钟 */
+
+/******************************************************************************/
+/* 画面编号 */
+typedef enum
+{
+	SCREEN_ID_START,							/* 开机界面 */
+	SCREEN_ID_MENU,								/* 主界面 */
+	SCREEN_ID_CUR_DATA,							/* 当前数据 */
+	SCREEN_ID_HIS_DATA,							/* 历史数据 */
+	SCREEN_ID_DATA_EXPORT,						/* 数据导出 */
+	SCREEN_ID_PRINT,							/* 打印界面 */
+	SCREEN_ID_ABOUT,							/* 关于 */
+	SCREEN_ID_ADD_DEVICES,						/* 添加设备 */
+	SCREEN_ID_SETTING,							/* 密码 */
+	SCREEN_ID_SETTING_MENU,						/* 设置菜单 */
+	SCREEN_ID_PRINT_SETTING,					/* 打印设置 */
+	SCREEN_ID_SETTING_ALARM,					/* 温湿度上下限报警设置 */
+	SCREEN_ID_SETTING_ALARM_CODE,				/* 报警号码设置 */
+ 	SCREEN_ID_UPDATE,							/* 系统更新 */
+ 	SCREEN_ID_CURVE,							/* 曲线 */
+ 	SCREEN_ID_PRINT_TIME_SELECT,				/* 打印时间选择 */
+} TFTLCD_ScreenIDEnum;
+
+/******************************************************************************/
+/* 打印界面控件编号 */
+typedef enum
+{
+	PRINT_CTRL_ID_BACK = 1,
+	PRINT_CTRL_ID_SET,
+	PRINT_CTRL_ID_START_TIME,
+	PRINT_CTRL_ID_END_TIME,
+	PRINT_CTRL_ID_START_TIME_BUTTON,
+	PRINT_CTRL_ID_END_TIME_BUTTON,
+	PRINT_CTRL_ID_START_PRINT,
+	PRINT_CTRL_ID_CHANNEL_1,
+	PRINT_CTRL_ID_CHANNEL_2,
+}CtrlID_PrintEnum;
+
+/* 打印时间选择界面控件编号 */
+typedef enum
+{
+	TIME_SELECT_CTRL_ID_YEAR,
+	TIME_SELECT_CTRL_ID_MONTH,
+	TIME_SELECT_CTRL_ID_DAY,
+	TIME_SELECT_CTRL_ID_HOUR,
+	TIME_SELECT_CTRL_ID_MIN,
+	TIME_SELECT_CTRL_ID_CANCEL,
+	TIME_SELECT_CTRL_ID_OK
+} CtrlID_TimeSelectEnum;
+
 
 
 /******************************************************************************/
@@ -119,66 +158,41 @@ typedef struct
 	uint8_t tail[4];											/* 帧尾 */
 } TFTLCD_SendBufferTypedef;
 
+/******************************************************************************/
+/* 接收设置 */
 typedef struct
 {
-	uint8_t recvBuffer[TFTLCD_UART_RX_DATA_SIZE_MAX];			/* 接收缓存 */
+	uint8_t head;												/* 帧头 */
+	uint16_t cmd;												/* 指令 */
+	uint8_t screenIdH;											/* 画面ID */
+	uint8_t screenIdL;
+	uint8_t ctrlIDH;
+	uint8_t ctrlIDL;
+	uint8_t buf[TFTLCD_UART_RX_DATA_SIZE_MAX];
+} RecvDetail;
+
+typedef struct
+{
+	union
+	{
+		RecvDetail recvBuf;
+		uint8_t buf[TFTLCD_UART_RX_DATA_SIZE_MAX];
+	} date;
 	uint8_t bufferSize;											/* 缓存大小 */
-} TFTLCD_BufferStatusTypedef;
-
-/***********************批量更新控件数值********************************************/
-#define BATCH_UPDATE_CONTROL_MAX		(20)	/* 最大支持批量更改控件数 */
-#define BATCH_UPDATE_DATA_MAX			(5)		/* 单个控件数据最大字节数 */
-typedef struct
-{
-	uint8_t controlIdH;								/* 控件ID */
-	uint8_t controlIdL;
-	uint8_t sizeH;									/* 更新控件数值长度 */
-	uint8_t sizeL;
-	char strData[BATCH_UPDATE_DATA_MAX];		/* 更新数值 */
-} BatchUpdataData;
-
-typedef struct
-{
-	uint8_t cmdH;									/* 指令高 */
-	uint8_t cmdL;									/* 指令低 */
-	uint8_t screenIdH;								/* 画面ID */
-	uint8_t screenIdL;
-	BatchUpdataData updateData[BATCH_UPDATE_CONTROL_MAX];
-												/* 控件更新的数值 */
-} TFTLCD_BatchUpdateStructTypedef;
-
-/***********************RealTime Struct****************************************/
-typedef struct
-{
-	uint8_t cmdH;									/* 指令高 */
-	uint8_t cmdL;									/* 指令低 */
-	uint8_t screenIdH;								/* 画面ID */
-	uint8_t screenIdL;
-	uint8_t controlIdH;								/* 控件ID */
-	uint8_t controlIdL;
-
-	uint32_t year;
-	char symbol1;
-	uint16_t month;
-	char symbol2;
-	uint16_t day;
-	char symbol3;
-	uint16_t hour;
-	char symbol4;
-	uint16_t min;
-	char symbol5;
-	uint16_t sec;
-} TFTLCD_RealTimeUpdateTypedef;
+} TFTLCD_RecvBufferTypedef;
 
 #pragma pack(pop)
+
+/******************************************************************************/
+extern TFTLCD_RecvBufferTypedef TFTLCD_RecvBuffer;
 
 /******************************************************************************/
 void TFTLCD_Init(void);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
 void TFTLCD_RealtimeRefresh(RT_TimeTypedef* rt);
 void TFTLCD_UartIdleDeal(void);
-
-
+ErrorStatus TFTLCD_CheckHeadTail(void);
+void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
 
 
 

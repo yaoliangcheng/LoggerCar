@@ -8,6 +8,7 @@
 extern osThreadId ledTaskHandle;
 extern osThreadId debugTaskHandle;
 extern osThreadId realtimeTaskHandle;
+extern osThreadId tftlcdTaskHandle;
 extern osThreadId mainprocessTaskHandle;
 extern osThreadId gprsprocessTaskHandle;
 
