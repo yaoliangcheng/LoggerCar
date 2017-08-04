@@ -60,49 +60,7 @@
 #define WIP_Flag                  		(0x01)	/* WIP(busy)标志，FLASH内部正在写入 */
 
 
-/******************************************************************************/
-#pragma pack(push)
-#pragma pack(1)									/* 按字节对齐 */
 
-typedef struct
-{
-	uint8_t year;
-	uint8_t month;
-	uint8_t day;
-	uint8_t hour;
-	uint8_t min;
-	uint8_t sec;
-} exFLASH_RealTime;
-
-typedef struct
-{
-	uint16_t temp1;
-	uint16_t humi1;
-
-	uint16_t temp2;
-	uint16_t humi2;
-
-	uint16_t temp3;
-	uint16_t humi3;
-
-	uint16_t temp4;
-	uint16_t humi4;
-} exFLASH_AnalogValueTypedef;
-
-#define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
-
-typedef struct
-{
-	exFLASH_RealTime realTime;					/* 时间 */
-	uint8_t  batteryLevel;						/* 电池电量 */
-	uint8_t  externalPowerStatus;				/* 外部电池状态 */
-	uint32_t longitude;							/* 经度 */
-	uint32_t latitude;							/* 纬度 */
-	uint8_t  resever;							/* 保留 */
-	exFLASH_AnalogValueTypedef analogValue;		/* 模拟量值 */
-} exFLASH_InfoTypedef;
-
-#pragma pack(pop)
 
 /******************************************************************************/
 void SPI_FLASH_Init(void);
@@ -122,11 +80,5 @@ uint8_t SPI_FLASH_ReadByte(void);
 uint8_t SPI_FLASH_SendByte(uint8_t byte);
 void SPI_FLASH_WriteEnable(void);
 void SPI_FLASH_WaitForWriteEnd(void);
-
-void exFLASH_ReadStructInfo(exFLASH_InfoTypedef* info);
-void exFLASH_SaveStructInfo(exFLASH_InfoTypedef* saveInfo,
-							RT_TimeTypedef*      realTime,
-							ANALOG_ValueTypedef* analogValue,
-							GPS_LocateTypedef*   location);
 
 #endif

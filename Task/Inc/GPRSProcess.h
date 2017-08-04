@@ -56,7 +56,10 @@
 #define AT_CMD_RESPOND_OK				  ("OK")
 
 /******************************************************************************/
-#define GPRS_PROCESS_TASK_RECV_ENABLE	(1 << 0)
+#define GPRSPROCESS_GPS_ENABLE				(1 << 0)
+#define GPRSPROCESS_SEND_DATA_ENABLE		(1 << 1)
+
+#define GPRS_PROCESS_TASK_RECV_ENABLE		(1 << 2)
 
 /******************************************************************************/
 typedef enum

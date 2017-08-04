@@ -115,10 +115,9 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI1_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();
+  MX_UART4_Init();
 
   /* USER CODE BEGIN 2 */
-
 
   /* USER CODE END 2 */
 
@@ -137,8 +136,6 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-//	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-//	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */

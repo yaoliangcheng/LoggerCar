@@ -12,6 +12,23 @@ void str2numb(uint8_t* buf, uint8_t* info, uint8_t size)
 }
 
 /*******************************************************************************
+ * function:把BCD码转换成ASCII码,一个BCD码可以转成2个ASCII码
+ * @pASCII:转换成ascii接收指针
+ * @pBCD：BCD码指针
+ * @size：要转换的BCD字节数
+ */
+void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size)
+{
+	uint8_t i;
+
+	for (i = 0; i < size; i++)
+	{
+		*(pASCII + (i * 2))     = (*(pBCD + i) / 16) + '0';
+		*(pASCII + (i * 2) + 1) = (*(pBCD + i) % 16) + '0';
+	}
+}
+
+/*******************************************************************************
  *
  */
 uint8_t HalfWord_GetHighByte(uint16_t value)

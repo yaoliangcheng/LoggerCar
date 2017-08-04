@@ -106,10 +106,12 @@
 #define EE_SDA_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_12
 #define LED_GPIO_Port GPIOB
-#define PRINT_RX_Pin GPIO_PIN_8
-#define PRINT_RX_GPIO_Port GPIOD
-#define GPS_TX_Pin GPIO_PIN_9
-#define GPS_TX_GPIO_Port GPIOD
+#define SCREEN_RX_Pin GPIO_PIN_10
+#define SCREEN_RX_GPIO_Port GPIOC
+#define SCREEN_TX_Pin GPIO_PIN_11
+#define SCREEN_TX_GPIO_Port GPIOC
+#define FLASH_WP_Pin GPIO_PIN_4
+#define FLASH_WP_GPIO_Port GPIOD
 #define GPRS_RX_Pin GPIO_PIN_5
 #define GPRS_RX_GPIO_Port GPIOD
 #define GPRS_TX_Pin GPIO_PIN_6
@@ -120,6 +122,10 @@
 #define DEBUG_RX_GPIO_Port GPIOB
 #define DEBUG_TX_Pin GPIO_PIN_7
 #define DEBUG_TX_GPIO_Port GPIOB
+#define SCREEN_PWR_CTRL_Pin GPIO_PIN_0
+#define SCREEN_PWR_CTRL_GPIO_Port GPIOE
+#define PRINT_PWR_CTRL_Pin GPIO_PIN_1
+#define PRINT_PWR_CTRL_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

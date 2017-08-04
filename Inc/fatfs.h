@@ -58,6 +58,11 @@
 #include "user_diskio.h" /* defines USER_Driver as external */
 
 /* USER CODE BEGIN Includes */
+ typedef enum
+ {
+	 FATFS_MODE_OPEN_ALWAYS_WRITE,
+	 FATFS_MODE_OPEN_EXISTING_READ
+ } FATFS_ModeEnum;
 
 /* USER CODE END Includes */
 
@@ -67,6 +72,16 @@ extern char USER_Path[4]; /* USER logical drive path */
 void MX_FATFS_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+ErrorStatus FATFS_FileLink(void);
+ErrorStatus FATFS_FileUnlink(void);
+ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode);
+ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size);
+ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size);
+ErrorStatus FATFS_FileClose(void);
+ErrorStatus FATFS_FileSeekEnd(void);
+ErrorStatus FATFS_FileSeekBackward(WORD backwardByte);
+ErrorStatus FATFS_GetSpaceInfo(void);
+ErrorStatus FATFS_MakeFile(char* fileName);
 
 /* USER CODE END Prototypes */
 #ifdef __cplusplus

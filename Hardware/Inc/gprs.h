@@ -7,6 +7,7 @@
 
 #include "eeprom.h"
 #include "exFlash.h"
+#include "file.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart2)
@@ -15,8 +16,13 @@
 #define GPRS_PWR_CTRL_DISABLE() \
 		HAL_GPIO_WritePin(GPRS_PWRKEY_CTRL_GPIO_Port, GPRS_PWRKEY_CTRL_Pin, GPIO_PIN_RESET);
 
+#define GPRS_RST_CTRL_ENABLE() \
+		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_RESET);
+#define GPRS_RST_CTRL_DISABLE() \
+		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_SET);
+
 /******************************************************************************/
-#define DATA_PACK_NUMB_MAX				  (10)				/* 最多支持补传数据组数 */
+#define GPRS_PATCH_PACK_NUMB_MAX		  (30)				/* 最多支持补传数据组数 */
 #define GPRS_PACK_HEAD					  (uint8_t)(0X31)
 #define GPRS_PACK_TAIL					  (uint8_t)(0x32)
 
@@ -47,7 +53,7 @@ typedef struct
 	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB - 1];			/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
-	exFLASH_InfoTypedef dataPack[DATA_PACK_NUMB_MAX];		/* m条数据点 */
+	FILE_InfoTypedef dataPack[GPRS_PATCH_PACK_NUMB_MAX];	/* m条数据点 */
 	uint8_t tail;											/* 数据尾 */
 	uint8_t verifyData;										/* 校验数据 */
 } GPRS_StructTypedef;
@@ -62,6 +68,6 @@ void GPRS_Init(void);
 void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
 void GPRS_SendCmd(char* str);
 void GPRS_UartIdleDeal(void);
-void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf);
-
+void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack);
+void GPRS_RstModule(void);
 #endif

@@ -226,7 +226,7 @@ DRESULT USER_ioctl (
 	{
 	/* 扇区数量：1536*4096/1024/1024=6(MB) */
 	case GET_SECTOR_COUNT:
-		*(DWORD * )buff = 1024;
+		*(DWORD * )buff = 2048;
 	break;
 
 	/* 扇区大小  */
