@@ -17,7 +17,8 @@ void TFTLCD_Task(void)
 	uint16_t screenID;
 	uint16_t ctrlID;
 
-	FILE_RealTime printTime;		/* 打印起始时间 */
+	FILE_RealTime startPrintTime;		/* 打印起始时间 */
+	FILE_RealTime endPrintTime;			/* 打印起始时间 */
 
 	TFTTASK_StatusEnum status;
 	PrintChannelSelectTypedef PrintChannelSelect;
@@ -50,8 +51,14 @@ void TFTLCD_Task(void)
 //					/* 固定字节，表示选择控件 */
 //					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
 //						break;
-					ScreenTimeSelect(&printTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-							(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1], status);
+					if (status == TFT_PRINT_START_TIME)
+						ScreenTimeSelect(&startPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+								(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+								TFT_PRINT_START_TIME);
+					else if (status == TFT_PRINT_END_TIME)
+						ScreenTimeSelect(&endPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+								(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+								TFT_PRINT_END_TIME);
 					break;
 				default:
 					break;
