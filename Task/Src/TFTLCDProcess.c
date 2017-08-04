@@ -3,7 +3,8 @@
 #include "tftlcd.h"
 
 /******************************************************************************/
-static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status);
+static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
+		PrintChannelSelectTypedef* select);
 static void ScreenTimeSelect(FILE_RealTime* pTime, uint16_t cmd,
 		CtrlID_TimeSelectEnum ctrl, uint8_t value, TFTTASK_StatusEnum status);
 
@@ -19,41 +20,43 @@ void TFTLCD_Task(void)
 	FILE_RealTime printTime;		/* 打印起始时间 */
 
 	TFTTASK_StatusEnum status;
+	PrintChannelSelectTypedef PrintChannelSelect;
 
 	TFTLCD_Init();
 
 	while(1)
 	{
 		signal = osSignalWait(TFTLCD_TASK_RECV_ENABLE, osWaitForever);
-		if ((signal.value.signals & TFTLCD_TASK_RECV_ENABLE) != TFTLCD_TASK_RECV_ENABLE)
-			break;
-
-		/* 检测头和尾 */
-		if (ERROR == TFTLCD_CheckHeadTail())
-			break;
-
-		/* 识别画面ID和控件ID */
-		screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
-				| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
-		ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
-				| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
-
-		/* 按照界面来划分 */
-		switch (screenID)
+		if ((signal.value.signals & TFTLCD_TASK_RECV_ENABLE) == TFTLCD_TASK_RECV_ENABLE)
 		{
-		case SCREEN_ID_PRINT:
-			ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID, &status);
-			break;
+			/* 检测头和尾 */
+			if (ERROR != TFTLCD_CheckHeadTail())
+			{
+				/* 识别画面ID和控件ID */
+				screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
+						| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
+				ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
+						| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
 
-		case SCREEN_ID_PRINT_TIME_SELECT:
-//			/* 固定字节，表示选择控件 */
-//			if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
-//				break;
-			ScreenTimeSelect(&printTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-					(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1], status);
-			break;
-		default:
-			break;
+				/* 按照界面来划分 */
+				switch (screenID)
+				{
+				case SCREEN_ID_PRINT:
+					ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
+							&status, &PrintChannelSelect);
+					break;
+
+				case SCREEN_ID_PRINT_TIME_SELECT:
+//					/* 固定字节，表示选择控件 */
+//					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
+//						break;
+					ScreenTimeSelect(&printTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+							(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1], status);
+					break;
+				default:
+					break;
+				}
+			}
 		}
 	}
 
@@ -62,8 +65,10 @@ void TFTLCD_Task(void)
 /*******************************************************************************
  *
  */
-static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status)
+static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
+		PrintChannelSelectTypedef* select)
 {
+
 	switch (cmd)
 	{
 	case TFTLCD_CMD_BUTTON:
@@ -76,6 +81,54 @@ static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum*
 			*status = TFT_PRINT_END_TIME;
 			break;
 		case PRINT_CTRL_ID_START_PRINT:
+			break;
+		case PRINT_CTRL_ID_CHANNEL_1_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_1_ICON,
+					select->status.bit.ch1);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch1 = !select->status.bit.ch1;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_2_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_2_ICON,
+					select->status.bit.ch2);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch2 = !select->status.bit.ch2;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_3_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_3_ICON,
+					select->status.bit.ch3);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch3 = !select->status.bit.ch3;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_4_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_4_ICON,
+					select->status.bit.ch4);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch4 = !select->status.bit.ch4;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_5_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_5_ICON,
+					select->status.bit.ch5);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch5 = !select->status.bit.ch5;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_6_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_6_ICON,
+					select->status.bit.ch6);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch6 = !select->status.bit.ch6;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_7_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_7_ICON,
+					select->status.bit.ch7);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch7 = !select->status.bit.ch7;
+			break;
+		case PRINT_CTRL_ID_CHANNEL_8_BUTTON:
+			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_8_ICON,
+					select->status.bit.ch8);
+			/* 通道选择的状态取反 */
+			select->status.bit.ch8 = !select->status.bit.ch8;
 			break;
 		default:
 			break;

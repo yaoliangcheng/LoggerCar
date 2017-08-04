@@ -132,6 +132,34 @@ void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl)
 }
 
 /*******************************************************************************
+ * function:打印通道选择图标显示
+ * @ctrl：通道选择控件编号
+ * @status：当前该通道的值，若选中则变成不选，反之亦然。
+ */
+void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
+
+	/* 界面ID */
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_PRINT);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_PRINT);
+
+	TFTLCD_SendBuffer.buf.data.ctrlIdH = HalfWord_GetHighByte(ctrl);
+	TFTLCD_SendBuffer.buf.data.ctrlIdL = HalfWord_GetLowByte(ctrl);
+
+	if (status)
+		TFTLCD_SendBuffer.buf.data.value.date[0] = 0;
+	else
+		TFTLCD_SendBuffer.buf.data.value.date[0] = 1;
+
+	/* 长度少了“：05”，秒位 */
+	memcpy(&TFTLCD_SendBuffer.buf.data.value.date[1],
+			TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf((uint8_t*)&TFTLCD_SendBuffer.head, 12);
+}
+
+/*******************************************************************************
  * Uart接收中断函数
  */
 void TFTLCD_UartIdleDeal(void)

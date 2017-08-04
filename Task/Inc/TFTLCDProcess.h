@@ -16,6 +16,26 @@ typedef enum
 } TFTTASK_StatusEnum;
 
 /******************************************************************************/
+typedef struct
+{
+	union
+	{
+		struct
+		{
+			uint8_t ch1:1;
+			uint8_t ch2:1;
+			uint8_t ch3:1;
+			uint8_t ch4:1;
+			uint8_t ch5:1;
+			uint8_t ch6:1;
+			uint8_t ch7:1;
+			uint8_t ch8:1;
+		} bit;
+		uint8_t all;
+	} status;
+} PrintChannelSelectTypedef;
+
+/******************************************************************************/
 void TFTLCD_Task(void);
 
 #endif
