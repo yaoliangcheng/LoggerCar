@@ -67,6 +67,55 @@ void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 	PRINT_SendData(index);
 }
 
+/*******************************************************************************
+ * function：打印标题数据
+ */
+void PRINT_TitleOut(void)
+{
+	uint8_t index = 0;
+
+	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
+	index += 33;
+
+	memcpy(&PRINT_SendBuffer[index], "收货方：\n", 9);
+	index += 9;
+
+	memcpy(&PRINT_SendBuffer[index], "发货方：\n", 9);
+	index += 9;
+
+	memcpy(&PRINT_SendBuffer[index], "派送车牌：\n", 11);
+	index += 11;
+
+	memcpy(&PRINT_SendBuffer[index], "订单编号：\n", 11);
+	index += 11;
+
+	PRINT_SendData(index);
+}
+
+/*******************************************************************************
+ *
+ */
+void PRINT_TailOut(void)
+{
+	uint8_t index = 0;
+
+	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
+	index += 33;
+
+	memcpy(&PRINT_SendBuffer[index], "签收人：\n", 9);
+	index += 9;
+
+	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
+	index += 3;
+
+	memcpy(&PRINT_SendBuffer[index], "签收日期：\n", 11);
+	index += 11;
+
+	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
+	index += 3;
+
+	PRINT_SendData(index);
+}
 
 /*******************************************************************************
  *

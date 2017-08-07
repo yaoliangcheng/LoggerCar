@@ -194,8 +194,12 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 	if ((startTime->year == stopTime->year) && (startTime->month == stopTime->month)
 			&& (startTime->day == stopTime->day))
 	{
+		/* 生成结束打印时间 */
+		HEX2BCD(&stopTime->hour, (uint8_t*)(&endTimePoint) + 1, 1);
+		HEX2BCD(&stopTime->min,  (uint8_t*)(&endTimePoint),     1);
+
 		/* 寻找结束时间的结构体偏移量 */
-		endTimePoint   = SearchTimeInFile(stopTime);
+//		endTimePoint   = SearchTimeInFile(stopTime);
 
 		/* 开始打印 */
 		selectDataPrint(startTimePoint, endTimePoint, select);
@@ -331,7 +335,7 @@ static void AnalogDataFormatConvert(float value, EE_DataFormatEnum format,
 
 	/* 负数则最高位置一 */
 	if (negative)
-		*pBuffer |= 0x8000;
+		*pBuffer |= 0x80;
 }
 
 /*******************************************************************************
@@ -382,6 +386,10 @@ static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
 	while (1)
 	{
 		searchPoint = (fileStructNumbEnd + fileStructNumbStart) / 2;
+		
+		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
+		if (searchPoint == fileStructNumbStart)
+			break;
 
 		FATFS_FileSeek(searchPoint * sizeof(FILE_InfoTypedef));
 		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_InfoTypedef)) == SUCCESS)
@@ -396,10 +404,6 @@ static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
 			else
 				fileStructNumbStart = searchPoint;
 		}
-
-		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
-		if (searchPoint == fileStructNumbStart)
-			break;
 	}
 
 	return searchPoint;
@@ -414,17 +418,26 @@ static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_Channe
 
 	PRINT_PWR_ENABLE();
 	
+	PRINT_TitleOut();
+
 	/* 打印开始和结束时间点间的数据 */
-	while(startPoint <= endPoint)
+	while(startPoint <= (FATFS_GetFileStructCount() - 1))
 	{
 		FATFS_FileSeek(startPoint * sizeof(FILE_InfoTypedef));
 		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_InfoTypedef)) == SUCCESS)
 		{
-			PRINT_DataOut(&info, select);
-			startPoint++;
+			if (endPoint < ((info.realTime.hour << 8) | (info.realTime.min)))
+				break;
+			else
+			{
+				PRINT_DataOut(&info, select);
+				startPoint++;
+			}
 		}
 	}
 	
+
+	PRINT_TailOut();
 //	PRINT_PWR_DISABLE();
 }
 
