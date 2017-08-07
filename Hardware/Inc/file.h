@@ -7,6 +7,8 @@
 #include "cmsis_os.h"
 
 #include "common.h"
+#include "TFTLCDProcess.h"
+
 
 #include "rt.h"
 #include "analog.h"
@@ -79,6 +81,7 @@ void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
 							ANALOG_ValueTypedef* analogValue);
 ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer);
-
+ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
+		PRINT_ChannelSelectTypedef* select);
 
 #endif

@@ -79,9 +79,11 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size);
 ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size);
 ErrorStatus FATFS_FileClose(void);
 ErrorStatus FATFS_FileSeekEnd(void);
+ErrorStatus FATFS_FileSeek(WORD byte);
 ErrorStatus FATFS_FileSeekBackward(WORD backwardByte);
 ErrorStatus FATFS_GetSpaceInfo(void);
 ErrorStatus FATFS_MakeFile(char* fileName);
+uint16_t FATFS_GetFileStructCount(void);
 
 /* USER CODE END Prototypes */
 #ifdef __cplusplus

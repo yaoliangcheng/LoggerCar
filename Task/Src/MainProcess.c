@@ -27,8 +27,7 @@ void MAINPROCESS_Task(void)
 	FILE_PatchPackTypedef patchPack;
 	uint16_t curPatchPack;			/* 本次补传数据 */
 
-	/* 文件名格式初始化 */
-	FILE_Init();
+	
 
 	while(1)
 	{		

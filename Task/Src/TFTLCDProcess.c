@@ -1,10 +1,11 @@
 #include "TFTLCDProcess.h"
 
 #include "tftlcd.h"
+#include "print.h"
 
 /******************************************************************************/
 static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
-		PrintChannelSelectTypedef* select);
+		PRINT_ChannelSelectTypedef* select, FILE_RealTime* startTime, FILE_RealTime* stopTime);
 static void ScreenTimeSelect(FILE_RealTime* pTime, uint16_t cmd,
 		CtrlID_TimeSelectEnum ctrl, uint8_t value, TFTTASK_StatusEnum status);
 
@@ -21,7 +22,7 @@ void TFTLCD_Task(void)
 	FILE_RealTime endPrintTime;			/* 打印起始时间 */
 
 	TFTTASK_StatusEnum status;
-	PrintChannelSelectTypedef PrintChannelSelect;
+	PRINT_ChannelSelectTypedef PrintChannelSelect;
 
 	TFTLCD_Init();
 
@@ -44,7 +45,7 @@ void TFTLCD_Task(void)
 				{
 				case SCREEN_ID_PRINT:
 					ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
-							&status, &PrintChannelSelect);
+							&status, &PrintChannelSelect, &startPrintTime, &endPrintTime);
 					break;
 
 				case SCREEN_ID_PRINT_TIME_SELECT:
@@ -73,7 +74,7 @@ void TFTLCD_Task(void)
  *
  */
 static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
-		PrintChannelSelectTypedef* select)
+		PRINT_ChannelSelectTypedef* select, FILE_RealTime* startTime, FILE_RealTime* stopTime)
 {
 
 	switch (cmd)
@@ -88,6 +89,7 @@ static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum*
 			*status = TFT_PRINT_END_TIME;
 			break;
 		case PRINT_CTRL_ID_START_PRINT:
+			FILE_PrintDependOnTime(startTime, stopTime, select);
 			break;
 		case PRINT_CTRL_ID_CHANNEL_1_BUTTON:
 			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_1_ICON,

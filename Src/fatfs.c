@@ -52,6 +52,7 @@ uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
+#include "file.h"
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */
 DWORD freeClust, freeSect, totSect;	/* 空闲簇、空闲扇区、总扇区 */
@@ -245,18 +246,13 @@ ErrorStatus FATFS_GetSpaceInfo(void)
  */
 ErrorStatus FATFS_FileSeekEnd(void)
 {
-	if (objFile.fsize != 0)
+	if (FR_OK == f_lseek(&objFile, objFile.fsize))
 	{
-		if (FR_OK == f_lseek(&objFile, objFile.fsize))
-		{
-			printf("文件写入指针地址偏移：%d\r\n", objFile.fsize);
-			return SUCCESS;
-		}
-		else
-			return ERROR;
+		printf("文件写入指针地址偏移：%d\r\n", objFile.fsize);
+		return SUCCESS;
 	}
-
-	return SUCCESS;
+	else
+		return ERROR;
 }
 
 /*******************************************************************************
@@ -279,6 +275,22 @@ ErrorStatus FATFS_FileSeekBackward(WORD backwardByte)
 /*******************************************************************************
  *
  */
+ErrorStatus FATFS_FileSeek(WORD byte)
+{
+	if (byte <= objFile.fsize)
+	{
+		if (FR_OK == f_lseek(&objFile, byte))
+			return SUCCESS;
+		else
+			return ERROR;
+	}
+	else
+		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
 ErrorStatus FATFS_MakeFile(char* fileName)
 {
 	if (FR_OK == f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE))
@@ -290,6 +302,14 @@ ErrorStatus FATFS_MakeFile(char* fileName)
 	}
 	else
 		return ERROR;
+}
+
+/*******************************************************************************
+ * function:返回该文件中结构体数量
+ */
+uint16_t FATFS_GetFileStructCount(void)
+{
+	return objFile.fsize / sizeof(FILE_InfoTypedef);
 }
 
 /* USER CODE END Application */

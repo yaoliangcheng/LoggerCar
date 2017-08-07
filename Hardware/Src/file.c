@@ -1,4 +1,6 @@
 #include "file.h"
+#include "print.h"
+#include "fatfs.h"
 
 char FILE_FileName[11];
 FILE_PatchPackTypedef FILE_PatchPack;
@@ -10,6 +12,8 @@ static void FILE_GetFileNameDependOnTime(FILE_RealTime* time);
 static void AnalogDataFormatConvert(float value, EE_DataFormatEnum format,
 							uint8_t* pBuffer);
 static void LocationFormatConvert(double value, uint8_t* pBuffer);
+static uint16_t SearchTimeInFile(FILE_RealTime* pTime);
+static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_ChannelSelectTypedef* select);
 
 
 /*******************************************************************************
@@ -161,6 +165,70 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 }
 
 /*******************************************************************************
+ * function:寻找文件中该时间点的数据，返回该数据所在结构体地址
+ * @time：时间指针，注意：该时间是十进制format
+ *
+ */
+ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
+		PRINT_ChannelSelectTypedef* select)
+{
+	uint16_t startTimePoint, endTimePoint;
+
+	/* 获取开始打印时间文件名 */
+	/* 注意：这时候时间是十进制的 */
+	HEX2ASCII(&startTime->year, (uint8_t*)FILE_FileName, 3);
+
+	/* 挂载文件系统 */
+	if (ERROR == FATFS_FileLink())
+		return ERROR;
+
+	if (FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
+	{
+		/* 寻找开始时间的结构体偏移量 */
+		startTimePoint = SearchTimeInFile(startTime);
+	}
+	else
+		printf("未找到有效的开始打印时间文件\r\n");
+
+	/* 开始打印时间和结束打印时间是同一天 */
+	if ((startTime->year == stopTime->year) && (startTime->month == stopTime->month)
+			&& (startTime->day == stopTime->day))
+	{
+		/* 寻找结束时间的结构体偏移量 */
+		endTimePoint   = SearchTimeInFile(stopTime);
+
+		/* 开始打印 */
+		selectDataPrint(startTimePoint, endTimePoint, select);
+	}
+	/* 开始打印和结束打印时间是跨天的 */
+	else
+	{
+		/* todo */
+//		/* 先关闭开始打印时间所在的文件 */
+//		FATFS_FileClose();
+//
+//		/* 获取结束打印时间文件名 */
+//		sprintf(FILE_FileName[0], "%2d", stopTime->year);
+//		sprintf(FILE_FileName[2], "%2d", stopTime->month);
+//		sprintf(FILE_FileName[4], "%2d", stopTime->day);
+//
+//		if (FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
+//		{
+//			/* 寻找结束时间的结构体偏移量 */
+//			endTimePoint   = SearchTimeInFile(stopTime);
+//		}
+
+	}
+
+	if (FATFS_FileClose() == ERROR)
+		return ERROR;
+
+	FATFS_FileUnlink();
+	
+	return SUCCESS;
+}
+
+/*******************************************************************************
  *
  */
 static ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* info)
@@ -290,9 +358,75 @@ static void LocationFormatConvert(double value, uint8_t* pBuffer)
 	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
 }
 
+/*******************************************************************************
+ * function:在文件内寻找时间点
+ * @pTime:要寻找的时间点
+ */
+static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
+{
+	uint16_t sourceTime, destTime;		/* 源时间点，和目标时间点 */
+	uint16_t fileStructNumbStart, fileStructNumbEnd;	/* 文件中结构体个数 */
+	uint16_t searchPoint;
+	FILE_InfoTypedef info;
 
+	/* 找到文件夹，则将其转换为BCD */
+	/* 寻找时间点，只需根据时分两个参数去查找 */
+	/* 注意：stm32内部采用小端模式 */
+	HEX2BCD(&pTime->hour, (uint8_t*)(&destTime) + 1, 1);
+	HEX2BCD(&pTime->min,  (uint8_t*)(&destTime),     1);
 
+	fileStructNumbStart = 0;
+	/* 读取数据，则从最后一个结构体的起始地址开始读 */
+	fileStructNumbEnd = FATFS_GetFileStructCount();
 
+	while (1)
+	{
+		searchPoint = (fileStructNumbEnd + fileStructNumbStart) / 2;
+
+		FATFS_FileSeek(searchPoint * sizeof(FILE_InfoTypedef));
+		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_InfoTypedef)) == SUCCESS)
+		{
+			/* 结构体中获取时间变量 */
+			sourceTime = (info.realTime.hour << 8) | (info.realTime.min);
+
+			if (sourceTime == destTime)
+				break;
+			else if (sourceTime > destTime)
+				fileStructNumbEnd = searchPoint;
+			else
+				fileStructNumbStart = searchPoint;
+		}
+
+		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
+		if (searchPoint == fileStructNumbStart)
+			break;
+	}
+
+	return searchPoint;
+}
+
+/*******************************************************************************
+ * function:根据时间点打印同一个文件内的数据
+ */
+static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_ChannelSelectTypedef* select)
+{
+	FILE_InfoTypedef info;
+
+	PRINT_PWR_ENABLE();
+	
+	/* 打印开始和结束时间点间的数据 */
+	while(startPoint <= endPoint)
+	{
+		FATFS_FileSeek(startPoint * sizeof(FILE_InfoTypedef));
+		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_InfoTypedef)) == SUCCESS)
+		{
+			PRINT_DataOut(&info, select);
+			startPoint++;
+		}
+	}
+	
+//	PRINT_PWR_DISABLE();
+}
 
 
 
