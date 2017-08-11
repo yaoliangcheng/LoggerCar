@@ -85,12 +85,20 @@ ErrorStatus FATFS_FileLink(void)
 	status = f_mount(&objFileSystem, USER_Path, 1);
 
 	if (status == FR_OK)
+	{
+		/* 进入临界区 */
+		taskENTER_CRITICAL();
 		return SUCCESS;
+	}
 	else if(status == FR_NO_FILESYSTEM)	/* 如果没有文件系统就格式化创建创建文件系统 */
 	{
 		/* 格式化 */
 		if (SUCCESS == FATFS_FileMake())
+		{
+			/* 进入临界区 */
+			taskENTER_CRITICAL();
 			return SUCCESS;
+		}
 		else
 			return ERROR;
 	}
@@ -105,7 +113,11 @@ ErrorStatus FATFS_FileUnlink(void)
 {
 	/* 不再使用文件系统，取消挂载文件系统 */
 	 if (FR_OK == f_mount(NULL, USER_Path, 1))
+	 {
+		 /* 退出临界区 */
+		 taskEXIT_CRITICAL();
 		 return SUCCESS;
+	 }
 	 else
 		 return ERROR;
 }

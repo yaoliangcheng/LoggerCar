@@ -16,7 +16,8 @@ void GPRSPROCESS_Task(void)
 	char* expectString;						/* 预期收到的字符串 */
 
 	GPRS_StructTypedef sendStruct;			/* 发送结构 */
-	GPS_LocateTypedef location;
+	GPS_LocateTypedef  location;
+	RT_TimeTypedef*    eTime;
 
 	uint8_t moduleTimeoutCnt;				/* 模块超时计数 */
 	uint8_t moduleErrorCnt;					/* 模块接收错误指令计数 */
@@ -56,13 +57,6 @@ void GPRSPROCESS_Task(void)
 			GPRS_SendCmd(AT_CMD_GPS_ENABLE);
 			expectString = AT_CMD_GPS_ENABLE_RESPOND;
 			moduleStatus = ENABLE_GPS_FINISH;
-			break;
-
-		/* 使能GPS后，需要发送一个指令确认其状态 */
-		case GPS_CHECK_STATUS:
-			GPRS_SendCmd(AT_CMD_GPS_GET_GNRMC);
-			expectString = AT_CMD_CHECK_STATUS_RESPOND;
-			moduleStatus = GPS_CHECK_STATUS_FINISH;
 			break;
 
 		/* 获取GNRMC定位值 */
@@ -314,16 +308,10 @@ void GPRSPROCESS_Task(void)
 				/* 使能GPS功能完成 */
 				case ENABLE_GPS_FINISH:
 					printf("使能GPS功能完成\r\n");
-//					moduleStatus = GPS_CHECK_STATUS;
 					moduleStatus = GET_GPS_GNRMC;
 					/* 开启GPS后，5s再获取定位数据 */
 					osDelay(5000);
 					break;
-
-				case GPS_CHECK_STATUS_FINISH:
-					moduleStatus = GET_GPS_GNRMC;
-					break;
-
 
 					/* 获取GNRMC定位值完成 */
 				case GET_GPS_GNRMC_FINISH:
@@ -397,8 +385,10 @@ void GPRSPROCESS_Task(void)
 					printf("数据发送成功\r\n");
 					printf("服务器返回数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
 
+					signal = osMessageGet(realtimeMessageQId, 100);
+					eTime = (RT_TimeTypedef*)signal.value.v;
 					/* 将本地时间与云时间对比，时间校准 */
-//					RT_TimeAdjustWithCloud(GPRS_BufferStatus.recvBuffer, etime);
+					RT_TimeAdjustWithCloud(GPRS_BufferStatus.recvBuffer, eTime);
 
 					moduleStatus = EXTI_SERIANET_MODE;
 
