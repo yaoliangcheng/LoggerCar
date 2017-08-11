@@ -42,8 +42,6 @@ void MAINPROCESS_Task(void)
 		/* 激活GPRSProcess任务，启动GPS转换 */
 		osThreadResume(gprsprocessTaskHandle);
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
-//		osSignalClear(NULL, MAINPROCESS_GPS_CONVERT_FINISH);
-
 		
 		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，30s */
  		/* 刚启动模块的第一次定位耗时长，也不能得到定位数据，可以放弃 */
@@ -67,7 +65,7 @@ void MAINPROCESS_Task(void)
 				time.date.Year,  time.date.Month,   time.date.Date,
 				time.time.Hours, time.time.Minutes, time.time.Seconds);
 
-		printf("模拟量数据是：%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,",
+		printf("模拟量数据是：%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\r\n,",
 				AnalogValue->temp1, AnalogValue->temp2, AnalogValue->temp3, AnalogValue->temp4,
 				AnalogValue->humi1, AnalogValue->humi2, AnalogValue->humi3, AnalogValue->humi4);
 
@@ -76,23 +74,23 @@ void MAINPROCESS_Task(void)
 
 		/* 读取补传数据条数 */
 		/* 读取成功，则表明曾经有补传数据记录 */
-//		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
-//		{
-//			/* 补传数据全部上传完毕 */
-//			if (memcmp(patchPack.patchFileName, "\0\0\0\0\0\0", 6) != 0)
-//			{
-//				printf("读取补传文件名是%11s,补传开始结构体偏移=%d \r\n",
-//						patchPack.patchFileName, patchPack.patchStructOffset);
-//				curPatchPack = FILE_ReadPatchInfo(&patchPack, readInfo);
-//			}
-//			else
-//			{
-//				FILE_ReadInfo(readInfo);
-//				curPatchPack = 1;
-//			}
-//		}
-//		/* 读取文件不成功，则说明该文件还未创建 */
-//		else
+		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
+		{
+			/* 补传数据全部上传完毕 */
+			if (memcmp(patchPack.patchFileName, "\0\0\0\0\0\0", 6) != 0)
+			{
+				printf("读取补传文件名是%11s,补传开始结构体偏移=%d \r\n",
+						patchPack.patchFileName, patchPack.patchStructOffset);
+				curPatchPack = FILE_ReadPatchInfo(&patchPack, readInfo);
+			}
+			else
+			{
+				FILE_ReadInfo(readInfo);
+				curPatchPack = 1;
+			}
+		}
+		/* 读取文件不成功，则说明该文件还未创建 */
+		else
 		{
 			FILE_ReadInfo(readInfo);
 			curPatchPack = 1;
@@ -117,20 +115,20 @@ void MAINPROCESS_Task(void)
 			printf("发送数据超时，说明数据发送失败，记录数据等待补传\r\n");
 
 			/* 如果是本次发生的补传，则记录时间，否则是正在补传的过程，保持补传文件内容不变 */
-//			if (curPatchPack == 1)
-//			{
-//				/* 根据时间生成文件名 */
-//				BCD2ASCII(&patchPack.patchFileName[0], &time.date.Year,  1);
-//				BCD2ASCII(&patchPack.patchFileName[2], &time.date.Month, 1);
-//				BCD2ASCII(&patchPack.patchFileName[4], &time.date.Date,  1);
-//				/* 补传信息文件名后缀 */
-//				memcpy(&patchPack.patchFileName[6], ".txt\0", 5);
-//
-//				/* 记录当前文件前一次位置 */
-//				patchPack.patchStructOffset = curFileStructCount - 1;
-//
-//				FILE_WritePatchPackFile(&patchPack);
-//			}
+			if (curPatchPack == 1)
+			{
+				/* 根据时间生成文件名 */
+				BCD2ASCII(&patchPack.patchFileName[0], &time.date.Year,  1);
+				BCD2ASCII(&patchPack.patchFileName[2], &time.date.Month, 1);
+				BCD2ASCII(&patchPack.patchFileName[4], &time.date.Date,  1);
+				/* 补传信息文件名后缀 */
+				memcpy(&patchPack.patchFileName[6], ".txt\0", 5);
+
+				/* 记录当前文件前一次位置 */
+				patchPack.patchStructOffset = curFileStructCount - 1;
+
+				FILE_WritePatchPackFile(&patchPack);
+			}
 		}
 		else
 		{

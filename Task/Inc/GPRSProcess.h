@@ -38,6 +38,8 @@
 #define AT_CMD_GET_SELF_IP_ADDR_RESPOND   (AT_CMD_RESPOND_OK)
 #define AT_CMD_GPS_ENABLE				  ("AT+EGPSC=1\r\n")		/* 使能GPS功能 */
 #define AT_CMD_GPS_ENABLE_RESPOND		  ("+MGPSSTATUS:1,1,0")
+#define AT_CMD_GPS_CHECK_STATUS			  ("AT+GETGPS=\"GNRMC\"\r\n")	/* 获取GNRMC状态 */
+#define AT_CMD_GPS_CHECK_STATUS_RESPOND	  (AT_CMD_RESPOND_OK)
 #define AT_CMD_GPS_GET_GNRMC			  ("AT+GETGPS=\"GNRMC\"\r\n")	/* 获取GNRMC */
 #define AT_CMD_GPS_GET_GNRMC_RESPOND	  ("$GNRMC,")
 #define AT_CMD_GPS_DISABLE				  ("AT+EGPSC=0\r\n")		/* 失能GPS功能 */
@@ -72,9 +74,10 @@ typedef enum
 	SET_BAUD_RATE_FINISH,							/* 波特率设置完成 */
 	ENABLE_GPS,										/* 使能GPS功能 */
 	ENABLE_GPS_FINISH,								/* 使能GPS功能完成 */
+	GPS_CHECK_STATUS,								/* 检测GPS状态 */
+	GPS_CHECK_STATUS_FINISH,						/* 检测GPS状态完成 */
 	GET_GPS_GNRMC,									/* 获取GNRMC定位值 */
 	GET_GPS_GNRMC_FINISH,							/* 获取GNRMC定位值完成 */
-
 	CHECK_SIM_STATUS,								/* 查询SIM卡状态 */
 	CHECK_SIM_STATUS_FINISH,						/* 查询SIM卡状态完成 */
 	SEARCH_NET_STATUS,								/* 查找网络状态 */

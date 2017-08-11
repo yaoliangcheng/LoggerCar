@@ -58,10 +58,17 @@ void GPRSPROCESS_Task(void)
 			moduleStatus = ENABLE_GPS_FINISH;
 			break;
 
+		/* 使能GPS后，需要发送一个指令确认其状态 */
+		case GPS_CHECK_STATUS:
+			GPRS_SendCmd(AT_CMD_GPS_GET_GNRMC);
+			expectString = AT_CMD_CHECK_STATUS_RESPOND;
+			moduleStatus = GPS_CHECK_STATUS_FINISH;
+			break;
+
 		/* 获取GNRMC定位值 */
 		case GET_GPS_GNRMC:
 			/* 等待GPS使能信号 */
-			signal = osSignalWait(GPRSPROCESS_GPS_ENABLE, 2000);
+			signal = osSignalWait(GPRSPROCESS_GPS_ENABLE, 5000);
 			if ((signal.value.signals & GPRSPROCESS_GPS_ENABLE) == GPRSPROCESS_GPS_ENABLE)
 			{
 				printf("获取GNRMC定位值\r\n");
@@ -74,23 +81,27 @@ void GPRSPROCESS_Task(void)
 
 		/* 查询SIM卡状态 */
 		case CHECK_SIM_STATUS:
-			/* 判断GPRS功能是否初始化完成，是则直接跳转到获取服务器地址 */
-			if (gprsInited == TRUE)
+			/* 等待发送使能信号 */
+			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 20000);
+			if ((signal.value.signals & GPRSPROCESS_SEND_DATA_ENABLE) == GPRSPROCESS_SEND_DATA_ENABLE)
 			{
-				printf("GPRS功能已初始化\r\n");
-				GPRS_SendCmd(AT_CMD_CHECK_STATUS);
-				expectString = AT_CMD_CHECK_STATUS_RESPOND;
-				moduleStatus = SET_SERVER_IP_ADDR;
+				/* 判断GPRS功能是否初始化完成，是则直接跳转到获取服务器地址 */
+				if (gprsInited == TRUE)
+				{
+					printf("GPRS功能已初始化\r\n");
+					GPRS_SendCmd(AT_CMD_CHECK_STATUS);
+					expectString = AT_CMD_CHECK_STATUS_RESPOND;
+					moduleStatus = SET_SERVER_IP_ADDR;
+				}
+				/* 否，则执行初始化 */
+				else
+				{
+					printf("查询sim卡状态\r\n");
+					GPRS_SendCmd(AT_CMD_CHECK_SIM_STATUS);
+					expectString = AT_CMD_CHECK_SIM_STATUS_RESPOND;
+					moduleStatus = CHECK_SIM_STATUS_FINISH;
+				}
 			}
-			/* 否，则执行初始化 */
-			else
-			{
-				printf("查询sim卡状态\r\n");
-				GPRS_SendCmd(AT_CMD_CHECK_SIM_STATUS);
-				expectString = AT_CMD_CHECK_SIM_STATUS_RESPOND;
-				moduleStatus = CHECK_SIM_STATUS_FINISH;
-			}
-
 			break;
 
 		/* 查找网络状态 */
@@ -153,15 +164,10 @@ void GPRSPROCESS_Task(void)
 
 		/* 设置服务器地址 */
 		case SET_SERVER_IP_ADDR:
-			/* 等待发送使能信号 */
-			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 20000);
-			if ((signal.value.signals & GPRSPROCESS_SEND_DATA_ENABLE) == GPRSPROCESS_SEND_DATA_ENABLE)
-			{
 				printf("获取服务器地址\r\n");
 				GPRS_SendCmd(AT_CMD_SET_SERVER_IP_ADDR);
 				expectString = AT_CMD_SET_SERVER_IP_ADDR_RESPOND;
 				moduleStatus = SET_SERVER_IP_ADDR_FINISH;
-			}
 			break;
 
 		/* 模块准备好了 */
@@ -242,11 +248,16 @@ void GPRSPROCESS_Task(void)
 				break;
 
 			/* GPS启动过程比较慢，暂时忽略超时等待 */
-//			case ENABLE_GPS_FINISH:
-//				break;
-//
-//			case GET_GPS_GNRMC_FINISH:
-//				break;
+			case ENABLE_GPS_FINISH:
+				break;
+
+			case GET_GPS_GNRMC_FINISH:
+				if (moduleTimeoutCnt > 5)
+				{
+					moduleTimeoutCnt = 0;
+					moduleStatus = CHECK_SIM_STATUS;
+				}
+				break;
 
 			default:
 				/* 其他情况则将状态向前移动一步 */
@@ -296,8 +307,13 @@ void GPRSPROCESS_Task(void)
 				/* 使能GPS功能完成 */
 				case ENABLE_GPS_FINISH:
 					printf("使能GPS功能完成\r\n");
+					moduleStatus = GPS_CHECK_STATUS;
+					break;
+
+				case GPS_CHECK_STATUS_FINISH:
 					moduleStatus = GET_GPS_GNRMC;
 					break;
+
 
 					/* 获取GNRMC定位值完成 */
 				case GET_GPS_GNRMC_FINISH:
@@ -410,9 +426,9 @@ void GPRSPROCESS_Task(void)
 			{
 				/* 错误计数 */
 				moduleErrorCnt++;
-				if (moduleErrorCnt >= 5)
+				if (moduleErrorCnt >= 10)
 				{
-					printf("模块接收到错误指令超过5次\r\n");
+					printf("模块接收到错误指令超过10次\r\n");
 					moduleErrorCnt = 0;
 					switch (moduleStatus)
 					{
@@ -439,6 +455,7 @@ void GPRSPROCESS_Task(void)
 						break;
 
 					case GET_GPS_GNRMC:
+						moduleStatus = CHECK_SIM_STATUS;
 						break;
 
 					/*  */

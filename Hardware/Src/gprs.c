@@ -117,7 +117,7 @@ void GPRS_RstModule(void)
 /*******************************************************************************
  * gprs数据校验
  */
-uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint8_t size)
+uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size)
 {
 	uint8_t cal = 0;
 
