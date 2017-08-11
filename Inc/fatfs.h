@@ -75,14 +75,14 @@ void MX_FATFS_Init(void);
 ErrorStatus FATFS_FileLink(void);
 ErrorStatus FATFS_FileUnlink(void);
 ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode);
-ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size);
-ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size);
+ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size);
+ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size);
 ErrorStatus FATFS_FileClose(void);
 ErrorStatus FATFS_FileSeekEnd(void);
+ErrorStatus FATFS_FileSeekBackwardOnePack(void);
 ErrorStatus FATFS_FileSeek(WORD byte);
-ErrorStatus FATFS_FileSeekBackward(WORD backwardByte);
 ErrorStatus FATFS_GetSpaceInfo(void);
-ErrorStatus FATFS_MakeFile(char* fileName);
+ErrorStatus FATFS_CreateFile(char* fileName);
 uint16_t FATFS_GetFileStructCount(void);
 
 /* USER CODE END Prototypes */

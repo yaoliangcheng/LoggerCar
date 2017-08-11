@@ -1,14 +1,14 @@
 #include "file.h"
 #include "print.h"
 #include "fatfs.h"
+#include "gprs.h"
 
 char FILE_FileName[11];
 FILE_PatchPackTypedef FILE_PatchPack;
 
 /******************************************************************************/
-static ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* info);
-static ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* info, uint8_t count);
-static void FILE_GetFileNameDependOnTime(FILE_RealTime* time);
+static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName);
+static void FILE_GetNextFileName(char* fileName);
 static void AnalogDataFormatConvert(float value, EE_DataFormatEnum format,
 							uint8_t* pBuffer);
 static void LocationFormatConvert(double value, uint8_t* pBuffer);
@@ -25,14 +25,13 @@ void FILE_Init(void)
 	memcpy(&FILE_FileName[6], ".txt\0", 5);
 
 	/* 创建补传文件 */
-	FATFS_MakeFile(PATCH_PACK_FILE_NAME);
+//	FATFS_CreateFile(PATCH_PACK_FILE_NAME);
 }
 
 /*******************************************************************************
  *
  */
-ErrorStatus FILE_SaveReadInfo(FILE_InfoTypedef* saveInfo,
-		FILE_InfoTypedef* readInfo, uint8_t readInfoCount)
+ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* saveInfo, uint16_t* fileStructCount)
 {
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())
@@ -45,25 +44,135 @@ ErrorStatus FILE_SaveReadInfo(FILE_InfoTypedef* saveInfo,
 	}
 
 	/* 根据时间获取文件名 */
-	FILE_GetFileNameDependOnTime(&saveInfo->realTime);
+	FILE_GetFileNameDependOnTime(&saveInfo->realTime, FILE_FileName);
 
-	if (ERROR == FILE_SaveInfo(saveInfo))
+	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	if (ERROR == FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_ALWAYS_WRITE))
 	{
-		/* 保存出错处理 */
-		/* todo */
-		printf("数据储存失败\r\n");
+		printf("文件打开失败\r\n");
+		return ERROR;
 	}
 
-	if (ERROR == FILE_ReadInfo(readInfo, readInfoCount))
+	/* 将写指针指向文件的末尾 */
+	if (ERROR == FATFS_FileSeekEnd())
 	{
-		/* 读取操作出错处理 */
-		/* todo */
-		printf("数据读取失败\r\n");
+		printf("指向文件末尾失败\r\n");
+		return ERROR;
 	}
+
+	/* 把结构体写入文件 */
+	if (ERROR == FATFS_FileWrite((BYTE*)saveInfo, sizeof(FILE_InfoTypedef)))
+	{
+		printf("结构体写入失败\r\n");
+		return ERROR;
+	}
+
+	/* 获取文件大小 */
+	*fileStructCount = FATFS_GetFileStructCount();
+
+	if (ERROR == FATFS_FileClose())
+		return ERROR;
 
 	FATFS_FileUnlink();
 
 	return SUCCESS;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* readInfo)
+{
+	/* 挂载文件系统 */
+	if (ERROR == FATFS_FileLink())
+		return ERROR;
+
+	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	if (ERROR == FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ))
+	{
+		printf("文件打开失败\r\n");
+		return ERROR;
+	}
+
+	/* 将写指针指向文件的末尾 */
+	if (ERROR == FATFS_FileSeekBackwardOnePack())
+	{
+		printf("指向文件末尾失败\r\n");
+		return ERROR;
+	}
+
+	/* 把结构体写入文件 */
+	if (ERROR == FATFS_FileRead((BYTE*)readInfo, sizeof(FILE_InfoTypedef)))
+	{
+		printf("结构体写入失败\r\n");
+		return ERROR;
+	}
+
+	if (ERROR == FATFS_FileClose())
+		return ERROR;
+
+	FATFS_FileUnlink();
+
+	return SUCCESS;
+}
+
+/*******************************************************************************
+ * function:根据补传的信息获取数据
+ * @patch：补传信息
+ * @readInfo：读出缓存指针
+ */
+uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo)
+{
+	uint16_t readInfoCount;
+
+	/* 挂载文件系统 */
+	if (ERROR == FATFS_FileLink())
+		return 0;
+
+	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	if (ERROR == FATFS_FileOpen(patch->patchFileName, FATFS_MODE_OPEN_EXISTING_READ))
+		return 0;
+
+	/* 将读指针指向文件的指定位置 */
+	if (ERROR == FATFS_FileSeek(patch->patchStructOffset * sizeof(FILE_InfoTypedef)))
+		return 0;
+
+	/* 当前文件还有多少个结构体可以读 */
+	readInfoCount = FATFS_GetFileStructCount() - patch->patchStructOffset;
+
+	/* 文件中结构体数不能一次读完 */
+	if (readInfoCount > GPRS_PATCH_PACK_NUMB_MAX)
+	{
+		readInfoCount = GPRS_PATCH_PACK_NUMB_MAX;
+		patch->patchStructOffset += GPRS_PATCH_PACK_NUMB_MAX;
+	}
+	/* 当前文件剩余的结构体能够被一次读完 */
+	else
+	{
+		patch->patchStructOffset = 0;
+
+		/* 比较当前补传文件是否是当前文件 */
+		if (memcmp(patch->patchFileName, FILE_FileName, 6) == 0)
+		{
+			/* 是，则证明全部数据补传完毕,补传文件清空 */
+			memcpy(patch->patchFileName, "\0\0\0\0\0\0", 6);
+		}
+		else
+		{
+			/* 否则传递到下一个文件 */
+			FILE_GetNextFileName(patch->patchFileName);
+		}
+	}
+
+	if (ERROR == FATFS_FileRead((BYTE*)readInfo, (readInfoCount * sizeof(FILE_InfoTypedef))))
+		return 0;
+
+	if (ERROR == FATFS_FileClose())
+		return 0;
+
+	FATFS_FileUnlink();
+
+	return readInfoCount;
 }
 
 /*******************************************************************************
@@ -198,9 +307,6 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 		HEX2BCD(&stopTime->hour, (uint8_t*)(&endTimePoint) + 1, 1);
 		HEX2BCD(&stopTime->min,  (uint8_t*)(&endTimePoint),     1);
 
-		/* 寻找结束时间的结构体偏移量 */
-//		endTimePoint   = SearchTimeInFile(stopTime);
-
 		/* 开始打印 */
 		selectDataPrint(startTimePoint, endTimePoint, select);
 	}
@@ -233,71 +339,103 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 }
 
 /*******************************************************************************
- *
- */
-static ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* info)
-{
-	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
-	if (ERROR == FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_ALWAYS_WRITE))
-	{
-		printf("文件打开失败\r\n");
-		return ERROR;
-	}
-
-	/* 将写指针指向文件的末尾 */
-	if (ERROR == FATFS_FileSeekEnd())
-	{
-		printf("指向文件末尾失败\r\n");
-		return ERROR;
-	}
-
-	/* 把结构体写入文件 */
-	if (ERROR == FATFS_FileWrite((BYTE*)info, sizeof(FILE_InfoTypedef)))
-	{
-		printf("结构体写入失败\r\n");
-		return ERROR;
-	}
-
-	if (ERROR == FATFS_FileClose())
-		return ERROR;
-
-	return SUCCESS;
-}
-
-/*******************************************************************************
- *
- */
-static ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* info, uint8_t count)
-{
-	WORD byteToRead;
-
-	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
-	if (FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
-		return ERROR;
-
-	byteToRead = count * sizeof(FILE_InfoTypedef);
-
-	/* 将写指针指向文件的末尾 */
-	if (FATFS_FileSeekBackward(byteToRead) == ERROR)
-		return ERROR;
-
-	/* 把结构体写入文件 */
-	if (FATFS_FileRead((BYTE*)info, byteToRead) == ERROR)
-		return ERROR;
-
-	if (FATFS_FileClose() == ERROR)
-		return ERROR;
-
-	return SUCCESS;
-}
-
-/*******************************************************************************
  * function:根据结构体的时间，转换成文件名
  */
-static void FILE_GetFileNameDependOnTime(FILE_RealTime* time)
+static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName)
 {
 	/* 将时间转换成ASCII码 */
-	BCD2ASCII(FILE_FileName, (uint8_t*)time, 3);
+	BCD2ASCII(fileName, (uint8_t*)time, 3);
+}
+
+/*******************************************************************************
+ * function：根据FILE_FileName得到下一个文件名
+ */
+static void FILE_GetNextFileName(char* fileName)
+{
+	uint8_t temp1, temp2;
+
+	uint8_t year, month, day;
+
+	str2numb((uint8_t*)&fileName[0], &temp1, 1);
+	str2numb((uint8_t*)&fileName[1], &temp2, 1);
+	year = temp1 * 10 + temp2;
+
+	str2numb((uint8_t*)&fileName[2], &temp1, 1);
+	str2numb((uint8_t*)&fileName[3], &temp2, 1);
+	month = temp1 * 10 + temp2;
+
+	str2numb((uint8_t*)&fileName[4], &temp1, 1);
+	str2numb((uint8_t*)&fileName[5], &temp2, 1);
+	day = temp1 * 10 + temp2;
+
+	/* 时间计算 */
+	if((month == 1U) || (month == 3U) || (month == 5U) || (month == 7U) || \
+	   (month == 8U) || (month == 10U) || (month == 12U))
+	{
+		if(day < 31U)
+		{
+			day++;
+		}
+		/* Date structure member: day = 31 */
+		else
+		{
+			if(month != 12U)
+			{
+				month++;
+				day = 1U;
+			}
+			/* Date structure member: day = 31 & month =12 */
+			else
+			{
+				month = 1U;
+				day = 1U;
+				year++;
+			}
+		}
+	}
+	else if((month == 4U) || (month == 6U) || (month == 9U) || (month == 11U))
+	{
+		if(day < 30U)
+		{
+			day++;
+		}
+		/* Date structure member: day = 30 */
+		else
+		{
+			month++;
+			day = 1U;
+		}
+	}
+	else if(month == 2U)
+	{
+		if(day < 28U)
+		{
+			day++;
+		}
+		else if(day == 28U)
+		{
+			/* Leap year */
+			if(year % 4 == 0)
+			{
+				day++;
+			}
+			else
+			{
+				month++;
+				day = 1U;
+			}
+		}
+		else if(day == 29U)
+		{
+			month++;
+			day = 1U;
+		}
+	}
+
+	/* 日期转回ASCII */
+	HEX2ASCII(&year,  (uint8_t*)&fileName[0], 1);
+	HEX2ASCII(&month, (uint8_t*)&fileName[2], 1);
+	HEX2ASCII(&day,   (uint8_t*)&fileName[4], 1);
 }
 
 /*******************************************************************************

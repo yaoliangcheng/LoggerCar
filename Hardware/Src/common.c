@@ -3,11 +3,11 @@
 /*******************************************************************************
  *
  */
-void str2numb(uint8_t* buf, uint8_t* info, uint8_t size)
+void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size)
 {
 	while(size--)
 	{
-		*info++ = (*buf++) - '0';
+		*pNumb++ = (*pStr++) - '0';
 	}
 }
 

@@ -11,6 +11,8 @@
  * AT指令
  */
 /* 模块初始化指令 */
+#define AT_CMD_CHECK_STATUS				  ("AT\r\n")
+#define AT_CMD_CHECK_STATUS_RESPOND		  (AT_CMD_RESPOND_OK)
 #define AT_CMD_POWER_ON_READY_RESPOND	  ("+CFUN: 1")
 #define AT_CMD_MODULE_START_RESPOND	  	  ("SMS Ready")
 #define AT_CMD_SET_BAUD_RATE			  ("AT+IPR=115200\r\n")/* 设置固定波特率 */
@@ -66,9 +68,13 @@ typedef enum
 {
 	MODULE_INVALID,									/* 模块无效 */
 	MODULE_VALID,									/* 模块有效 */
-	MODULE_START,									/* 模块启动 */
 	SET_BAUD_RATE,									/* 设置波特率 */
 	SET_BAUD_RATE_FINISH,							/* 波特率设置完成 */
+	ENABLE_GPS,										/* 使能GPS功能 */
+	ENABLE_GPS_FINISH,								/* 使能GPS功能完成 */
+	GET_GPS_GNRMC,									/* 获取GNRMC定位值 */
+	GET_GPS_GNRMC_FINISH,							/* 获取GNRMC定位值完成 */
+
 	CHECK_SIM_STATUS,								/* 查询SIM卡状态 */
 	CHECK_SIM_STATUS_FINISH,						/* 查询SIM卡状态完成 */
 	SEARCH_NET_STATUS,								/* 查找网络状态 */
@@ -85,12 +91,6 @@ typedef enum
 	ACTIVE_PDP_FINISH,								/* 激活PDP场景完成 */
 	GET_SELF_IP_ADDR,								/* 获取本机IP地址 */
 	GET_SELF_IP_ADDR_FINISH,						/* 获取本机IP地址完成 */
-	ENABLE_GPS,										/* 使能GPS功能 */
-	ENABLE_GPS_FINISH,								/* 使能GPS功能完成 */
-	GET_GPS_GNRMC,									/* 获取GNRMC定位值 */
-	GET_GPS_GNRMC_FINISH,							/* 获取GNRMC定位值完成 */
-	DISABLE_GPS,									/* 失能GPS功能 */
-	DISABLE_GPS_FINISH,								/* 失能GPS功能完成 */
 	SET_SERVER_IP_ADDR,								/* 设置服务器地址 */
 	SET_SERVER_IP_ADDR_FINISH,						/* 设置服务器地址完成 */
 	READY,											/* 模块准备好 */

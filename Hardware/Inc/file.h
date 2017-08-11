@@ -62,7 +62,8 @@ typedef struct
 
 typedef struct
 {
-	uint16_t patchPackNumb;						/* 补传数据条数 */
+	char patchFileName[11];						/* 开始补传的文件名 */
+	uint16_t patchStructOffset;					/* 开始补传的结构体在文件中的偏移 */
 	uint16_t patchPackOver_5;					/* 补传超过5条 */
 	uint16_t patchPackOver_10;					/* 补传超过10条 */
 	uint16_t patchPackOver_20;					/* 补传超过20条 */
@@ -73,8 +74,9 @@ typedef struct
 
 /******************************************************************************/
 void FILE_Init(void);
-ErrorStatus FILE_SaveReadInfo(FILE_InfoTypedef* saveInfo,
-		FILE_InfoTypedef* readInfo, uint8_t readInfoCount);
+ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* saveInfo, uint16_t* fileStructCount);
+ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* readInfo);
+uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo);
 void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
 							RT_TimeTypedef*      realTime,
 							GPS_LocateTypedef*   location,

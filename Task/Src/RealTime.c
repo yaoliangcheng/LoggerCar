@@ -51,7 +51,6 @@ void REALTIME_Task(void)
 				{
 					/* 获取传感器的值 */
 					ANALOG_GetSensorValue(&AnalogValue);
-					printf("模拟量转换完成！！！\r\n");
 
 					/* 如果记录间隔时间到，则触发记录 */
 					if (realTime.time.Minutes % EE_recordInterval == 0)

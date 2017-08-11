@@ -162,7 +162,7 @@ ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode)
  * @pBuffer:要写入的数据指针
  * @size：要写入数据的长度
  */
-ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size)
+ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size)
 {
 	uint32_t byteWrite;
 
@@ -184,7 +184,7 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size)
  ** @pBuffer:要读出的数据指针
  * @size：要读出数据的长度
  */
-ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size)
+ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size)
 {
 	uint32_t byteRead;
 
@@ -223,10 +223,11 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 	if (FR_OK == f_getfree(USER_Path, &freeClust, &pfs))
 	{
 		/* 单位为KB */
-		freeSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
-		totSect   = freeClust           * pfs->csize * 4;
+		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
+		freeSect = freeClust           * pfs->csize * 4;
 
-		printf("设备总空间：%uKB 可用空间：%uKB\r\n", freeSect, totSect);
+		printf("设备总空间：%uKB 可用空间：%uKB\r\n", totSect, freeSect);
+		printf("设备剩余储存空间：%d%%\r\n", freeSect * 100 / totSect);
 
 		/* 没有空间可写 */
 		if (freeSect == 0)
@@ -247,29 +248,20 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 ErrorStatus FATFS_FileSeekEnd(void)
 {
 	if (FR_OK == f_lseek(&objFile, objFile.fsize))
-	{
-		printf("文件写入指针地址偏移：%d\r\n", objFile.fsize);
 		return SUCCESS;
-	}
 	else
 		return ERROR;
 }
 
 /*******************************************************************************
- * function：将读写指针移动到文件末尾的后腿指定字节
- * @backwardByt:要后腿的字节数
+ * function:将读、写指针移动到文件的末尾向前一个结构体
  */
-ErrorStatus FATFS_FileSeekBackward(WORD backwardByte)
+ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 {
-	if (objFile.fsize != 0)
-	{
-		if (FR_OK == f_lseek(&objFile, objFile.fsize - backwardByte))
-			return SUCCESS;
-		else
-			return ERROR;
-	}
-
-	return SUCCESS;
+	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_InfoTypedef)))
+		return SUCCESS;
+	else
+		return ERROR;
 }
 
 /*******************************************************************************
@@ -291,17 +283,21 @@ ErrorStatus FATFS_FileSeek(WORD byte)
 /*******************************************************************************
  *
  */
-ErrorStatus FATFS_MakeFile(char* fileName)
+ErrorStatus FATFS_CreateFile(char* fileName)
 {
-	if (FR_OK == f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE))
-	{
-		if (FR_OK == f_close(NULL))
-			return SUCCESS;
-		else
-			return ERROR;
-	}
-	else
+	if (ERROR == FATFS_FileLink())
 		return ERROR;
+
+	if (ERROR == FATFS_FileOpen(fileName, FATFS_MODE_OPEN_ALWAYS_WRITE))
+		return ERROR;
+
+	if (ERROR == FATFS_FileClose())
+		return ERROR;
+
+	if (ERROR == FATFS_FileUnlink())
+		return ERROR;
+
+	return SUCCESS;
 }
 
 /*******************************************************************************
