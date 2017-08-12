@@ -6,6 +6,9 @@
 #include "osConfig.h"
 #include "MainProcess.h"
 
+/******************************************************************************/
+static void SendFailedDeal(void);
+
 /*******************************************************************************
  *
  */
@@ -177,6 +180,7 @@ void GPRSPROCESS_Task(void)
 					curPatchPack * sizeof(FILE_InfoTypedef));
 			/* 发送数据到平台 */
 			GPRS_SendProtocol(&sendStruct, curPatchPack);
+//			printf("发送的数据是：%100s",sendStruct);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
@@ -236,6 +240,7 @@ void GPRSPROCESS_Task(void)
 				{
 					moduleTimeoutCnt = 0;
 					moduleStatus = EXTI_SERIANET_MODE;
+					osMessageGet(realtimeMessageQId, 1);
 					printf("未接收到平台正确回文\r\n");
 				}
 
@@ -267,9 +272,8 @@ void GPRSPROCESS_Task(void)
 					moduleTimeoutCnt = 0;
 					moduleStatus = GET_GPS_GNRMC;
 					printf("模块指令接收超时3次,放弃本次发送\r\n");
-					/* 挂起任务之前，清空标志位 */
-					osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
-					osThreadSuspend(NULL);
+					/* 发送失败处理 */
+					SendFailedDeal();
 				}
 				break;
 			}
@@ -463,9 +467,8 @@ void GPRSPROCESS_Task(void)
 						moduleStatus = GET_GPS_GNRMC;
 						gprsInited = FALSE;
 						printf("模块配置错误，等待下次重新配置\r\n");
-						/* 挂起任务之前，清空标志位 */
-						osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
-						osThreadSuspend(NULL);
+						/* 发送失败处理 */
+						SendFailedDeal();
 						break;
 					}
 				}
@@ -475,5 +478,15 @@ void GPRSPROCESS_Task(void)
 	}
 }
 
-
+/*******************************************************************************
+ * function:任务发送失败处理
+ *
+ */
+static void SendFailedDeal(void)
+{
+	/* 挂起任务之前，清空标志位 */
+	osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
+	osMessageGet(realtimeMessageQId, 1);
+	osThreadSuspend(NULL);
+}
 

@@ -1,6 +1,8 @@
 #include "RealTime.h"
 
 #include "osConfig.h"
+#include "Mainprocess.h"
+
 #include "analog.h"
 #include "eeprom.h"
 #include "analog.h"
@@ -63,6 +65,7 @@ void REALTIME_Task(void)
 
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
+//						osSignalSet(mainprocessTaskHandle, MAINPROCESS_START_TASK);
 					}
 
 					/* 更新液晶屏显示 */

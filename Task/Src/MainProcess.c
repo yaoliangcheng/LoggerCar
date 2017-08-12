@@ -42,9 +42,9 @@ void MAINPROCESS_Task(void)
 		/* 激活GPRSProcess任务，启动GPS转换 */
 		osThreadResume(gprsprocessTaskHandle);
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
-		
+
 		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，30s */
- 		/* 刚启动模块的第一次定位耗时长，也不能得到定位数据，可以放弃 */
+		/* 刚启动模块的第一次定位耗时长，也不能得到定位数据，可以放弃 */
 		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, 30000);
 		if ((signal.value.signals & MAINPROCESS_GPS_CONVERT_FINISH)
 						!= MAINPROCESS_GPS_CONVERT_FINISH)
@@ -143,7 +143,6 @@ void MAINPROCESS_Task(void)
 				FILE_WritePatchPackFile(&patchPack);
 		}
 
-		/* 任务运行完毕，一定要将自己挂起 */
 		osThreadSuspend(NULL);
 	}
 }
