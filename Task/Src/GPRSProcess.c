@@ -7,7 +7,7 @@
 #include "MainProcess.h"
 
 /******************************************************************************/
-static void SendFailedDeal(void);
+static void SendFailedHandle(void);
 
 /*******************************************************************************
  *
@@ -273,7 +273,7 @@ void GPRSPROCESS_Task(void)
 					moduleStatus = GET_GPS_GNRMC;
 					printf("模块指令接收超时3次,放弃本次发送\r\n");
 					/* 发送失败处理 */
-					SendFailedDeal();
+					SendFailedHandle();
 				}
 				break;
 			}
@@ -468,7 +468,7 @@ void GPRSPROCESS_Task(void)
 						gprsInited = FALSE;
 						printf("模块配置错误，等待下次重新配置\r\n");
 						/* 发送失败处理 */
-						SendFailedDeal();
+						SendFailedHandle();
 						break;
 					}
 				}
@@ -482,7 +482,7 @@ void GPRSPROCESS_Task(void)
  * function:任务发送失败处理
  *
  */
-static void SendFailedDeal(void)
+static void SendFailedHandle(void)
 {
 	/* 挂起任务之前，清空标志位 */
 	osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
