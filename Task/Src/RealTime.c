@@ -4,7 +4,7 @@
 #include "Mainprocess.h"
 
 #include "analog.h"
-#include "eeprom.h"
+#include "file.h"
 #include "analog.h"
 #include "tftlcd.h"
 
@@ -16,6 +16,7 @@ void REALTIME_Task(void)
 	ANALOG_ValueTypedef AnalogValue;
 
 	RT_Init(&realTime);
+
 
 	while(1)
 	{
@@ -55,7 +56,7 @@ void REALTIME_Task(void)
 					ANALOG_GetSensorValue(&AnalogValue);
 
 					/* 如果记录间隔时间到，则触发记录 */
-					if (realTime.time.Minutes % EE_recordInterval == 0)
+					if (realTime.time.Minutes % FILE_DeviceParam.recordInterval == 0)
 					{
 						/* 发送记录时间数据 */
 						osMessagePut(realtimeMessageQId, (uint32_t)&realTime, 100);

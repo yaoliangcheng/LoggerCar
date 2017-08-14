@@ -174,7 +174,7 @@ void GPRSPROCESS_Task(void)
 				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
 						curPatchPack * sizeof(FILE_InfoTypedef));
 				/* 获取当前时间用于校准 */
-				signal = osMessageGet(realtimeMessageQId, 2000);
+				signal = osMessageGet(adjustTimeMessageQId, 2000);
 				eTime = (RT_TimeTypedef*)signal.value.v;
 			}
 			break;
@@ -486,6 +486,11 @@ void GPRSPROCESS_Task(void)
  */
 static void SendFailedHandle(void)
 {
+	/* 清空队列中的数据 */
+	osMessageGet(infoCntMessageQId, 100);
+	osMessageGet(infoMessageQId, 100);
+	osMessageGet(adjustTimeMessageQId, 100);
+
 	/* 挂起任务之前，清空标志位 */
 	osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
 //	osMessageGet(realtimeMessageQId, 1);

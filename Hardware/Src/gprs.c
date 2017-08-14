@@ -1,4 +1,6 @@
 #include "gprs.h"
+
+
 #include "GPRSProcess.h"
 #include "osConfig.h"
 
@@ -13,41 +15,17 @@ void GPRS_StructInit(GPRS_StructTypedef* sendBuf)
 {
 	sendBuf->head = GPRS_PACK_HEAD;
 
-	sendBuf->locationType = LOCATION_GPS;
+	sendBuf->locationType = FILE_DeviceParam.locationType;
 
 	/* eeprom中读出数据 */
-	memcpy(&sendBuf->seriaNumber, EE_deviceSN, sizeof(sendBuf->seriaNumber));
-	sendBuf->firmwareVersion = 	  EE_firmwareVersion;
-	sendBuf->recordInterval = 	  EE_recordInterval;
-	sendBuf->overLimitInterval =  EE_overLimitRecordInterval;
+	memcpy(&sendBuf->seriaNumber, FILE_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
+	sendBuf->firmwareVersion = 	  FILE_DeviceParam.firmwareVersion;
+	sendBuf->recordInterval = 	  FILE_DeviceParam.recordInterval;
+	sendBuf->overLimitInterval =  FILE_DeviceParam.overLimitRecordInterval;
 
 	/* 设置通道类型 */
-//	sendBuf->analogChannelNumb = ANALOG_CHANNEL_NUMB;
-	sendBuf->analogChannelNumb    = 8;
-	sendBuf->param[0].channelType = TYPE_TEMP;
-	sendBuf->param[0].channelUnit = UNIT_TEMP;
-	sendBuf->param[0].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[1].channelType = TYPE_HUMI;
-	sendBuf->param[1].channelUnit = UNIT_HUMI;
-	sendBuf->param[1].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[2].channelType = TYPE_TEMP;
-	sendBuf->param[2].channelUnit = UNIT_TEMP;
-	sendBuf->param[2].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[3].channelType = TYPE_HUMI;
-	sendBuf->param[3].channelUnit = UNIT_HUMI;
-	sendBuf->param[3].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[4].channelType = TYPE_TEMP;
-	sendBuf->param[4].channelUnit = UNIT_TEMP;
-	sendBuf->param[4].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[5].channelType = TYPE_HUMI;
-	sendBuf->param[5].channelUnit = UNIT_HUMI;
-	sendBuf->param[5].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[6].channelType = TYPE_TEMP;
-	sendBuf->param[6].channelUnit = UNIT_TEMP;
-	sendBuf->param[6].dataFormat  = FORMAT_ONE_DECIMAL;
-	sendBuf->param[7].channelType = TYPE_HUMI;
-	sendBuf->param[7].channelUnit = UNIT_HUMI;
-	sendBuf->param[7].dataFormat  = FORMAT_ONE_DECIMAL;
+	sendBuf->exitAnalogChannelNumb = FILE_DeviceParam.exitAnalogChannelNumb;
+	memcpy(&sendBuf->param[0], &FILE_DeviceParam.param[0], sizeof(sendBuf->param));
 
 	sendBuf->tail = GPRS_PACK_TAIL;
 }

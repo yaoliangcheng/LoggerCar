@@ -69,7 +69,7 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-
+  FILE_ParamFileInit();
   /* USER CODE END Init */
 }
 

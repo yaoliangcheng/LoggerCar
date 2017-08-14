@@ -28,10 +28,12 @@ void MAINPROCESS_Task(void)
 	uint16_t curPatchPack;				/* 本次补传数据 */
 	uint16_t curFileStructCount;		/* 当前文件结构体总数 */
 
+
+
 	while(1)
 	{		
 		/* 获取时间 */
-		signal = osMessageGet(realtimeMessageQId, 2000);
+		signal = osMessageGet(realtimeMessageQId, 5000);
 		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
 		/* 获取模拟量数据 */
@@ -105,7 +107,7 @@ void MAINPROCESS_Task(void)
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);
 
 		/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
-		osMessagePut(realtimeMessageQId, (uint32_t)&time, 1000);
+		osMessagePut(adjustTimeMessageQId, (uint32_t)&time, 1000);
 
 		/* 使能MainProcess任务发送数据 */
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
