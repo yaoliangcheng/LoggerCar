@@ -20,6 +20,8 @@
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
 #define PATCH_PACK_FILE_NAME					("patch.txt")
 
+#define FILE_PRINT_TO_END						(0xFFFF)
+
 /******************************************************************************/
 #pragma pack(push)
 #pragma pack(1)									/* °´×Ö½Ú¶ÔÆë */

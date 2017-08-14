@@ -18,6 +18,7 @@
 		HAL_GPIO_WritePin(PRINT_PWR_CTRL_GPIO_Port, PRINT_PWR_CTRL_Pin, GPIO_PIN_SET);
 
 /******************************************************************************/
+void PRINT_Date(char* fileName);
 void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select);
 void PRINT_TitleOut(void);
 void PRINT_TailOut(void);

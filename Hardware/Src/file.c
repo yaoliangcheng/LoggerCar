@@ -3,7 +3,8 @@
 #include "fatfs.h"
 #include "gprs.h"
 
-char FILE_FileName[11];
+char FILE_FileName[11];						/* 储存文件名 */
+char FILE_PrintFileName[11]; 				/* 打印文件名 */
 FILE_PatchPackTypedef FILE_PatchPack;
 
 /******************************************************************************/
@@ -13,8 +14,9 @@ static void AnalogDataFormatConvert(float value, EE_DataFormatEnum format,
 							uint8_t* pBuffer);
 static void LocationFormatConvert(double value, uint8_t* pBuffer);
 static uint16_t SearchTimeInFile(FILE_RealTime* pTime);
-static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_ChannelSelectTypedef* select);
-
+static void selectDataPrint(char* fileName,
+							uint16_t startPoint, uint16_t endPoint,
+							PRINT_ChannelSelectTypedef* select);
 
 /*******************************************************************************
  *
@@ -23,6 +25,7 @@ void FILE_Init(void)
 {
 	/* 向文件名添加固定的后缀名 */
 	memcpy(&FILE_FileName[6], ".txt\0", 5);
+	memcpy(&FILE_PrintFileName[6], ".txt\0", 5);
 
 	/* 创建补传文件 */
 //	FATFS_CreateFile(PATCH_PACK_FILE_NAME);
@@ -281,57 +284,52 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
 		PRINT_ChannelSelectTypedef* select)
 {
-	uint16_t startTimePoint, endTimePoint;
+	uint16_t startTimeStructOffset;			/* 开始打印时间，结构体偏移 */
+	uint16_t endTimePoint;					/* 结束时间点 */
+	char stopPrintFileName[6];					/* 停止打印文件名 */
 
 	/* 获取开始打印时间文件名 */
 	/* 注意：这时候时间是十进制的 */
-	HEX2ASCII(&startTime->year, (uint8_t*)FILE_FileName, 3);
+	HEX2ASCII(&startTime->year, (uint8_t*)FILE_PrintFileName, 3);
+	HEX2ASCII(&stopTime->year,  (uint8_t*)stopPrintFileName,  3);
 
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())
 		return ERROR;
 
-	if (FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
+	if (FATFS_FileOpen(FILE_PrintFileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
 	{
 		/* 寻找开始时间的结构体偏移量 */
-		startTimePoint = SearchTimeInFile(startTime);
+		startTimeStructOffset = SearchTimeInFile(startTime);
 	}
 	else
 		printf("未找到有效的开始打印时间文件\r\n");
 
-	/* 开始打印时间和结束打印时间是同一天 */
-	if ((startTime->year == stopTime->year) && (startTime->month == stopTime->month)
-			&& (startTime->day == stopTime->day))
-	{
-		/* 生成结束打印时间 */
-		HEX2BCD(&stopTime->hour, (uint8_t*)(&endTimePoint) + 1, 1);
-		HEX2BCD(&stopTime->min,  (uint8_t*)(&endTimePoint),     1);
-
-		/* 开始打印 */
-		selectDataPrint(startTimePoint, endTimePoint, select);
-	}
-	/* 开始打印和结束打印时间是跨天的 */
-	else
-	{
-		/* todo */
-//		/* 先关闭开始打印时间所在的文件 */
-//		FATFS_FileClose();
-//
-//		/* 获取结束打印时间文件名 */
-//		sprintf(FILE_FileName[0], "%2d", stopTime->year);
-//		sprintf(FILE_FileName[2], "%2d", stopTime->month);
-//		sprintf(FILE_FileName[4], "%2d", stopTime->day);
-//
-//		if (FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
-//		{
-//			/* 寻找结束时间的结构体偏移量 */
-//			endTimePoint   = SearchTimeInFile(stopTime);
-//		}
-
-	}
-
 	if (FATFS_FileClose() == ERROR)
 		return ERROR;
+
+	/* 先打印标题 */
+	PRINT_TitleOut();
+
+	/* 还没有打印到停止时间文件 */
+	while (memcmp(FILE_PrintFileName, stopPrintFileName, 6) != 0)
+	{
+		/* 打开文件并打印到文件结束 */
+		selectDataPrint(FILE_PrintFileName, startTimeStructOffset, FILE_PRINT_TO_END, select);
+		/* 转换到下一个文件 */
+		FILE_GetNextFileName(FILE_PrintFileName);
+		/* 下一个文件结构体偏移为0 */
+		startTimeStructOffset = 0;
+	}
+
+	/* 生成结束打印时间 */
+	HEX2BCD(&stopTime->hour, (uint8_t*)(&endTimePoint) + 1, 1);
+	HEX2BCD(&stopTime->min,  (uint8_t*)(&endTimePoint),     1);
+	/* 开始打印 */
+	selectDataPrint(FILE_PrintFileName, startTimeStructOffset, endTimePoint, select);
+
+	/* 打印结束 */
+	PRINT_TailOut();
 
 	FATFS_FileUnlink();
 	
@@ -548,15 +546,19 @@ static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
 }
 
 /*******************************************************************************
- * function:根据时间点打印同一个文件内的数据
+ * function:根据时间点打印同一个文件内的数据,endPoint为0xffff，则打印到文件结尾
  */
-static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_ChannelSelectTypedef* select)
+static void selectDataPrint(char* fileName,
+							uint16_t startPoint, uint16_t endPoint,
+							PRINT_ChannelSelectTypedef* select)
 {
 	FILE_InfoTypedef info;
 
-	PRINT_PWR_ENABLE();
-	
-	PRINT_TitleOut();
+	/* 打开文件 */
+	FATFS_FileOpen(fileName, FATFS_MODE_OPEN_EXISTING_READ);
+
+	/* 先打印日期 */
+	PRINT_Date(fileName);
 
 	/* 打印开始和结束时间点间的数据 */
 	while(startPoint <= (FATFS_GetFileStructCount() - 1))
@@ -574,9 +576,7 @@ static void selectDataPrint(uint16_t startPoint, uint16_t endPoint, PRINT_Channe
 		}
 	}
 	
-
-	PRINT_TailOut();
-//	PRINT_PWR_DISABLE();
+	FATFS_FileClose();
 }
 
 

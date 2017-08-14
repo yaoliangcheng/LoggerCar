@@ -8,6 +8,18 @@ static void PRINT_SendData(uint8_t size);
 static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf);
 
 /*******************************************************************************
+ * function:打印日期
+ */
+void PRINT_Date(char* fileName)
+{
+	memcpy(&PRINT_SendBuffer[0], "*************", 13);
+	memcpy(&PRINT_SendBuffer[13], fileName, 6);
+	memcpy(&PRINT_SendBuffer[19], "*************", 13);
+	PRINT_SendBuffer[33] = '\n';
+	PRINT_SendData(33);
+}
+
+/*******************************************************************************
  * function:打印输出
  */
 void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
@@ -15,49 +27,53 @@ void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 	uint8_t index = 0;
 
 	/* 时间转换 */
-	BCD2ASCII((char*)&PRINT_SendBuffer[index], &info->realTime.year, sizeof(FILE_RealTime));
-	index += 12;
+	BCD2ASCII((char*)&PRINT_SendBuffer[0], &info->realTime.hour, 1);
+	PRINT_SendBuffer[2] = ':';
+	BCD2ASCII((char*)&PRINT_SendBuffer[3], &info->realTime.min, 1);
+	PRINT_SendBuffer[5] = ':';
+	BCD2ASCII((char*)&PRINT_SendBuffer[6], &info->realTime.sec, 1);
+	index += 8;
 
 	/* 根据打印选择，输出数据 */
 	if (select->status.bit.ch1)
 	{
 		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch2)
 	{
 		PRINT_GetAnalog(info->analogValue.humi1, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch3)
 	{
 		PRINT_GetAnalog(info->analogValue.temp2, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch4)
 	{
 		PRINT_GetAnalog(info->analogValue.humi2, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch5)
 	{
 		PRINT_GetAnalog(info->analogValue.temp3, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch6)
 	{
 		PRINT_GetAnalog(info->analogValue.humi3, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch7)
 	{
 		PRINT_GetAnalog(info->analogValue.humi4, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 	if (select->status.bit.ch8)
 	{
 		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
-		index += 5;
+		index += 6;
 	}
 
 	/* 打印换行 */
@@ -142,7 +158,7 @@ static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf)
 	else
 		temp = (float)(data & 0x7FFF) / 10;
 
-	sprintf((char*)buf, "%5.1f", temp);
+	sprintf((char*)buf, "%6.1f", temp);
 }
 
 
