@@ -164,20 +164,24 @@ void GPRSPROCESS_Task(void)
 				GPRS_SendCmd(AT_CMD_SET_SERVER_IP_ADDR);
 				expectString = AT_CMD_SET_SERVER_IP_ADDR_RESPOND;
 				moduleStatus = SET_SERVER_IP_ADDR_FINISH;
+
+				/* 获取本次发送的条数 */
+				signal = osMessageGet(infoCntMessageQId, 2000);
+				curPatchPack = signal.value.v;
+
+				/* 获取模拟量信息 */
+				signal = osMessageGet(infoMessageQId, 2000);
+				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
+						curPatchPack * sizeof(FILE_InfoTypedef));
+				/* 获取当前时间用于校准 */
+				signal = osMessageGet(realtimeMessageQId, 2000);
+				eTime = (RT_TimeTypedef*)signal.value.v;
 			}
 			break;
 
 		/* 模块准备好了 */
 		case READY:
 			printf("模块准备好了，发送数据\r\n");
-			/* 获取本次发送的条数 */
-			signal = osMessageGet(infoCntMessageQId, 100);
-			curPatchPack = signal.value.v;
-
-			/* 获取模拟量信息 */
-			signal = osMessageGet(infoMessageQId, 100);
-			memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
-					curPatchPack * sizeof(FILE_InfoTypedef));
 			/* 发送数据到平台 */
 			GPRS_SendProtocol(&sendStruct, curPatchPack);
 //			printf("发送的数据是：%100s",sendStruct);
@@ -389,8 +393,6 @@ void GPRSPROCESS_Task(void)
 					printf("数据发送成功\r\n");
 					printf("服务器返回数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
 
-					signal = osMessageGet(realtimeMessageQId, 100);
-					eTime = (RT_TimeTypedef*)signal.value.v;
 					/* 将本地时间与云时间对比，时间校准 */
 					RT_TimeAdjustWithCloud(GPRS_BufferStatus.recvBuffer, eTime);
 
@@ -486,7 +488,7 @@ static void SendFailedHandle(void)
 {
 	/* 挂起任务之前，清空标志位 */
 	osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
-	osMessageGet(realtimeMessageQId, 1);
+//	osMessageGet(realtimeMessageQId, 1);
 	osThreadSuspend(NULL);
 }
 

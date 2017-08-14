@@ -4,7 +4,7 @@
 
 /******************************************************************************/
 uint8_t EE_DeviceInit = 0xAA;							/* EE储存标志位 */
-char 	EE_deviceSN[10] = "1707041010";					/* 设备SN号 */
+char 	EE_deviceSN[10] = "1708151515";					/* 设备SN号 */
 uint8_t EE_firmwareVersion = 10;						/* 固件版本号 */
 uint8_t EE_recordInterval = 2;							/* 记录间隔 */
 uint8_t EE_overLimitRecordInterval = 2;					/* 超标记录间隔 */

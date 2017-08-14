@@ -31,11 +31,11 @@ void MAINPROCESS_Task(void)
 	while(1)
 	{		
 		/* 获取时间 */
-		signal = osMessageGet(realtimeMessageQId, 100);
+		signal = osMessageGet(realtimeMessageQId, 2000);
 		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
 		/* 获取模拟量数据 */
-		signal = osMessageGet(analogMessageQId, 100);
+		signal = osMessageGet(analogMessageQId, 2000);
 		AnalogValue = (ANALOG_ValueTypedef*)signal.value.v;
 
 		/* 获取定位数据 */
@@ -99,13 +99,13 @@ void MAINPROCESS_Task(void)
 
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
-		osMessagePut(infoMessageQId, (uint32_t)&readInfo, 100);
+		osMessagePut(infoMessageQId, (uint32_t)&readInfo, 1000);
 
 		/* 传递本次发送的数据条数，注意：curPatchPack是以数据形式传递，不是传递指针 */
-		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 100);
+		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);
 
 		/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
-		osMessagePut(realtimeMessageQId, (uint32_t)&time, 100);
+		osMessagePut(realtimeMessageQId, (uint32_t)&time, 1000);
 
 		/* 使能MainProcess任务发送数据 */
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
