@@ -20,6 +20,17 @@ void PRINT_Date(char* fileName)
 }
 
 /*******************************************************************************
+ *
+ */
+void PRINT_SetMode(void)
+{
+	PRINT_SendBuffer[0] = 0x1B;
+	PRINT_SendBuffer[1] = 0x7B;
+	PRINT_SendBuffer[2] = 0;
+	PRINT_SendData(3);
+}
+
+/*******************************************************************************
  * function:´òÓ¡Êä³ö
  */
 void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)

@@ -680,11 +680,6 @@
               <FilePath>..\Hardware\Src\analog.c</FilePath>
             </File>
             <File>
-              <FileName>eeprom.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Hardware\Src\eeprom.c</FilePath>
-            </File>
-            <File>
               <FileName>exFlash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hardware\Src\exFlash.c</FilePath>

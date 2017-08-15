@@ -366,6 +366,8 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 	if (FATFS_FileClose() == ERROR)
 		return ERROR;
 
+	PRINT_SetMode();
+	osDelay(1000);
 	/* 先打印标题 */
 	PRINT_TitleOut();
 
