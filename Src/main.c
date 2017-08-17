@@ -49,11 +49,17 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
+#include "adc.h"
+#include "dma.h"
+#include "fatfs.h"
+#include "i2c.h"
 #include "rtc.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "gprs.h"
 
 /* USER CODE END Includes */
 
@@ -102,10 +108,19 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_RTC_Init();
+  MX_ADC1_Init();
+  MX_I2C2_Init();
+  MX_SPI1_Init();
+  MX_USART2_UART_Init();
+  MX_UART4_Init();
+  MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  /* 文件名格式初始化 */
+	FILE_Init();
 
   /* USER CODE END 2 */
 
@@ -124,8 +139,6 @@ int main(void)
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-//	  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-//	  HAL_Delay(100);
 
   }
   /* USER CODE END 3 */
@@ -143,11 +156,11 @@ void SystemClock_Config(void)
 
     /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV5;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.Prediv1Source = RCC_PREDIV1_SOURCE_PLL2;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -174,8 +187,9 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
-  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -200,6 +214,27 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+/* USER CODE BEGIN Callback 0 */
+
+/* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6) {
+    HAL_IncTick();
+  }
+/* USER CODE BEGIN Callback 1 */
+
+/* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

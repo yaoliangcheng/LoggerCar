@@ -1,4 +1,7 @@
 #include "rt.h"
+
+#include "common.h"
+
 #include "RealTime.h"
 #include "osConfig.h"
 
@@ -49,12 +52,12 @@ void RT_Init(RT_TimeTypedef* time)
 	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
 	{
 		time->date.Year = 0X17;
-		time->date.Month = RTC_MONTH_JULY;
-		time->date.Date = 0x08;
-		time->date.WeekDay = RTC_WEEKDAY_SATURDAY;
-		time->time.Hours = 0x09;
-		time->time.Minutes = 0x30;
-		time->time.Seconds = 0x30;
+		time->date.Month = RTC_MONTH_AUGUST;
+		time->date.Date = 0x11;
+		time->date.WeekDay = RTC_WEEKDAY_FRIDAY;
+		time->time.Hours = 0x08;
+		time->time.Minutes = 0x45;
+		time->time.Seconds = 0x00;
 		RT_SetRealTime(time);
 
 		HAL_RTCEx_BKUPWrite(&RT_RTC, RTC_BKUP_REG_DATA, RTC_BKUP_DATA);
@@ -70,4 +73,33 @@ void RT_Init(RT_TimeTypedef* time)
 void HAL_RTCEx_RTCEventCallback(RTC_HandleTypeDef *hrtc)
 {
 	osSignalSet(realtimeTaskHandle, REALTIME_TASK_SIGNAL_UPDATE);
+}
+
+/*******************************************************************************
+ * 与云平台时间校准
+ * @pBuffer：接收缓存数据（平台回文）
+ * @pStruct：发送结构体
+ */
+void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time)
+{
+	uint8_t str[12] = {0};
+
+	RT_TimeTypedef   eTime;
+
+	/* 将字符转换成数字 */
+	str2numb((pBuffer + RT_OFFSET_CLOUD_TIME), str, sizeof(str));
+
+	eTime.date.Year    = (str[0] << 4)  + (str[1]);
+	eTime.date.Month   = (str[2] << 4)  + (str[3]);
+	eTime.date.Date    = (str[4] << 4)  + (str[5]);
+	eTime.time.Hours   = (str[6] << 4)  + (str[7]);
+	eTime.time.Minutes = (str[8] << 4)  + (str[9]);
+	eTime.time.Seconds = (str[10] << 4) + (str[11]);
+
+	/* 接收到平台回文，与发送时间比较，若相差年月日时分有偏差，则校准，秒钟不计，校准字节长度为5 */
+	if ((0 != memcmp(&eTime.date, &time->date, 3)
+			|| (0 != memcmp(&eTime.time, &time->time, 2))))
+	{
+		RT_SetRealTime(&eTime);
+	}
 }

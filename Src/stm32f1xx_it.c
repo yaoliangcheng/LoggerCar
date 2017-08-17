@@ -37,11 +37,29 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
+#include "osConfig.h"
+
+#include "analog.h"
+#include "gprs.h"
+#include "gps.h"
+#include "tftlcd.h"
+
+#include "MainProcess.h"
+#include "RealTime.h"
 
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc1;
 extern RTC_HandleTypeDef hrtc;
+extern DMA_HandleTypeDef hdma_uart4_rx;
+extern DMA_HandleTypeDef hdma_uart4_tx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart2;
+
+extern TIM_HandleTypeDef htim6;
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
@@ -145,7 +163,6 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
   osSystickHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
@@ -171,6 +188,124 @@ void RTC_IRQHandler(void)
   /* USER CODE BEGIN RTC_IRQn 1 */
 
   /* USER CODE END RTC_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 channel1 global interrupt.
+*/
+void DMA1_Channel1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
+  ANALOG_ConvertDisable();
+  osSignalSet(realtimeTaskHandle, REALTIME_SENSOR_CONVERT_FINISH);
+
+  /* USER CODE END DMA1_Channel1_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 channel6 global interrupt.
+*/
+void DMA1_Channel6_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel6_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
+
+
+  /* USER CODE END DMA1_Channel6_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 channel7 global interrupt.
+*/
+void DMA1_Channel7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
+
+  /* USER CODE END DMA1_Channel7_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_tx);
+  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel7_IRQn 1 */
+}
+
+/**
+* @brief This function handles USART2 global interrupt.
+*/
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+	GPRS_UartIdleDeal();
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+
+  /* USER CODE END USART2_IRQn 1 */
+}
+
+/**
+* @brief This function handles UART4 global interrupt.
+*/
+void UART4_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART4_IRQn 0 */
+	TFTLCD_UartIdleDeal();
+
+  /* USER CODE END UART4_IRQn 0 */
+  HAL_UART_IRQHandler(&huart4);
+  /* USER CODE BEGIN UART4_IRQn 1 */
+
+  /* USER CODE END UART4_IRQn 1 */
+}
+
+/**
+* @brief This function handles TIM6 global interrupt.
+*/
+void TIM6_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_IRQn 0 */
+
+  /* USER CODE END TIM6_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim6);
+  /* USER CODE BEGIN TIM6_IRQn 1 */
+
+  /* USER CODE END TIM6_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA2 channel3 global interrupt.
+*/
+void DMA2_Channel3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Channel3_IRQn 0 */
+
+  /* USER CODE END DMA2_Channel3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart4_rx);
+  /* USER CODE BEGIN DMA2_Channel3_IRQn 1 */
+
+  /* USER CODE END DMA2_Channel3_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA2 channel5 global interrupt.
+*/
+void DMA2_Channel5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Channel5_IRQn 0 */
+
+  /* USER CODE END DMA2_Channel5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart4_tx);
+  /* USER CODE BEGIN DMA2_Channel5_IRQn 1 */
+
+  /* USER CODE END DMA2_Channel5_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

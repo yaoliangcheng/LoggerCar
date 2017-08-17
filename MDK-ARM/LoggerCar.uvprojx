@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -335,7 +335,7 @@
               <MiscControls>--C99</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F105xC</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;..\Task\Inc;..\Hardware\Inc</IncludePath>
+              <IncludePath>../Inc;                                      ../Drivers/STM32F1xx_HAL_Driver/Inc;                                      ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;                                      ../Drivers/CMSIS/Device/ST/STM32F1xx/Include;                                      ../Drivers/CMSIS/Include;                                      ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;                                      ../Middlewares/Third_Party/FreeRTOS/Source/include;                                      ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;                                      ..\Task\Inc;                                      ..\Hardware\Inc;                    ../Middlewares/Third_Party/FatFs/src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -434,6 +434,41 @@
               <FileType>1</FileType>
               <FilePath>../Src/rtc.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f1xx_hal_timebase_TIM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/stm32f1xx_hal_timebase_TIM.c</FilePath>
+            </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>fatfs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/fatfs.c</FilePath>
+            </File>
+            <File>
+              <FileName>user_diskio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/user_diskio.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -514,6 +549,31 @@
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rtc_ex.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f1xx_hal_adc_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_spi_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f1xx_hal_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -584,6 +644,21 @@
               <FileType>1</FileType>
               <FilePath>..\Task\Src\RealTime.c</FilePath>
             </File>
+            <File>
+              <FileName>GPRSProcess.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Task\Src\GPRSProcess.c</FilePath>
+            </File>
+            <File>
+              <FileName>MainProcess.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Task\Src\MainProcess.c</FilePath>
+            </File>
+            <File>
+              <FileName>TFTLCDProcess.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Task\Src\TFTLCDProcess.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -598,6 +673,81 @@
               <FileName>rt.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hardware\Src\rt.c</FilePath>
+            </File>
+            <File>
+              <FileName>analog.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\analog.c</FilePath>
+            </File>
+            <File>
+              <FileName>exFlash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\exFlash.c</FilePath>
+            </File>
+            <File>
+              <FileName>gprs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\gprs.c</FilePath>
+            </File>
+            <File>
+              <FileName>hih5030.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\hih5030.c</FilePath>
+            </File>
+            <File>
+              <FileName>ntc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\ntc.c</FilePath>
+            </File>
+            <File>
+              <FileName>input.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\input.c</FilePath>
+            </File>
+            <File>
+              <FileName>gps.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\gps.c</FilePath>
+            </File>
+            <File>
+              <FileName>file.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\file.c</FilePath>
+            </File>
+            <File>
+              <FileName>tftlcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\tftlcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>print.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\print.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Middlewares/FatFs</GroupName>
+          <Files>
+            <File>
+              <FileName>ff.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Middlewares/Third_Party/FatFs/src/ff.c</FilePath>
+            </File>
+            <File>
+              <FileName>syscall.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Middlewares/Third_Party/FatFs/src/option/syscall.c</FilePath>
+            </File>
+            <File>
+              <FileName>diskio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Middlewares/Third_Party/FatFs/src/diskio.c</FilePath>
+            </File>
+            <File>
+              <FileName>ff_gen_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Middlewares/Third_Party/FatFs/src/ff_gen_drv.c</FilePath>
             </File>
           </Files>
         </Group>
