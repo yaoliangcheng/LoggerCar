@@ -152,7 +152,6 @@ void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status)
 	else
 		TFTLCD_SendBuffer.buf.data.value.date[0] = 1;
 
-	/* 长度少了“：05”，秒位 */
 	memcpy(&TFTLCD_SendBuffer.buf.data.value.date[1],
 			TFTLCD_SendBuffer.tail, 4);
 

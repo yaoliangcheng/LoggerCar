@@ -76,6 +76,7 @@ osThreadId gprsprocessTaskHandle;
 
 /* 队列句柄 */
 osMessageQId realtimeMessageQId;
+osMessageQId adjustTimeMessageQId;
 osMessageQId analogMessageQId;
 osMessageQId infoMessageQId;
 osMessageQId infoCntMessageQId;
@@ -126,7 +127,7 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(DEBUG, DEBUG_Task, osPriorityNormal, 0, 128);
   debugTaskHandle = osThreadCreate(osThread(DEBUG), NULL);
 
-  osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 128);
+  osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 512);
   realtimeTaskHandle = osThreadCreate(osThread(REALTIME), NULL);
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
@@ -147,19 +148,22 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  osMessageQDef(REALTIME_MESSAGE, 1, sizeof(uint32_t*));
+  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
   realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
 
-  osMessageQDef(ANALOG_MESSAGE, 1, sizeof(uint32_t*));
+  osMessageQDef(ADJUSTTIME_MESSAGE, 2, sizeof(uint32_t*));
+  adjustTimeMessageQId = osMessageCreate(osMessageQ(ADJUSTTIME_MESSAGE), NULL);
+
+  osMessageQDef(ANALOG_MESSAGE, 2, sizeof(uint32_t*));
   analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
 
-
-  osMessageQDef(INFO_MESSAGE, 1, sizeof(uint32_t*));
+  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
   infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
 
   /* 数据条数传递的是值本身 */
-  osMessageQDef(INFO_CNT_MESSAGE, 1, sizeof(uint16_t));
+  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
   infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
+
 
   /* USER CODE END RTOS_QUEUES */
 }

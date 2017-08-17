@@ -33,7 +33,7 @@ typedef struct
 		} bit;
 		uint8_t all;
 	} status;
-} PrintChannelSelectTypedef;
+} PRINT_ChannelSelectTypedef;
 
 /******************************************************************************/
 void TFTLCD_Task(void);

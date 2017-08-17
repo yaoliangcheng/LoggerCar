@@ -7,7 +7,6 @@
 #include "common.h"
 
 #include "spi.h"
-#include "eeprom.h"
 #include "input.h"
 #include "gps.h"
 

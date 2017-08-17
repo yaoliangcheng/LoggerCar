@@ -11,7 +11,7 @@
 #define RT_RTC						(hrtc)
 
 /******************************************************************************/
-#define RTC_BKUP_DATA				(0xA0A1)
+#define RTC_BKUP_DATA				(0xA0A0)
 
 #define RTC_BKUP_REG_DATA			(RTC_BKP_DR2)
 #define RTC_BKUP_REG_YEAR			(RTC_BKP_DR3)
@@ -20,7 +20,7 @@
 #define RTC_BKUP_REG_WEEK			(RTC_BKP_DR6)
 
 /******************************************************************************/
-#define RT_OFFSET_CLOUD_TIME		(8)
+#define RT_OFFSET_CLOUD_TIME		(8)				/* 平台回文时间偏移 */
 
 /******************************************************************************/
 #pragma pack(push)

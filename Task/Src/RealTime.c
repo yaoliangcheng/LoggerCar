@@ -1,8 +1,10 @@
 #include "RealTime.h"
 
 #include "osConfig.h"
+#include "Mainprocess.h"
+
 #include "analog.h"
-#include "eeprom.h"
+#include "file.h"
 #include "analog.h"
 #include "tftlcd.h"
 
@@ -14,6 +16,7 @@ void REALTIME_Task(void)
 	ANALOG_ValueTypedef AnalogValue;
 
 	RT_Init(&realTime);
+
 
 	while(1)
 	{
@@ -51,10 +54,9 @@ void REALTIME_Task(void)
 				{
 					/* 获取传感器的值 */
 					ANALOG_GetSensorValue(&AnalogValue);
-					printf("模拟量转换完成！！！\r\n");
 
 					/* 如果记录间隔时间到，则触发记录 */
-					if (realTime.time.Minutes % EE_recordInterval == 0)
+					if (realTime.time.Minutes % FILE_DeviceParam.recordInterval == 0)
 					{
 						/* 发送记录时间数据 */
 						osMessagePut(realtimeMessageQId, (uint32_t)&realTime, 100);
@@ -64,6 +66,7 @@ void REALTIME_Task(void)
 
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
+//						osSignalSet(mainprocessTaskHandle, MAINPROCESS_START_TASK);
 					}
 
 					/* 更新液晶屏显示 */

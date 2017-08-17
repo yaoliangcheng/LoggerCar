@@ -6,11 +6,8 @@ void DEBUG_Task(void)
 
 	while(1)
 	{
-
-		printf("FreeRTOS正在运行......\r\n");
-
-		osDelay(10000);
-
+		printf("。");
+		osDelay(2000);
 	}
 }
 

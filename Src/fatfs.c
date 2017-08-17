@@ -52,6 +52,7 @@ uint8_t retUSER;    /* Return value for USER */
 char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
+#include "file.h"
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */
 DWORD freeClust, freeSect, totSect;	/* 空闲簇、空闲扇区、总扇区 */
@@ -68,7 +69,7 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-
+  FILE_ParamFileInit();
   /* USER CODE END Init */
 }
 
@@ -84,12 +85,20 @@ ErrorStatus FATFS_FileLink(void)
 	status = f_mount(&objFileSystem, USER_Path, 1);
 
 	if (status == FR_OK)
+	{
+		/* 进入临界区 */
+		taskENTER_CRITICAL();
 		return SUCCESS;
+	}
 	else if(status == FR_NO_FILESYSTEM)	/* 如果没有文件系统就格式化创建创建文件系统 */
 	{
 		/* 格式化 */
 		if (SUCCESS == FATFS_FileMake())
+		{
+			/* 进入临界区 */
+			taskENTER_CRITICAL();
 			return SUCCESS;
+		}
 		else
 			return ERROR;
 	}
@@ -104,7 +113,11 @@ ErrorStatus FATFS_FileUnlink(void)
 {
 	/* 不再使用文件系统，取消挂载文件系统 */
 	 if (FR_OK == f_mount(NULL, USER_Path, 1))
+	 {
+		 /* 退出临界区 */
+		 taskEXIT_CRITICAL();
 		 return SUCCESS;
+	 }
 	 else
 		 return ERROR;
 }
@@ -161,7 +174,7 @@ ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode)
  * @pBuffer:要写入的数据指针
  * @size：要写入数据的长度
  */
-ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size)
+ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size)
 {
 	uint32_t byteWrite;
 
@@ -183,7 +196,7 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, BYTE size)
  ** @pBuffer:要读出的数据指针
  * @size：要读出数据的长度
  */
-ErrorStatus FATFS_FileRead(BYTE* pBuffer, BYTE size)
+ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size)
 {
 	uint32_t byteRead;
 
@@ -222,10 +235,11 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 	if (FR_OK == f_getfree(USER_Path, &freeClust, &pfs))
 	{
 		/* 单位为KB */
-		freeSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
-		totSect   = freeClust           * pfs->csize * 4;
+		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
+		freeSect = freeClust           * pfs->csize * 4;
 
-		printf("设备总空间：%uKB 可用空间：%uKB\r\n", freeSect, totSect);
+		printf("设备总空间：%uKB 可用空间：%uKB\r\n", totSect, freeSect);
+		printf("设备剩余储存空间：%d%%\r\n", freeSect * 100 / totSect);
 
 		/* 没有空间可写 */
 		if (freeSect == 0)
@@ -245,51 +259,65 @@ ErrorStatus FATFS_GetSpaceInfo(void)
  */
 ErrorStatus FATFS_FileSeekEnd(void)
 {
-	if (objFile.fsize != 0)
-	{
-		if (FR_OK == f_lseek(&objFile, objFile.fsize))
-		{
-			printf("文件写入指针地址偏移：%d\r\n", objFile.fsize);
-			return SUCCESS;
-		}
-		else
-			return ERROR;
-	}
-
-	return SUCCESS;
+	if (FR_OK == f_lseek(&objFile, objFile.fsize))
+		return SUCCESS;
+	else
+		return ERROR;
 }
 
 /*******************************************************************************
- * function：将读写指针移动到文件末尾的后腿指定字节
- * @backwardByt:要后腿的字节数
+ * function:将读、写指针移动到文件的末尾向前一个结构体
  */
-ErrorStatus FATFS_FileSeekBackward(WORD backwardByte)
+ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 {
-	if (objFile.fsize != 0)
-	{
-		if (FR_OK == f_lseek(&objFile, objFile.fsize - backwardByte))
-			return SUCCESS;
-		else
-			return ERROR;
-	}
-
-	return SUCCESS;
+	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_InfoTypedef)))
+		return SUCCESS;
+	else
+		return ERROR;
 }
 
 /*******************************************************************************
  *
  */
-ErrorStatus FATFS_MakeFile(char* fileName)
+ErrorStatus FATFS_FileSeek(WORD byte)
 {
-	if (FR_OK == f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE))
+	if (byte <= objFile.fsize)
 	{
-		if (FR_OK == f_close(NULL))
+		if (FR_OK == f_lseek(&objFile, byte))
 			return SUCCESS;
 		else
 			return ERROR;
 	}
 	else
 		return ERROR;
+}
+
+/*******************************************************************************
+ *
+ */
+ErrorStatus FATFS_CreateFile(char* fileName)
+{
+	if (ERROR == FATFS_FileLink())
+		return ERROR;
+
+	if (ERROR == FATFS_FileOpen(fileName, FATFS_MODE_OPEN_ALWAYS_WRITE))
+		return ERROR;
+
+	if (ERROR == FATFS_FileClose())
+		return ERROR;
+
+	if (ERROR == FATFS_FileUnlink())
+		return ERROR;
+
+	return SUCCESS;
+}
+
+/*******************************************************************************
+ * function:返回该文件中结构体数量
+ */
+uint16_t FATFS_GetFileStructCount(void)
+{
+	return objFile.fsize / sizeof(FILE_InfoTypedef);
 }
 
 /* USER CODE END Application */

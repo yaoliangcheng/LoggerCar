@@ -52,11 +52,11 @@ void RT_Init(RT_TimeTypedef* time)
 	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
 	{
 		time->date.Year = 0X17;
-		time->date.Month = RTC_MONTH_JULY;
-		time->date.Date = 0x28;
+		time->date.Month = RTC_MONTH_AUGUST;
+		time->date.Date = 0x11;
 		time->date.WeekDay = RTC_WEEKDAY_FRIDAY;
-		time->time.Hours = 0x09;
-		time->time.Minutes = 0x50;
+		time->time.Hours = 0x08;
+		time->time.Minutes = 0x45;
 		time->time.Seconds = 0x00;
 		RT_SetRealTime(time);
 

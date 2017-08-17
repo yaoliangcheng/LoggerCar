@@ -3,11 +3,11 @@
 /*******************************************************************************
  *
  */
-void str2numb(uint8_t* buf, uint8_t* info, uint8_t size)
+void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size)
 {
 	while(size--)
 	{
-		*info++ = (*buf++) - '0';
+		*pNumb++ = (*pStr++) - '0';
 	}
 }
 
@@ -25,6 +25,39 @@ void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size)
 	{
 		*(pASCII + (i * 2))     = (*(pBCD + i) / 16) + '0';
 		*(pASCII + (i * 2) + 1) = (*(pBCD + i) % 16) + '0';
+	}
+}
+
+/*******************************************************************************
+ * function:把数值转换成BCD码
+ * @pHEX:数值指针
+ * @pBCD：BCD存放指针
+ * @size：要转换的数值长度
+ */
+void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
+{
+	uint8_t i;
+
+	for (i = 0; i < size; i++)
+	{
+		*(pBCD + i) = (*(pHEX + i) / 10 * 16 + *(pHEX + i) % 10);
+	}
+}
+
+/*******************************************************************************
+ * function:把数值转换成BCD码
+ * @pHEX:数值指针
+ * @pBCD：BCD存放指针
+ * @size：要转换的数值长度
+ */
+void HEX2ASCII(uint8_t* pHEX, uint8_t* pASCII, uint8_t size)
+{
+	uint8_t i;
+
+	for (i = 0; i < size; i++)
+	{
+		*(pASCII + (i * 2))     = (*(pHEX + i) / 10) + '0';
+		*(pASCII + (i * 2) + 1) = (*(pHEX + i) % 10) + '0';
 	}
 }
 

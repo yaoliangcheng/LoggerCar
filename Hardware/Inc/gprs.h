@@ -5,7 +5,6 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "eeprom.h"
 #include "exFlash.h"
 #include "file.h"
 
@@ -44,13 +43,13 @@ typedef struct
 	uint8_t dateSizeH;										/* 字节数 高位 */
 	uint8_t dateSizeL;										/* 字节数 低位 */
 	char seriaNumber[10];									/* SN号 */
-	EE_LocationTypeEnum locationType;						/* 定位标志 */
+	LocationTypdEnum locationType;							/* 定位标志 */
 	uint8_t firmwareVersion;								/* 固件版本 */
 	uint8_t recordInterval;									/* 记录间隔 */
 	uint8_t overLimitInterval;								/* 超标间隔 */
 	uint8_t resever[6];										/* 预留 */
-	uint8_t analogChannelNumb;								/* 模拟量n通道数 */
-	EE_ParamTypedef param[ANALOG_CHANNEL_NUMB - 1];			/* n个通道参数 */
+	uint8_t exitAnalogChannelNumb;							/* 模拟量n通道数 */
+	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
 	FILE_InfoTypedef dataPack[GPRS_PATCH_PACK_NUMB_MAX];	/* m条数据点 */
