@@ -11,7 +11,7 @@
 #define RT_RTC						(hrtc)
 
 /******************************************************************************/
-#define RTC_BKUP_DATA				(0xA0A0)
+#define RTC_BKUP_DATA				(0xA0A1)
 
 #define RTC_BKUP_REG_DATA			(RTC_BKP_DR2)
 #define RTC_BKUP_REG_YEAR			(RTC_BKP_DR3)

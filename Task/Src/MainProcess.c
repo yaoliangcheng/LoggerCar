@@ -106,9 +106,6 @@ void MAINPROCESS_Task(void)
 		/* 传递本次发送的数据条数，注意：curPatchPack是以数据形式传递，不是传递指针 */
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);
 
-		/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
-		osMessagePut(adjustTimeMessageQId, (uint32_t)&time, 1000);
-
 		/* 使能MainProcess任务发送数据 */
 		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
 

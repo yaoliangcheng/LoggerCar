@@ -76,17 +76,17 @@ void TFTLCD_RealtimeRefresh(RT_TimeTypedef* rt)
 	/* 在年的前面添加上“20” */
 	TFTLCD_SendBuffer.buf.data.value.time.year[0] = '2';
 	TFTLCD_SendBuffer.buf.data.value.time.year[1] = '0';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.year[2], &rt->date.Year, 1);
+	HEX2ASCII(&rt->date.Year, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.year[2], 1);
 	TFTLCD_SendBuffer.buf.data.value.time.str1 = '.';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.month[0], &rt->date.Month, 1);
+	HEX2ASCII(&rt->date.Month, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.month[0], 1);
 	TFTLCD_SendBuffer.buf.data.value.time.str2 = '.';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.day[0], &rt->date.Date, 1);
+	HEX2ASCII(&rt->date.Date, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.day[0], 1);
 	TFTLCD_SendBuffer.buf.data.value.time.str3 = ' ';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.hour[0], &rt->time.Hours, 1);
+	HEX2ASCII(&rt->time.Hours, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.hour[0], 1);
 	TFTLCD_SendBuffer.buf.data.value.time.str4 = ':';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.min[0], &rt->time.Minutes, 1);
+	HEX2ASCII(&rt->time.Minutes, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.min[0], 1);
 	TFTLCD_SendBuffer.buf.data.value.time.str5 = ':';
-	BCD2ASCII(&TFTLCD_SendBuffer.buf.data.value.time.sec[0], &rt->time.Seconds, 1);
+	HEX2ASCII(&rt->time.Seconds, (uint8_t*)&TFTLCD_SendBuffer.buf.data.value.time.sec[0], 1);
 
 	memcpy(&TFTLCD_SendBuffer.buf.data.value.date[sizeof(TFTLCD_TimeUpdateTypedef)],
 			TFTLCD_SendBuffer.tail, 4);

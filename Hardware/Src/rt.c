@@ -37,8 +37,8 @@ static void RT_BKUP_ReadDate(void)
  */
 void RT_SetRealTime(RT_TimeTypedef* time)
 {
-	HAL_RTC_SetDate(&RT_RTC, &time->date, RTC_FORMAT_BCD);
-	HAL_RTC_SetTime(&RT_RTC, &time->time, RTC_FORMAT_BCD);
+	HAL_RTC_SetDate(&RT_RTC, &time->date, RTC_FORMAT_BIN);
+	HAL_RTC_SetTime(&RT_RTC, &time->time, RTC_FORMAT_BIN);
 
 	/* 将更新的日期备份 */
 	RT_BKUP_UpdateDate(time);
@@ -51,12 +51,12 @@ void RT_Init(RT_TimeTypedef* time)
 {
 	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
 	{
-		time->date.Year = 0X17;
+		time->date.Year = 17;
 		time->date.Month = RTC_MONTH_AUGUST;
-		time->date.Date = 0x11;
-		time->date.WeekDay = RTC_WEEKDAY_FRIDAY;
-		time->time.Hours = 0x08;
-		time->time.Minutes = 0x45;
+		time->date.Date = 17;
+		time->date.WeekDay = RTC_WEEKDAY_THURSDAY;
+		time->time.Hours = 10;
+		time->time.Minutes = 55;
 		time->time.Seconds = 0x00;
 		RT_SetRealTime(time);
 
@@ -65,7 +65,7 @@ void RT_Init(RT_TimeTypedef* time)
 	else
 	{
 		RT_BKUP_ReadDate();
-		HAL_RTC_GetDate(&RT_RTC, &time->date, RTC_FORMAT_BCD);
+		HAL_RTC_GetDate(&RT_RTC, &time->date, RTC_FORMAT_BIN);
 	}
 }
 
@@ -89,12 +89,12 @@ void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time)
 	/* 将字符转换成数字 */
 	str2numb((pBuffer + RT_OFFSET_CLOUD_TIME), str, sizeof(str));
 
-	eTime.date.Year    = (str[0] << 4)  + (str[1]);
-	eTime.date.Month   = (str[2] << 4)  + (str[3]);
-	eTime.date.Date    = (str[4] << 4)  + (str[5]);
-	eTime.time.Hours   = (str[6] << 4)  + (str[7]);
-	eTime.time.Minutes = (str[8] << 4)  + (str[9]);
-	eTime.time.Seconds = (str[10] << 4) + (str[11]);
+	eTime.date.Year    = (str[0]  * 10)  + str[1];
+	eTime.date.Month   = (str[2]  * 10)  + str[3];
+	eTime.date.Date    = (str[4]  * 10)  + str[5];
+	eTime.time.Hours   = (str[6]  * 10)  + str[7];
+	eTime.time.Minutes = (str[8]  * 10)  + str[9];
+	eTime.time.Seconds = (str[10] * 10)  + str[11];
 
 	/* 接收到平台回文，与发送时间比较，若相差年月日时分有偏差，则校准，秒钟不计，校准字节长度为5 */
 	if ((0 != memcmp(&eTime.date, &time->date, 3)
