@@ -57,26 +57,27 @@ void REALTIME_Task(void)
 					/* 更新液晶屏显示 */
 					TFTLCD_AnalogDataRefresh(&AnalogValue);
 				}
+
+				/* 如果记录间隔时间到，则触发记录 */
+				if (realTime.time.Seconds % 60 == 0)
+				{
+					/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
+					osMessagePut(adjustTimeMessageQId, (uint32_t)&realTime, 1000);
+
+					/* 发送记录时间数据,先把时间转换成BCD模式 */
+					HEX2BCD((uint8_t*)&realTime, (uint8_t*)&sTime, sizeof(RT_TimeTypedef));
+					osMessagePut(realtimeMessageQId, (uint32_t)&sTime, 100);
+
+					/* 发送模拟量数据 */
+					osMessagePut(analogMessageQId, (uint32_t)&AnalogValue, 100);
+
+					/* 激活MainProcess任务 */
+					osThreadResume(mainprocessTaskHandle);
+				}
+
 			}
 
-			/* 如果记录间隔时间到，则触发记录 */
-//			if (realTime.time.Minutes % FILE_DeviceParam.recordInterval == 0)
-			if ((realTime.time.Minutes % 5 == 0)
-					&& (realTime.time.Seconds % 60 == 0))
-			{
-				/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
-				osMessagePut(adjustTimeMessageQId, (uint32_t)&realTime, 1000);
 
-				/* 发送记录时间数据,先把时间转换成BCD模式 */
-				HEX2BCD((uint8_t*)&realTime, (uint8_t*)&sTime, sizeof(RT_TimeTypedef));
-				osMessagePut(realtimeMessageQId, (uint32_t)&sTime, 100);
-
-				/* 发送模拟量数据 */
-				osMessagePut(analogMessageQId, (uint32_t)&AnalogValue, 100);
-
-				/* 激活MainProcess任务 */
-				osThreadResume(mainprocessTaskHandle);
-			}
 		}
 	}
 }

@@ -4,8 +4,8 @@
 uint8_t PRINT_SendBuffer[PRINT_SEND_BYTES_MAX];
 
 /******************************************************************************/
-static void PRINT_SendData(uint8_t size);
-static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf);
+static void PRINT_SendData(uint16_t size);
+static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
 
 /*******************************************************************************
  * function:打印日期
@@ -33,9 +33,10 @@ void PRINT_SetMode(void)
 /*******************************************************************************
  * function:打印输出
  */
-void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
+BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 {
 	uint8_t index = 0;
+	BOOL    status = FALSE;
 
 	/* 时间转换 */
 	BCD2ASCII((char*)&PRINT_SendBuffer[0], &info->realTime.hour, 1);
@@ -48,42 +49,50 @@ void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 	/* 根据打印选择，输出数据 */
 	if (select->status.bit.ch1)
 	{
-		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
+		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp1, &PRINT_SendBuffer[index],
+				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
 		index += 6;
 	}
 	if (select->status.bit.ch2)
 	{
-		PRINT_GetAnalog(info->analogValue.humi1, &PRINT_SendBuffer[index]);
+		PRINT_GetAnalogAndAdjust(info->analogValue.humi1, &PRINT_SendBuffer[index],
+				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
 		index += 6;
 	}
 	if (select->status.bit.ch3)
 	{
-		PRINT_GetAnalog(info->analogValue.temp2, &PRINT_SendBuffer[index]);
+		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp2, &PRINT_SendBuffer[index],
+				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
 		index += 6;
 	}
 	if (select->status.bit.ch4)
 	{
-		PRINT_GetAnalog(info->analogValue.humi2, &PRINT_SendBuffer[index]);
+		PRINT_GetAnalogAndAdjust(info->analogValue.humi2, &PRINT_SendBuffer[index],
+				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
 		index += 6;
 	}
 	if (select->status.bit.ch5)
 	{
-		PRINT_GetAnalog(info->analogValue.temp3, &PRINT_SendBuffer[index]);
+		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp3, &PRINT_SendBuffer[index],
+				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
 		index += 6;
 	}
 	if (select->status.bit.ch6)
 	{
-		PRINT_GetAnalog(info->analogValue.humi3, &PRINT_SendBuffer[index]);
+		PRINT_GetAnalogAndAdjust(info->analogValue.humi3, &PRINT_SendBuffer[index],
+				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
 		index += 6;
 	}
 	if (select->status.bit.ch7)
 	{
-		PRINT_GetAnalog(info->analogValue.humi4, &PRINT_SendBuffer[index]);
+		status = PRINT_GetAnalogAndAdjust(info->analogValue.humi4, &PRINT_SendBuffer[index],
+				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
 		index += 6;
 	}
 	if (select->status.bit.ch8)
 	{
-		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
+		PRINT_GetAnalogAndAdjust(info->analogValue.temp1, &PRINT_SendBuffer[index],
+				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
 		index += 6;
 	}
 
@@ -92,6 +101,8 @@ void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 	index++;
 
 	PRINT_SendData(index);
+
+	return status;
 }
 
 /*******************************************************************************
@@ -147,19 +158,25 @@ void PRINT_TailOut(void)
 /*******************************************************************************
  *
  */
-static void PRINT_SendData(uint8_t size)
+static void PRINT_SendData(uint16_t size)
 {
 //	HAL_UART_Transmit_DMA(&PRINT_UART, PRINT_SendBuffer, size);
 	HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
 }
 
 /*******************************************************************************
- *
+ * function:获取模拟量的值，将其输出打印，并且判断是否超标
+ * analog：模拟量值
+ * buf：转换成字符串的指针
+ * alarmUp:报警上限
+ * alarmLow：报警下限
+ * return: true->超标，  false->正常
  */
-static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf)
+static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow)
 {
-	float temp;
+	float    temp;
 	uint16_t data;
+	BOOL     status = FALSE;
 
 	data = (HalfWord_GetLowByte(analog) << 8) | HalfWord_GetHighByte(analog);
 
@@ -170,6 +187,15 @@ static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf)
 		temp = (float)(data & 0x7FFF) / 10;
 
 	sprintf((char*)buf, "%6.1f", temp);
+
+	/* 报警上限值有效，并且超标 */
+	if ((alarmUp != PRINT_ALARM_INVALID) && (temp > alarmUp))
+		status = TRUE;
+
+	if ((alarmLow != PRINT_ALARM_INVALID) && (temp < alarmLow))
+		status = TRUE;
+
+	return status;
 }
 
 

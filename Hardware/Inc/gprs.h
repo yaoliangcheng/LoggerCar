@@ -27,6 +27,8 @@
 
 #define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
 
+#define GPRS_SIGNAL_QUALITY_OFFSET			(8)
+
 /******************************************************************************/
 #pragma pack(push)
 #pragma pack(1)											/* °´×Ö½Ú¶ÔÆë */
@@ -69,4 +71,5 @@ void GPRS_SendCmd(char* str);
 void GPRS_UartIdleDeal(void);
 void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack);
 void GPRS_RstModule(void);
+uint8_t GPRS_GetSignalQuality(uint8_t* buf);
 #endif

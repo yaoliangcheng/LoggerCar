@@ -280,11 +280,11 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 ErrorStatus FILE_ParamFileInit(void)
 {
 	/* 挂载文件系统 */
-	if (ERROR == FATFS_FileLink())
-		return ERROR;
+//	if (ERROR == FATFS_FileLink())
+//		return ERROR;
 
 	/* 如果文件不存在 */
-	if (FATFS_FileOpen(PARAM_FILE_NAME, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
+//	if (FATFS_FileOpen(PARAM_FILE_NAME, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
 	{
 		memcpy(FILE_DeviceParam.deviceSN, "1708151515", sizeof(FILE_DeviceParam.deviceSN));
 		FILE_DeviceParam.locationType    = LOCATION_GPS;
@@ -317,19 +317,36 @@ ErrorStatus FILE_ParamFileInit(void)
 		FILE_DeviceParam.param[7].channelUnit = UNIT_HUMI;
 		FILE_DeviceParam.param[7].dataFormat  = FORMAT_ONE_DECIMAL;
 
+		FILE_DeviceParam.temp1.alarmValueUp       = 40;
+		FILE_DeviceParam.temp1.alarmValueLow      = -10;
+		FILE_DeviceParam.temp1.perwarningValueUp  = 30;
+		FILE_DeviceParam.temp1.perwarningValueLow = -5;
+		FILE_DeviceParam.temp2.alarmValueUp       = 40;
+		FILE_DeviceParam.temp2.alarmValueLow      = -10;
+		FILE_DeviceParam.temp2.perwarningValueUp  = 30;
+		FILE_DeviceParam.temp2.perwarningValueLow = -5;
+		FILE_DeviceParam.temp3.alarmValueUp       = 40;
+		FILE_DeviceParam.temp3.alarmValueLow      = -10;
+		FILE_DeviceParam.temp3.perwarningValueUp  = 30;
+		FILE_DeviceParam.temp3.perwarningValueLow = -5;
+		FILE_DeviceParam.temp4.alarmValueUp       = 40;
+		FILE_DeviceParam.temp4.alarmValueLow      = -10;
+		FILE_DeviceParam.temp4.perwarningValueUp  = 30;
+		FILE_DeviceParam.temp4.perwarningValueLow = -5;
+
 		FATFS_FileOpen(PARAM_FILE_NAME, FATFS_MODE_OPEN_ALWAYS_WRITE);
 		FATFS_FileWrite((uint8_t*)&FILE_DeviceParam, sizeof(FILE_DeviceParam));
 	}
 	/* 打开成功则说明文件存在 */
-	else
-	{
-		FATFS_FileRead((uint8_t*)&FILE_DeviceParam, sizeof(FILE_DeviceParam));
-	}
+//	else
+//	{
+//		FATFS_FileRead((uint8_t*)&FILE_DeviceParam, sizeof(FILE_DeviceParam));
+//	}
 
-	if (FATFS_FileClose() == ERROR)
-		return ERROR;
+//	if (FATFS_FileClose() == ERROR)
+//		return ERROR;
 
-	FATFS_FileUnlink();
+//	FATFS_FileUnlink();
 
 	return SUCCESS;
 }
@@ -361,7 +378,11 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 		startTimeStructOffset = SearchTimeInFile(startTime);
 	}
 	else
+	{
 		printf("未找到有效的开始打印时间文件\r\n");
+		FATFS_FileUnlink();
+		return ERROR;
+	}
 
 	if (FATFS_FileClose() == ERROR)
 		return ERROR;
@@ -392,7 +413,7 @@ ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stop
 	PRINT_TailOut();
 
 	FATFS_FileUnlink();
-	
+
 	return SUCCESS;
 }
 
@@ -607,12 +628,14 @@ static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
 
 /*******************************************************************************
  * function:根据时间点打印同一个文件内的数据,endPoint为0xffff，则打印到文件结尾
+ * >>>根据GSP规定，普通数据5分钟打印一条，正常数据2分钟打印一条。
  */
 static void selectDataPrint(char* fileName,
 							uint16_t startPoint, uint16_t endPoint,
 							PRINT_ChannelSelectTypedef* select)
 {
 	FILE_InfoTypedef info;
+	BOOL status = FALSE;
 
 	/* 打开文件 */
 	FATFS_FileOpen(fileName, FATFS_MODE_OPEN_EXISTING_READ);
@@ -626,12 +649,16 @@ static void selectDataPrint(char* fileName,
 		FATFS_FileSeek(startPoint * sizeof(FILE_InfoTypedef));
 		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_InfoTypedef)) == SUCCESS)
 		{
+			/* 判断结束时间，如果超过，则停止打印 */
 			if (endPoint < ((info.realTime.hour << 8) | (info.realTime.min)))
 				break;
 			else
 			{
-				PRINT_DataOut(&info, select);
-				startPoint++;
+				status = PRINT_DataOut(&info, select);
+				if (status)
+					startPoint += 2;
+				else
+					startPoint += 5;
 			}
 		}
 	}

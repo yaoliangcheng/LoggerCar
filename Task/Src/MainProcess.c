@@ -33,17 +33,19 @@ void MAINPROCESS_Task(void)
 	while(1)
 	{		
 		/* 获取时间 */
-		signal = osMessageGet(realtimeMessageQId, 5000);
+		signal = osMessageGet(realtimeMessageQId, 1000);
 		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
 		/* 获取模拟量数据 */
-		signal = osMessageGet(analogMessageQId, 2000);
+		signal = osMessageGet(analogMessageQId, 1000);
 		AnalogValue = (ANALOG_ValueTypedef*)signal.value.v;
 
 		/* 获取定位数据 */
 		/* 激活GPRSProcess任务，启动GPS转换 */
-		osThreadResume(gprsprocessTaskHandle);
-		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
+//		osThreadResume(gprsprocessTaskHandle);
+//		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
+
+		osMessagePut(gprsTaskMessageQid, START_TASK_GPS, 1000);
 
 		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，30s */
 		/* 刚启动模块的第一次定位耗时长，也不能得到定位数据，可以放弃 */
@@ -107,7 +109,8 @@ void MAINPROCESS_Task(void)
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);
 
 		/* 使能MainProcess任务发送数据 */
-		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
+//		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
+		osMessagePut(gprsTaskMessageQid, START_TASK_GPRS, 1000);
 
 		/* 等待GPRSProcess完成 */
 		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 30000);

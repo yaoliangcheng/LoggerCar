@@ -149,6 +149,16 @@ void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 	GPRS_SendData(&sendBuf->head, dataSize + 5);
 }
 
+/*******************************************************************************
+ * function：获取信号质量
+ *
+ */
+uint8_t GPRS_GetSignalQuality(uint8_t* buf)
+{
+	uint8_t temp[2];
 
+	str2numb(&buf[GPRS_SIGNAL_QUALITY_OFFSET], temp, 2);
+	return (uint8_t)(temp[0] * 10 + temp[1]);
+}
 
 

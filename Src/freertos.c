@@ -80,6 +80,7 @@ osMessageQId adjustTimeMessageQId;
 osMessageQId analogMessageQId;
 osMessageQId infoMessageQId;
 osMessageQId infoCntMessageQId;
+osMessageQId gprsTaskMessageQid;
 
 /* USER CODE END Variables */
 
@@ -164,6 +165,8 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
   infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
 
+  osMessageQDef(GPRS_TASK_MESSAGE, 5, sizeof(uint8_t));
+  gprsTaskMessageQid = osMessageCreate(osMessageQ(GPRS_TASK_MESSAGE), NULL);
 
   /* USER CODE END RTOS_QUEUES */
 }

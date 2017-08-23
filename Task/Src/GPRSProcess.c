@@ -6,9 +6,6 @@
 #include "osConfig.h"
 #include "MainProcess.h"
 
-/******************************************************************************/
-static void SendFailedHandle(void);
-
 /*******************************************************************************
  *
  */
@@ -16,16 +13,18 @@ void GPRSPROCESS_Task(void)
 {
 	osEvent signal;
 	GPRS_ModuleStatusEnum moduleStatus = MODULE_INVALID;		/* GPRS模块状态 */
-	char* expectString;						/* 预期收到的字符串 */
+	char* expectString;											/* 预期收到的字符串 */
 
-	GPRS_StructTypedef sendStruct;			/* 发送结构 */
+	GPRS_StructTypedef sendStruct;								/* 发送结构 */
 	GPS_LocateTypedef  location;
 	RT_TimeTypedef*    eTime;
 
-	uint8_t moduleTimeoutCnt;				/* 模块超时计数 */
-	uint8_t moduleErrorCnt;					/* 模块接收错误指令计数 */
-	uint16_t curPatchPack;					/* 本次上传条数 */
-	BOOL gprsInited;						/* gprs功能初始化标志位 */
+	GPRS_TaskStatusEnum taskStatus;
+	uint8_t moduleTimeoutCnt;									/* 模块超时计数 */
+	uint8_t moduleErrorCnt;										/* 模块接收错误指令计数 */
+	uint16_t curPatchPack;										/* 本次上传条数 */
+	BOOL gprsInited;											/* gprs功能初始化标志位 */
+	uint8_t signalQuality;										/* 信号质量值 */
 
 	GPRS_Init();
 	/* 初始化发送结构体 */
@@ -38,7 +37,7 @@ void GPRSPROCESS_Task(void)
 		{
 		/* 如果模块无效，则先执行开机 */
 		case MODULE_INVALID:
-			printf("模块开机\r\n");
+			DebugPrintf("模块开机\r\n");
 			/* 开机 */
 			GPRS_PWR_CTRL_ENABLE();
 			expectString = AT_CMD_POWER_ON_READY_RESPOND;
@@ -47,124 +46,41 @@ void GPRSPROCESS_Task(void)
 
 		/* 设置波特率 */
 		case SET_BAUD_RATE:
-			printf("设置波特率\r\n");
+			DebugPrintf("设置波特率\r\n");
 			GPRS_SendCmd(AT_CMD_SET_BAUD_RATE);
 			expectString = AT_CMD_SET_BAUD_RATE_RESPOND;
 			moduleStatus = SET_BAUD_RATE_FINISH;
+			break;
 
+		/* 关闭回显模式 */
+		case ECHO_DISABLE:
+			DebugPrintf("关闭回显模式\r\n");
+			GPRS_SendCmd(AT_CMD_ECHO_DISABLE);
+			expectString = AT_CMD_ECHO_DISABLE_RESPOND;
+			moduleStatus = ECHO_DISABLE_FINISH;
 			break;
 
 		/* 使能GPS功能 */
 		case ENABLE_GPS:
-			printf("使能GPS功能\r\n");
+			DebugPrintf("使能GPS功能\r\n");
 			GPRS_SendCmd(AT_CMD_GPS_ENABLE);
 			expectString = AT_CMD_GPS_ENABLE_RESPOND;
 			moduleStatus = ENABLE_GPS_FINISH;
 			break;
 
-		/* 获取GNRMC定位值 */
-		case GET_GPS_GNRMC:
-			/* 等待GPS使能信号 */
-			signal = osSignalWait(GPRSPROCESS_GPS_ENABLE, 5000);
-			if ((signal.value.signals & GPRSPROCESS_GPS_ENABLE) == GPRSPROCESS_GPS_ENABLE)
+		/* 初始状态 */
+		case INIT:
+			signal = osMessageGet(gprsTaskMessageQid, osWaitForever);
+			taskStatus = (GPRS_TaskStatusEnum)signal.value.v;
+			switch (taskStatus)
 			{
-				printf("获取GNRMC定位值\r\n");
-				/* GPS功能使能比较慢，需要先延时一段时间 */
-				GPRS_SendCmd(AT_CMD_GPS_GET_GNRMC);
-				expectString = AT_CMD_GPS_GET_GNRMC_RESPOND;
-				moduleStatus = GET_GPS_GNRMC_FINISH;
-			}
-			break;
+			/* 开启定位 */
+			case START_TASK_GPS:
+				moduleStatus = GET_GPS_GNRMC;
+				break;
 
-		/* 查询SIM卡状态 */
-		case CHECK_SIM_STATUS:
-			/* 判断GPRS功能是否初始化完成，是则直接跳转到获取服务器地址 */
-			if (gprsInited == TRUE)
-			{
-				printf("GPRS功能已初始化\r\n");
-				GPRS_SendCmd(AT_CMD_CHECK_STATUS);
-				expectString = AT_CMD_CHECK_STATUS_RESPOND;
-				moduleStatus = SET_SERVER_IP_ADDR;
-			}
-			/* 否，则执行初始化 */
-			else
-			{
-				printf("查询sim卡状态\r\n");
-				GPRS_SendCmd(AT_CMD_CHECK_SIM_STATUS);
-				expectString = AT_CMD_CHECK_SIM_STATUS_RESPOND;
-				moduleStatus = CHECK_SIM_STATUS_FINISH;
-			}
-			break;
-
-		/* 查找网络状态 */
-		case SEARCH_NET_STATUS:
-			printf("查找网络\r\n");
-			GPRS_SendCmd(AT_CMD_SEARCH_NET_STATUS);
-			expectString = AT_CMD_SEARCH_NET_STATUS_RESPOND;
-			moduleStatus = SEARCH_NET_STATUS_FINISH;
-			break;
-
-		/* 查找GPRS状态 */
-		case CHECK_GPRS_STATUS:
-			printf("查找GPRS状态\r\n");
-			GPRS_SendCmd(AT_CMD_CHECK_GPRS_STATUS);
-			expectString = AT_CMD_CHECK_GPRS_STATUS_RESPOND;
-			moduleStatus = CHECK_GPRS_STATUS_FINISH;
-			break;
-
-		/* 设置单连接方式 */
-		case SET_SINGLE_LINK:
-			printf("设置单连方式\r\n");
-			GPRS_SendCmd(AT_CMD_SET_SINGLE_LINK);
-			expectString = AT_CMD_SET_SINGLE_LINK_RESPOND;
-			moduleStatus = SET_SINGLE_LINK_FINISH;
-			break;
-
-		/* 设置为透传模式 */
-		case SET_SERIANET_MODE:
-			printf("设置透传模式\r\n");
-			GPRS_SendCmd(AT_CMD_SET_SERIANET_MODE);
-			expectString = AT_CMD_SET_SERIANET_MODE_RESPOND;
-			moduleStatus = SET_SERIANET_MODE_FINISH;
-			break;
-
-		/* 设置APN名称 */
-		case SET_APN_NAME:
-			printf("设置APN名称\r\n");
-			GPRS_SendCmd(AT_CMD_SET_APN_NAME);
-			expectString = AT_CMD_SET_APN_NAME_RESPOND;
-			moduleStatus = SET_APN_NAME_FINISH;
-			break;
-
-		/* 激活PDP场景 */
-		case ACTIVE_PDP:
-			printf("激活PDP场景\r\n");
-			GPRS_SendCmd(AT_CMD_ACTIVE_PDP);
-			expectString = AT_CMD_ACTIVE_PDP_RESPOND;
-			moduleStatus = ACTIVE_PDP_FINISH;
-			break;
-
-		/* 获取本机IP地址 */
-		case GET_SELF_IP_ADDR:
-			printf("获取本机IP地址\r\n");
-			GPRS_SendCmd(AT_CMD_GET_SELF_IP_ADDR);
-			expectString = AT_CMD_GET_SELF_IP_ADDR_RESPOND;
-			moduleStatus = GET_SELF_IP_ADDR_FINISH;
-			/* 标记GPRS功能初始化完成 */
-			gprsInited = TRUE;
-			break;
-
-		/* 设置服务器地址 */
-		case SET_SERVER_IP_ADDR:
-			/* 等待发送使能信号 */
-			signal = osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 20000);
-			if ((signal.value.signals & GPRSPROCESS_SEND_DATA_ENABLE) == GPRSPROCESS_SEND_DATA_ENABLE)
-			{
-				printf("获取服务器地址\r\n");
-				GPRS_SendCmd(AT_CMD_SET_SERVER_IP_ADDR);
-				expectString = AT_CMD_SET_SERVER_IP_ADDR_RESPOND;
-				moduleStatus = SET_SERVER_IP_ADDR_FINISH;
-
+			/* 开启GPRS发送数据 */
+			case START_TASK_GPRS:
 				/* 获取本次发送的条数 */
 				signal = osMessageGet(infoCntMessageQId, 2000);
 				curPatchPack = signal.value.v;
@@ -176,22 +92,152 @@ void GPRSPROCESS_Task(void)
 				/* 获取当前时间用于校准 */
 				signal = osMessageGet(adjustTimeMessageQId, 2000);
 				eTime = (RT_TimeTypedef*)signal.value.v;
+
+				/* 如果模块已经初始化完成 */
+				if (gprsInited == TRUE)
+					moduleStatus = GET_SIGNAL_QUALITY;
+				else
+					moduleStatus = CHECK_SIM_STATUS;
+				break;
+
+			/* 开启短信发送 */
+			case START_TASK_GSM:
+				break;
+
+			default:
+				break;
 			}
+
+			/* 获取状态后，先发一次AT命令 */
+			GPRS_SendCmd(AT_CMD_CHECK_STATUS);
+			expectString = AT_CMD_CHECK_STATUS_RESPOND;
+			break;
+
+		/* 获取GNRMC定位值 */
+		case GET_GPS_GNRMC:
+			DebugPrintf("获取GNRMC定位值\r\n");
+			/* GPS功能使能比较慢，需要先延时一段时间 */
+			GPRS_SendCmd(AT_CMD_GPS_GET_GNRMC);
+			expectString = AT_CMD_GPS_GET_GNRMC_RESPOND;
+			moduleStatus = GET_GPS_GNRMC_FINISH;
+			break;
+
+		/* 查询SIM卡状态 */
+		case CHECK_SIM_STATUS:
+			DebugPrintf("查询sim卡状态\r\n");
+			GPRS_SendCmd(AT_CMD_CHECK_SIM_STATUS);
+			expectString = AT_CMD_CHECK_SIM_STATUS_RESPOND;
+			moduleStatus = CHECK_SIM_STATUS_FINISH;
+			break;
+
+		/* 查找网络状态 */
+		case SEARCH_NET_STATUS:
+			DebugPrintf("查找网络\r\n");
+			GPRS_SendCmd(AT_CMD_SEARCH_NET_STATUS);
+			expectString = AT_CMD_SEARCH_NET_STATUS_RESPOND;
+			moduleStatus = SEARCH_NET_STATUS_FINISH;
+			break;
+
+		/* 获取运营商信息 */
+		case GET_OPERATOR:
+			DebugPrintf("获取运营商信息\r\n");
+			GPRS_SendCmd(AT_CMD_GET_OPERATOR);
+			expectString = AT_CMD_GET_OPERATOR_RESPOND;
+			moduleStatus = GET_OPERATOR_FINISH;
+			break;
+
+		/* 设置字符集格式为GSM */
+		case SET_TEXT_FORMAT_GSM:
+			DebugPrintf("设置字符集格式为GSM\r\n");
+			GPRS_SendCmd(AT_CMD_SET_TEXT_FORMAT_GSM);
+			expectString = AT_CMD_SET_TEXT_FORMAT_GSM_RESPOND;
+			moduleStatus = SET_TEXT_FORMAT_GSM_FINISH;
+			break;
+
+		/* 获取本机号码 */
+		case GET_SUBSCRIBER_NUMB:
+			DebugPrintf("获取本机号码\r\n");
+			GPRS_SendCmd(AT_CMD_GET_SUBSCRIBER_NUMB);
+			expectString = AT_CMD_GET_SUBSCRIBER_NUMB_RESPOND;
+			moduleStatus = GET_SUBSCRIBER_NUMB_FINISH;
+			break;
+
+		/* 查找GPRS状态 */
+		case CHECK_GPRS_STATUS:
+			DebugPrintf("查找GPRS状态\r\n");
+			GPRS_SendCmd(AT_CMD_CHECK_GPRS_STATUS);
+			expectString = AT_CMD_CHECK_GPRS_STATUS_RESPOND;
+			moduleStatus = CHECK_GPRS_STATUS_FINISH;
+			break;
+
+		/* 设置单连接方式 */
+		case SET_SINGLE_LINK:
+			DebugPrintf("设置单连方式\r\n");
+			GPRS_SendCmd(AT_CMD_SET_SINGLE_LINK);
+			expectString = AT_CMD_SET_SINGLE_LINK_RESPOND;
+			moduleStatus = SET_SINGLE_LINK_FINISH;
+			break;
+
+		/* 设置为透传模式 */
+		case SET_SERIANET_MODE:
+			DebugPrintf("设置透传模式\r\n");
+			GPRS_SendCmd(AT_CMD_SET_SERIANET_MODE);
+			expectString = AT_CMD_SET_SERIANET_MODE_RESPOND;
+			moduleStatus = SET_SERIANET_MODE_FINISH;
+			break;
+
+		/* 设置APN名称 */
+		case SET_APN_NAME:
+			DebugPrintf("设置APN名称\r\n");
+			GPRS_SendCmd(AT_CMD_SET_APN_NAME);
+			expectString = AT_CMD_SET_APN_NAME_RESPOND;
+			moduleStatus = SET_APN_NAME_FINISH;
+			break;
+
+		/* 激活PDP场景 */
+		case ACTIVE_PDP:
+			DebugPrintf("激活PDP场景\r\n");
+			GPRS_SendCmd(AT_CMD_ACTIVE_PDP);
+			expectString = AT_CMD_ACTIVE_PDP_RESPOND;
+			moduleStatus = ACTIVE_PDP_FINISH;
+			break;
+
+		/* 获取本机IP地址 */
+		case GET_SELF_IP_ADDR:
+			DebugPrintf("获取本机IP地址\r\n");
+			GPRS_SendCmd(AT_CMD_GET_SELF_IP_ADDR);
+			expectString = AT_CMD_GET_SELF_IP_ADDR_RESPOND;
+			moduleStatus = GET_SELF_IP_ADDR_FINISH;
+			break;
+
+		/* 获取信号质量 */
+		case GET_SIGNAL_QUALITY:
+			DebugPrintf("获取信号质量\r\n");
+			GPRS_SendCmd(AT_CMD_GET_SIGNAL_QUALITY);
+			expectString = AT_CMD_GET_SIGNAL_QUALITY_RESPOND;
+			moduleStatus = GET_SIGNAL_QUALITY_FINISH;
+			break;
+
+		/* 设置服务器地址 */
+		case SET_SERVER_IP_ADDR:
+			DebugPrintf("获取服务器地址\r\n");
+			GPRS_SendCmd(AT_CMD_SET_SERVER_IP_ADDR);
+			expectString = AT_CMD_SET_SERVER_IP_ADDR_RESPOND;
+			moduleStatus = SET_SERVER_IP_ADDR_FINISH;
 			break;
 
 		/* 模块准备好了 */
 		case READY:
-			printf("模块准备好了，发送数据\r\n");
+			DebugPrintf("模块准备好了，发送数据\r\n");
 			/* 发送数据到平台 */
 			GPRS_SendProtocol(&sendStruct, curPatchPack);
-//			printf("发送的数据是：%100s",sendStruct);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
 
 		/* 退出透传模式 */
 		case EXTI_SERIANET_MODE:
-			printf("退出透传模式\r\n");
+			DebugPrintf("退出透传模式\r\n");
 			GPRS_SendCmd(AT_CMD_EXIT_SERIANET_MODE);
 			expectString = AT_CMD_EXIT_SERIANET_MODE_RESPOND;
 			moduleStatus = EXTI_SERIANET_MODE_FINISH;
@@ -199,7 +245,7 @@ void GPRSPROCESS_Task(void)
 
 		/* 退出连接模式 */
 		case EXTI_LINK_MODE:
-			printf("退出连接模式\r\n");
+			DebugPrintf("退出连接模式\r\n");
 			GPRS_SendCmd(AT_CMD_EXIT_LINK_MODE);
 			expectString = AT_CMD_EXIT_LINK_MODE_RESPOND;
 			moduleStatus = EXTI_LINK_MODE_FINISH;
@@ -207,7 +253,7 @@ void GPRSPROCESS_Task(void)
 
 		/* 关闭移动场景 */
 		case SHUT_MODULE:
-			printf("关闭移动场景\r\n");
+			DebugPrintf("关闭移动场景\r\n");
 			GPRS_SendCmd(AT_CMD_SHUT_MODELU);
 			expectString = AT_CMD_SHUT_MODELU_RESPOND;
 			moduleStatus = SHUT_MODULE_FINISH;
@@ -221,7 +267,7 @@ void GPRSPROCESS_Task(void)
 		/* 发送超时 */
 		if (signal.status == osEventTimeout)
 		{
-			printf("GMS模块指令接收等待超时\r\n");
+			DebugPrintf("GMS模块指令接收等待超时\r\n");
 			/* 模块超时计数,如果超过2次，放弃本次发送，挂起任务 */
 			moduleTimeoutCnt++;
 			switch (moduleStatus)
@@ -245,7 +291,7 @@ void GPRSPROCESS_Task(void)
 					moduleTimeoutCnt = 0;
 					moduleStatus = EXTI_SERIANET_MODE;
 					osMessageGet(realtimeMessageQId, 1);
-					printf("未接收到平台正确回文\r\n");
+					DebugPrintf("未接收到平台正确回文\r\n");
 				}
 
 				break;
@@ -255,7 +301,7 @@ void GPRSPROCESS_Task(void)
 				if (moduleTimeoutCnt > 3)
 				{
 					moduleTimeoutCnt = 0;
-					moduleStatus = CHECK_SIM_STATUS;
+					moduleStatus = INIT;
 				}
 				break;
 
@@ -263,7 +309,7 @@ void GPRSPROCESS_Task(void)
 				if (moduleTimeoutCnt > 3)
 				{
 					moduleTimeoutCnt = 0;
-					moduleStatus = CHECK_SIM_STATUS;
+					moduleStatus = INIT;
 				}
 				break;
 
@@ -274,10 +320,8 @@ void GPRSPROCESS_Task(void)
 				if (moduleTimeoutCnt > 2)
 				{
 					moduleTimeoutCnt = 0;
-					moduleStatus = GET_GPS_GNRMC;
-					printf("模块指令接收超时3次,放弃本次发送\r\n");
-					/* 发送失败处理 */
-					SendFailedHandle();
+					moduleStatus = INIT;
+					DebugPrintf("模块指令接收超时3次,放弃本次发送\r\n");
 				}
 				break;
 			}
@@ -298,7 +342,7 @@ void GPRSPROCESS_Task(void)
 				{
 				/* 模块可用 */
 				case MODULE_VALID:
-					printf("模块可用\r\n");
+					DebugPrintf("模块可用\r\n");
 					/* 开机完成，断开power控制引脚 */
 					GPRS_PWR_CTRL_DISABLE();
 
@@ -309,88 +353,124 @@ void GPRSPROCESS_Task(void)
 
 				/* 设置波特率完成 */
 				case SET_BAUD_RATE_FINISH:
-					printf("设置波特率完成\r\n");
+					DebugPrintf("设置波特率完成\r\n");
+					moduleStatus = ECHO_DISABLE;
+					break;
+
+				/* 关闭回显模式完成 */
+				case ECHO_DISABLE_FINISH:
+					DebugPrintf("关闭回显模式完成\r\n");
 					moduleStatus = ENABLE_GPS;
 					break;
 
 				/* 使能GPS功能完成 */
 				case ENABLE_GPS_FINISH:
-					printf("使能GPS功能完成\r\n");
-					moduleStatus = GET_GPS_GNRMC;
+					DebugPrintf("使能GPS功能完成\r\n");
+					/* 使能GPS功能后，开机已经完成，回到Init模式 */
+					moduleStatus = INIT;
 					/* 开启GPS后，5s再获取定位数据 */
 					osDelay(5000);
 					break;
 
-					/* 获取GNRMC定位值完成 */
+				/* 获取GNRMC定位值完成 */
 				case GET_GPS_GNRMC_FINISH:
-					printf("获取GNRMC定位值完成\r\n");
+					DebugPrintf("获取GNRMC定位值完成\r\n");
 					/* 转换定位数据 */
 					GPS_GetLocation(GPRS_BufferStatus.recvBuffer, &location);
 					printf("定位数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
 					/* 传递定位信息 */
 					osMessagePut(infoMessageQId, (uint32_t)&location, 100);
 					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPS_CONVERT_FINISH);
-					/* GPS定位成功，将模块状态调整到GPRS状态 */
-					moduleStatus = CHECK_SIM_STATUS;
+					/* GPS定位成功，回到init状态 */
+					moduleStatus = INIT;
 					break;
 
-					/* 检测sim卡状态完成 */
+				/* 检测sim卡状态完成 */
 				case CHECK_SIM_STATUS_FINISH:
-					printf("检测sim卡状态完成\r\n");
+					DebugPrintf("检测sim卡状态完成\r\n");
 					moduleStatus = SEARCH_NET_STATUS;
 					break;
 
-					/* 查找网络状态完成 */
+				/* 查找网络状态完成 */
 				case SEARCH_NET_STATUS_FINISH:
-					printf("查找网络状态完成\r\n");
+					DebugPrintf("查找网络状态完成\r\n");
+					moduleStatus = GET_OPERATOR;
+					break;
+
+				/* 获取运营商信息完成 */
+				case GET_OPERATOR_FINISH:
+					DebugPrintf("获取运营商信息完成\r\n");
+//					moduleStatus = SET_TEXT_FORMAT_GSM;
 					moduleStatus = CHECK_GPRS_STATUS;
 					break;
 
-					/* 查找GPRS状态完成 */
+				/* 设置字符集格式为GSM完成 */
+				case SET_TEXT_FORMAT_GSM_FINISH:
+					DebugPrintf("设置字符集格式为GSM完成\r\n");
+					moduleStatus = GET_SUBSCRIBER_NUMB;
+					break;
+
+				/* 获取本机号码完成 */
+				case GET_SUBSCRIBER_NUMB_FINISH:
+					DebugPrintf("获取本机号码完成\r\n");
+					moduleStatus = CHECK_GPRS_STATUS;
+					break;
+
+				/* 查找GPRS状态完成 */
 				case CHECK_GPRS_STATUS_FINISH:
-					printf("查找GPRS状态完成\r\n");
+					DebugPrintf("查找GPRS状态完成\r\n");
 					moduleStatus = SET_SINGLE_LINK;
 					break;
 
-					/* 设置单连方式完成 */
+				/* 设置单连方式完成 */
 				case SET_SINGLE_LINK_FINISH:
-					printf("设置单连方式完成\r\n");
+					DebugPrintf("设置单连方式完成\r\n");
 					moduleStatus = SET_SERIANET_MODE;
 					break;
 
-					/* 设置透传模式完成 */
+				/* 设置透传模式完成 */
 				case SET_SERIANET_MODE_FINISH:
-					printf("设置透传模式完成\r\n");
+					DebugPrintf("设置透传模式完成\r\n");
 					moduleStatus = SET_APN_NAME;
 					break;
 
-					/* 设置APN名称完成 */
+				/* 设置APN名称完成 */
 				case SET_APN_NAME_FINISH:
-					printf("设置APN名称完成\r\n");
+					DebugPrintf("设置APN名称完成\r\n");
 					moduleStatus = ACTIVE_PDP;
 					break;
 
-					/* 激活PDP场景完成 */
+				/* 激活PDP场景完成 */
 				case ACTIVE_PDP_FINISH:
-					printf("激活PDP场景完成\r\n");
+					DebugPrintf("激活PDP场景完成\r\n");
 					moduleStatus = GET_SELF_IP_ADDR;
 					break;
 
-					/* 获取本机IP地址完成 */
+				/* 获取本机IP地址完成 */
 				case GET_SELF_IP_ADDR_FINISH:
-					printf("获取本机IP地址完成\r\n");
+					DebugPrintf("获取本机IP地址完成\r\n");
+					moduleStatus = GET_SIGNAL_QUALITY;
+					/* 标记GPRS功能初始化完成 */
+					gprsInited = TRUE;
+					break;
+
+				/* 获取信号质量完成 */
+				case GET_SIGNAL_QUALITY_FINISH:
+					DebugPrintf("获取信号质量完成\r\n");
+					signalQuality = GPRS_GetSignalQuality(GPRS_BufferStatus.recvBuffer);
+					printf("信号强度=%d\r\n", signalQuality);
 					moduleStatus = SET_SERVER_IP_ADDR;
 					break;
 
-					/* 设置服务器地址完成 */
+				/* 设置服务器地址完成 */
 				case SET_SERVER_IP_ADDR_FINISH:
-					printf("设置服务器地址完成\r\n");
+					DebugPrintf("设置服务器地址完成\r\n");
 					moduleStatus = READY;
 					break;
 
-					/* 数据发送完成 */
+				/* 数据发送完成 */
 				case DATA_SEND_FINISH:
-					printf("数据发送成功\r\n");
+					DebugPrintf("数据发送成功\r\n");
 					printf("服务器返回数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
 
 					/* 将本地时间与云时间对比，时间校准 */
@@ -402,25 +482,23 @@ void GPRSPROCESS_Task(void)
 					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPRS_SEND_FINISHED);
 					break;
 
-					/* 退出透传模式完成 */
+				/* 退出透传模式完成 */
 				case EXTI_SERIANET_MODE_FINISH:
-					printf("退出透传模式完成\r\n");
+					DebugPrintf("退出透传模式完成\r\n");
 					moduleStatus = EXTI_LINK_MODE;
 					break;
 
-					/* 退出单连模式完成 */
+				/* 退出单连模式完成 */
 				case EXTI_LINK_MODE_FINISH:
-					printf("退出单连模式完成\r\n");
+					DebugPrintf("退出单连模式完成\r\n");
 					moduleStatus = SHUT_MODULE;
 					break;
 
-					/* 关闭移动场景完成 */
+				/* 关闭移动场景完成 */
 				case SHUT_MODULE_FINISH:
-					printf("关闭移动场景完成\r\n");
+					DebugPrintf("关闭移动场景完成\r\n");
 					/* 模块发送完成，把状态设置成使能GPS定位，下次启动直接连接服务器地址即可发送 */
-					moduleStatus = GET_GPS_GNRMC;
-					/* 将自己挂起 */
-					osThreadSuspend(NULL);
+					moduleStatus = INIT;
 					break;
 
 				default:
@@ -434,7 +512,7 @@ void GPRSPROCESS_Task(void)
 				moduleErrorCnt++;
 				if (moduleErrorCnt >= 10)
 				{
-					printf("模块接收到错误指令超过10次\r\n");
+					DebugPrintf("模块接收到错误指令超过10次\r\n");
 					moduleErrorCnt = 0;
 					switch (moduleStatus)
 					{
@@ -446,11 +524,9 @@ void GPRSPROCESS_Task(void)
 						if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, "FAIL ERROR"))
 						{
 							/* 放弃本次发送 */
-							moduleStatus = GET_GPS_GNRMC;
+							moduleStatus = INIT;
 
-							printf("不能链接上服务器，放弃本次发送\r\n");
-							/* 将自己挂起 */
-							osThreadSuspend(NULL);
+							DebugPrintf("不能链接上服务器，放弃本次发送\r\n");
 						}
 						break;
 
@@ -461,16 +537,13 @@ void GPRSPROCESS_Task(void)
 						break;
 
 					case GET_GPS_GNRMC:
-						moduleStatus = CHECK_SIM_STATUS;
+						moduleStatus = INIT;
 						break;
 
-					/*  */
 					default:
-						moduleStatus = GET_GPS_GNRMC;
+						moduleStatus = INIT;
 						gprsInited = FALSE;
-						printf("模块配置错误，等待下次重新配置\r\n");
-						/* 发送失败处理 */
-						SendFailedHandle();
+						DebugPrintf("模块配置错误，等待下次重新配置\r\n");
 						break;
 					}
 				}
@@ -478,22 +551,5 @@ void GPRSPROCESS_Task(void)
 			memset(GPRS_BufferStatus.recvBuffer, 0, GPRS_BufferStatus.bufferSize);
 		}
 	}
-}
-
-/*******************************************************************************
- * function:任务发送失败处理
- *
- */
-static void SendFailedHandle(void)
-{
-	/* 清空队列中的数据 */
-	osMessageGet(infoCntMessageQId, 100);
-	osMessageGet(infoMessageQId, 100);
-	osMessageGet(adjustTimeMessageQId, 100);
-
-	/* 挂起任务之前，清空标志位 */
-	osSignalWait(GPRSPROCESS_SEND_DATA_ENABLE, 1);
-//	osMessageGet(realtimeMessageQId, 1);
-	osThreadSuspend(NULL);
 }
 

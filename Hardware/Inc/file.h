@@ -138,6 +138,14 @@ typedef struct
 
 typedef struct
 {
+	float alarmValueUp;								/* 报警上限 */
+	float alarmValueLow;							/* 报警下限 */
+	float perwarningValueUp;						/* 预警上限 */
+	float perwarningValueLow;						/* 预警下限 */
+} ParamAlarmTypedef;
+
+typedef struct
+{
 	char    deviceSN[10];									/* 设备SN号 */
 	LocationTypdEnum locationType;							/* 定位标记 */
 	uint8_t firmwareVersion;								/* 固件版本号 */
@@ -145,6 +153,10 @@ typedef struct
 	uint8_t overLimitRecordInterval;						/* 超标记录间隔 */
 	uint8_t exitAnalogChannelNumb;							/* 外部模拟量通道数 */
 	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* 模拟量参数 */
+	ParamAlarmTypedef temp1;								/* temp1报警值 */
+	ParamAlarmTypedef temp2;								/* temp2报警值 */
+	ParamAlarmTypedef temp3;								/* temp3报警值 */
+	ParamAlarmTypedef temp4;								/* temp4报警值 */
 } FILE_DeviceParamTypedef;
 
 #pragma pack(pop)

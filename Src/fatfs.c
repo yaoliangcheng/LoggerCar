@@ -53,6 +53,8 @@ char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
 #include "file.h"
+#include "osConfig.h"
+
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */
 DWORD freeClust, freeSect, totSect;	/* 空闲簇、空闲扇区、总扇区 */
@@ -70,6 +72,8 @@ void MX_FATFS_Init(void)
   /* USER CODE BEGIN Init */
   /* additional user code for init */
   FILE_ParamFileInit();
+  /* 在文件系统初始化完成后，在启动GPRS任务 */
+  osThreadResume(gprsprocessTaskHandle);
   /* USER CODE END Init */
 }
 
