@@ -28,8 +28,6 @@ void MAINPROCESS_Task(void)
 	uint16_t curPatchPack;				/* 本次补传数据 */
 	uint16_t curFileStructCount;		/* 当前文件结构体总数 */
 
-
-
 	while(1)
 	{		
 		/* 获取时间 */

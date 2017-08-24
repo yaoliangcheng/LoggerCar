@@ -630,11 +630,6 @@
           <GroupName>Task</GroupName>
           <Files>
             <File>
-              <FileName>debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Task\Src\debug.c</FilePath>
-            </File>
-            <File>
               <FileName>led.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Task\Src\led.c</FilePath>

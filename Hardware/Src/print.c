@@ -186,7 +186,30 @@ static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmU
 	else
 		temp = (float)(data & 0x7FFF) / 10;
 
-	sprintf((char*)buf, "%6.1f", temp);
+	/* 调用这个函数导致设备死机，还未找到问题，后续继续研究 */
+//	sprintf((char*)buf, "%6.1f", temp);
+
+	*buf = ' ';
+
+	/* 如果为负数 */
+	if ((data & 0x8000) != 0)
+	{
+		*(buf + 1) = '-';
+		/* 转换为正数 */
+		data &= 0x7FFF;
+	}
+	else
+	{
+		/* 正数的话才有可能是三位数 */
+		*(buf + 1) = ((data % 10000) / 1000) + '0';
+		if (*(buf + 1) == '0')
+			*(buf + 1) = ' ';
+	}
+
+	*(buf + 2) = ((data % 1000) / 100)   + '0';
+	*(buf + 3) = ((data % 100) / 10)     + '0';
+	*(buf + 4) = '.';
+	*(buf + 5) = (data % 10)             + '0';
 
 	/* 报警上限值有效，并且超标 */
 	if ((alarmUp != PRINT_ALARM_INVALID) && (temp > alarmUp))

@@ -10,7 +10,7 @@
 
 /******************************************************************************/
 #define PRINT_UART							(huart3)
-#define PRINT_SEND_BYTES_MAX				(100)
+#define PRINT_SEND_BYTES_MAX				(300)
 
 #define PRINT_PWR_ENABLE() \
 		HAL_GPIO_WritePin(PRINT_PWR_CTRL_GPIO_Port, PRINT_PWR_CTRL_Pin, GPIO_PIN_RESET);

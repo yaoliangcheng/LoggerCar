@@ -184,7 +184,6 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size)
 
 	if (FR_OK == f_write(&objFile, pBuffer, size, &byteWrite))
 	{
-		printf("写入%d字节\r\n", byteWrite);
 		/* 要写入的和实际写入的必须相同 */
 		if (byteWrite == size)
 			return SUCCESS;
@@ -206,7 +205,6 @@ ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size)
 
 	if (FR_OK == f_read(&objFile, pBuffer, size, &byteRead))
 	{
-		printf("读出%d字节\r\n", byteRead);
 		/* 要读出的和实际读出的必须相同 */
 		if (byteRead == size)
 			return SUCCESS;
@@ -242,7 +240,6 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
 		freeSect = freeClust           * pfs->csize * 4;
 
-		printf("设备总空间：%uKB 可用空间：%uKB\r\n", totSect, freeSect);
 		printf("设备剩余储存空间：%d%%\r\n", freeSect * 100 / totSect);
 
 		/* 没有空间可写 */

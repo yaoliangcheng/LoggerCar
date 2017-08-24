@@ -17,7 +17,6 @@ void REALTIME_Task(void)
 
 	RT_Init(&realTime);
 
-
 	while(1)
 	{
 		signal = osSignalWait(REALTIME_TASK_SIGNAL_UPDATE, 2000);

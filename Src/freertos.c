@@ -53,7 +53,6 @@
 
 /* USER CODE BEGIN Includes */     
 #include "led.h"
-#include "debug.h"
 #include "RealTime.h"
 #include "MainProcess.h"
 #include "GPRSProcess.h"
@@ -68,7 +67,6 @@ osThreadId defaultTaskHandle;
 
 /* ÈÎÎñ¾ä±ú */
 osThreadId ledTaskHandle;
-osThreadId debugTaskHandle;
 osThreadId realtimeTaskHandle;
 osThreadId tftlcdTaskHandle;
 osThreadId mainprocessTaskHandle;
@@ -124,9 +122,6 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   osThreadDef(LED, LED_Task, osPriorityNormal, 0, 128);
   ledTaskHandle = osThreadCreate(osThread(LED), NULL);
-  
-  osThreadDef(DEBUG, DEBUG_Task, osPriorityNormal, 0, 128);
-  debugTaskHandle = osThreadCreate(osThread(DEBUG), NULL);
 
   osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 512);
   realtimeTaskHandle = osThreadCreate(osThread(REALTIME), NULL);
