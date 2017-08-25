@@ -9,10 +9,17 @@
 
 /******************************************************************************/
 #define ANALOG_ADC								(hadc1)
+/* 传感器电源控制引脚 */
 #define ANALOG_PWR_ENABLE() \
 	HAL_GPIO_WritePin(SENSOR_PWR_CTRL_GPIO_Port, SENSOR_PWR_CTRL_Pin, GPIO_PIN_RESET);
 #define ANALOG_PWR_DISABLE() \
 	HAL_GPIO_WritePin(SENSOR_PWR_CTRL_GPIO_Port, SENSOR_PWR_CTRL_Pin, GPIO_PIN_SET);
+
+/* 锂电池电压采集电源控制引脚 */
+#define VBAT_PWR_CHECK_ENABLE() \
+	HAL_GPIO_WritePin(VBAT_CTRL_GPIO_Port, VBAT_CTRL_Pin, GPIO_PIN_RESET);
+#define VBAT_PWR_CHECK_DISABLE() \
+	HAL_GPIO_WritePin(VBAT_CTRL_GPIO_Port, VBAT_CTRL_Pin, GPIO_PIN_SET);
 
 #define ANALOG_CHANNEL_NUMB_MAX					(14)	/* 最大支持14通道的模拟量 */
 #define ANALOG_CHANNEL_NUMB_TOTLE      			(9)		/* 模拟量通道数(包含温湿度和锂电池电压采集) */
