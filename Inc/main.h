@@ -74,6 +74,9 @@
 #define TEMP3_GPIO_Port GPIOC
 #define TEMP4_Pin GPIO_PIN_3
 #define TEMP4_GPIO_Port GPIOC
+#define WKUP_Pin GPIO_PIN_0
+#define WKUP_GPIO_Port GPIOA
+#define WKUP_EXTI_IRQn EXTI0_IRQn
 #define TEMP5_Pin GPIO_PIN_1
 #define TEMP5_GPIO_Port GPIOA
 #define TEMP6_Pin GPIO_PIN_2

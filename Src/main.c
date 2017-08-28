@@ -60,6 +60,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "gprs.h"
+#include "lowPwr.h"
 
 /* USER CODE END Includes */
 
@@ -103,7 +104,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  /* 在外设配置前，检测是否开机 */
+  LOWPWR_Init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -119,6 +121,7 @@ int main(void)
   MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
+
   /* 文件名格式初始化 */
 	FILE_Init();
 
