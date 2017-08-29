@@ -52,7 +52,6 @@
 #include "adc.h"
 #include "dma.h"
 #include "fatfs.h"
-#include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
 #include "usart.h"
@@ -114,13 +113,13 @@ int main(void)
   MX_USART1_UART_Init();
   MX_RTC_Init();
   MX_ADC1_Init();
-  MX_I2C2_Init();
   MX_SPI1_Init();
   MX_USART2_UART_Init();
   MX_UART4_Init();
   MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  ANALOG_Init();
 
   /* 文件名格式初始化 */
 	FILE_Init();

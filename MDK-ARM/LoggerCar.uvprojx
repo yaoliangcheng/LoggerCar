@@ -335,7 +335,7 @@
               <MiscControls>--C99</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F105xC</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;                                             ../Drivers/STM32F1xx_HAL_Driver/Inc;                                             ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;                                             ../Drivers/CMSIS/Device/ST/STM32F1xx/Include;                                             ../Drivers/CMSIS/Include;                                             ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;                                             ../Middlewares/Third_Party/FreeRTOS/Source/include;                                             ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;                                             ..\Task\Inc;                                             ..\Hardware\Inc;                           ../Middlewares/Third_Party/FatFs/src</IncludePath>
+              <IncludePath>../Inc;                                              ../Drivers/STM32F1xx_HAL_Driver/Inc;                                              ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;                                              ../Drivers/CMSIS/Device/ST/STM32F1xx/Include;                                              ../Drivers/CMSIS/Include;                                              ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM3;                                              ../Middlewares/Third_Party/FreeRTOS/Source/include;                                              ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;                                              ..\Task\Inc;                                              ..\Hardware\Inc;                            ../Middlewares/Third_Party/FatFs/src</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -448,11 +448,6 @@
               <FileName>dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/dma.c</FilePath>
-            </File>
-            <File>
-              <FileName>i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Src/i2c.c</FilePath>
             </File>
             <File>
               <FileName>spi.c</FileName>
@@ -568,11 +563,6 @@
               <FileName>stm32f1xx_hal_spi_ex.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_spi_ex.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f1xx_hal_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -62,6 +62,7 @@ typedef struct
 
 #pragma pack(pop)
 /******************************************************************************/
+void ANALOG_Init(void);
 void ANALOG_GetSensorValue(ANALOG_ValueTypedef* value);
 void ANALOG_ConvertEnable(void);
 void ANALOG_ConvertDisable(void);

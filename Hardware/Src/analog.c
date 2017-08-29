@@ -9,6 +9,14 @@ static uint16_t convertValueBuffer[ANALOG_SAMPLE_NUMB][ANALOG_CHANNEL_NUMB_TOTLE
 /*******************************************************************************
  *
  */
+void ANALOG_Init(void)
+{
+	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
+}
+
+/*******************************************************************************
+ *
+ */
 static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue)
 {
 	uint8_t i, j, k;
@@ -60,6 +68,11 @@ static uint8_t ANALOG_GetBatVoltage(uint16_t value)
 
 	percent = (voltage * 100) / 2400;
 
+	if (percent > 100)
+	{
+		percent = 100;
+	}
+
 	return percent;
 }
 
@@ -74,16 +87,16 @@ void ANALOG_GetSensorValue(ANALOG_ValueTypedef* value)
 	ANALOG_GetAverageValue(&ANALOG_convertValue);
 
 	/* 获取温度 */
-	value->temp1 = NTC_GetTemp(ANALOG_convertValue.temp1 + 70);
-	value->temp2 = NTC_GetTemp(ANALOG_convertValue.temp2 + 70);
-	value->temp3 = NTC_GetTemp(ANALOG_convertValue.temp3 + 70);
-	value->temp4 = NTC_GetTemp(ANALOG_convertValue.temp4 + 70);
+	value->temp1 = NTC_GetTemp(ANALOG_convertValue.temp1);
+	value->temp2 = NTC_GetTemp(ANALOG_convertValue.temp2);
+	value->temp3 = NTC_GetTemp(ANALOG_convertValue.temp3);
+	value->temp4 = NTC_GetTemp(ANALOG_convertValue.temp4);
 
 	/* 获取湿度，并补偿 */
-	value->humi1 = HIH5030_GetHumi(ANALOG_convertValue.humi1, value->temp1 + 70);
-	value->humi2 = HIH5030_GetHumi(ANALOG_convertValue.humi2, value->temp2 + 70);
-	value->humi3 = HIH5030_GetHumi(ANALOG_convertValue.humi3, value->temp3 + 70);
-	value->humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, value->temp4 + 70);
+	value->humi1 = HIH5030_GetHumi(ANALOG_convertValue.humi1, value->temp1);
+	value->humi2 = HIH5030_GetHumi(ANALOG_convertValue.humi2, value->temp2);
+	value->humi3 = HIH5030_GetHumi(ANALOG_convertValue.humi3, value->temp3);
+	value->humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, value->temp4);
 
 	/* 获取电池电压 */
 	value->batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage + 70);
@@ -98,6 +111,7 @@ void ANALOG_ConvertEnable(void)
 	ANALOG_PWR_ENABLE();
 	VBAT_PWR_CHECK_ENABLE();
 	osDelay(10);
+	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
 	HAL_ADC_Start_DMA(&ANALOG_ADC, (uint32_t*)convertValueBuffer,
 								sizeof(convertValueBuffer));
 }
