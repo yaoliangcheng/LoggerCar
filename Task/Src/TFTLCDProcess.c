@@ -2,6 +2,7 @@
 
 #include "tftlcd.h"
 #include "print.h"
+#include "gprs.h"
 
 /******************************************************************************/
 static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
@@ -28,41 +29,70 @@ void TFTLCD_Task(void)
 
 	while(1)
 	{
-		signal = osSignalWait(TFTLCD_TASK_RECV_ENABLE, osWaitForever);
+		/* 获取任务信号 */
+		signal = osSignalWait(0xFFFFFFFF, 1);
+
+		/* 状态栏刷新 */
+		if ((signal.value.signals & TFTLCD_TASK_STATUS_BAR_UPDATE) ==
+				TFTLCD_TASK_STATUS_BAR_UPDATE)
+		{
+			TFTLCD_StatusBarTextRefresh(TFTLCD_status.curScreenID, &RT_RealTime,
+					ANALOG_value.batVoltage);
+		}
+
+		/* 刷新实时数据 */
+		if ((signal.value.signals & TFTLCD_TASK_ANALOG_UPDATE) ==
+				TFTLCD_TASK_ANALOG_UPDATE)
+		{
+			TFTLCD_AnalogDataRefresh(&ANALOG_value);
+		}
+
+		/* 串口接收处理 */
 		if ((signal.value.signals & TFTLCD_TASK_RECV_ENABLE) == TFTLCD_TASK_RECV_ENABLE)
 		{
 			/* 检测头和尾 */
 			if (ERROR != TFTLCD_CheckHeadTail())
 			{
-				/* 识别画面ID和控件ID */
-				screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
-						| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
-				ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
-						| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
-
-				/* 按照界面来划分 */
-				switch (screenID)
+				if (TFTLCD_RecvBuffer.date.recvBuf.cmd == TFTLCD_CMD_SCREEN_ID_GET)
 				{
-				case SCREEN_ID_PRINT:
-					ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
-							&status, &PrintChannelSelect, &startPrintTime, &endPrintTime);
-					break;
+					TFTLCD_status.curScreenID = (TFTLCD_ScreenIDEnum)((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
+							| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
 
-				case SCREEN_ID_PRINT_TIME_SELECT:
-//					/* 固定字节，表示选择控件 */
-//					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
-//						break;
-					if (status == TFT_PRINT_START_TIME)
-						ScreenTimeSelect(&startPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-								(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
-								TFT_PRINT_START_TIME);
-					else if (status == TFT_PRINT_END_TIME)
-						ScreenTimeSelect(&endPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-								(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
-								TFT_PRINT_END_TIME);
-					break;
-				default:
-					break;
+					/* 界面跳转后，需要刷新一次状态栏 */
+					osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+				}
+				else
+				{
+					/* 识别画面ID和控件ID */
+					screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
+							| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
+					ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
+							| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
+
+					/* 按照界面来划分 */
+					switch (screenID)
+					{
+					case SCREEN_ID_PRINT:
+						ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
+								&status, &PrintChannelSelect, &startPrintTime, &endPrintTime);
+						break;
+
+					case SCREEN_ID_PRINT_TIME_SELECT:
+	//					/* 固定字节，表示选择控件 */
+	//					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
+	//						break;
+						if (status == TFT_PRINT_START_TIME)
+							ScreenTimeSelect(&startPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+									TFT_PRINT_START_TIME);
+						else if (status == TFT_PRINT_END_TIME)
+							ScreenTimeSelect(&endPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+									TFT_PRINT_END_TIME);
+						break;
+					default:
+						break;
+					}
 				}
 			}
 		}
@@ -190,10 +220,10 @@ static void ScreenTimeSelect(FILE_RealTime* pTime, uint16_t cmd,
 			switch (status)
 			{
 			case TFT_PRINT_START_TIME:
-				TFTLCD_printTimeUpdate(pTime, PRINT_CTRL_ID_START_TIME);
+//				TFTLCD_printTimeUpdate(pTime, PRINT_CTRL_ID_START_TIME);
 				break;
 			case TFT_PRINT_END_TIME:
-				TFTLCD_printTimeUpdate(pTime, PRINT_CTRL_ID_END_TIME);
+//				TFTLCD_printTimeUpdate(pTime, PRINT_CTRL_ID_END_TIME);
 				break;
 			default:
 				break;

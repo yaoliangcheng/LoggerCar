@@ -33,6 +33,8 @@
 /*******************************************************************************
  * 指令格式
  */
+#define TFTLCD_CMD_SCREEN_ID_CHANGE			(uint16_t)(0x00B1)		/* 切换画面 */
+#define TFTLCD_CMD_SCREEN_ID_GET			(uint16_t)(0x01B1)		/* 获取画面 */
 #define TFTLCD_CMD_BATCH_UPDATE				(uint16_t)(0x12B1)
 #define TFTLCD_CMD_TEXT_UPDATE				(uint16_t)(0x10B1)		/* 更新文本 */
 #define TFTLCD_CMD_SET_SCREEN				(uint16_t)(0X00B1)
@@ -42,38 +44,58 @@
 #define TFTLCD_CMD_ICON_DISP				(uint16_t)(0x23B1)		/* 图标控件显示 */
 
 
+/****************************控件ID枚举******************************************/
+/* 状态栏公共控件ID */
+typedef enum
+{
+	CTL_ID_REALTIME,
+	CTL_ID_BAT_QUANTITY,
+	CTL_ID_BAT_QUANTITY_PERCENT,
+	CTL_ID_SIGNAL_QUALITY,
+	CTL_ID_ALARM_ICON
+} TFTLCD_CommonCtlIdEnum;
 
-/* 控件ID */
-#define CTRL_TYPE_ID_TEMP1					(uint16_t)(1)		/* 温度1 */
-#define CTRL_TYPE_ID_TEMP2					(uint16_t)(2)		/* 温度2 */
-#define CTRL_TYPE_ID_TEMP3					(uint16_t)(3)		/* 温度3 */
-#define CTRL_TYPE_ID_TEMP4					(uint16_t)(4)		/* 温度4 */
-#define CTRL_TYPE_ID_HUMI1					(uint16_t)(5)		/* 湿度1 */
-#define CTRL_TYPE_ID_HUMI2					(uint16_t)(6)		/* 湿度2 */
-#define CTRL_TYPE_ID_HUMI3					(uint16_t)(7)		/* 湿度3 */
-#define CTRL_TYPE_ID_HUMI4					(uint16_t)(8)		/* 湿度4 */
-#define CTRL_TYPE_ID_REAL_TIME				(uint16_t)(9)		/* 实时时钟 */
+typedef enum
+{
+	CTL_ID_DATA_CH1 = 6,
+	CTL_ID_DATA_CH2,
+	CTL_ID_DATA_CH3,
+	CTL_ID_DATA_CH4,
+	CTL_ID_DATA_CH5,
+	CTL_ID_DATA_CH6,
+	CTL_ID_DATA_CH7,
+	CTL_ID_DATA_CH8,
+	CTL_ID_DATA_CH9,
+	CTL_ID_DATA_CH10,
+	CTL_ID_DATA_CH11,
+	CTL_ID_DATA_CH12,
+	CTL_ID_DATA_CH13,
+	CTL_ID_DATA_CH14,
+} TFTLCD_DataCtlIdEnum;
 
-/******************************************************************************/
+/****************************画面ID枚举******************************************/
 /* 画面编号 */
 typedef enum
 {
 	SCREEN_ID_START,							/* 开机界面 */
-	SCREEN_ID_MENU,								/* 主界面 */
-	SCREEN_ID_CUR_DATA,							/* 当前数据 */
+	SCREEN_ID_CUR_DATA_2CH,						/* 实时数据 2通道 */
+	SCREEN_ID_CUR_DATA_4CH,						/* 实时数据 4通道 */
+	SCREEN_ID_CUR_DATA_8CH,						/* 实时数据 8通道 */
+	SCREEN_ID_CUR_DATA_14CH,					/* 实时数据 14通道 */
 	SCREEN_ID_HIS_DATA,							/* 历史数据 */
+	SCREEN_ID_HIS_DATA_CURVE,					/* 历史数据 曲线 */
+	SCREEN_ID_PRINT,							/* 数据打印 */
+	SCREEN_ID_PRINT_DETAIL,						/* 数据打印——详细 */
 	SCREEN_ID_DATA_EXPORT,						/* 数据导出 */
-	SCREEN_ID_PRINT,							/* 打印界面 */
-	SCREEN_ID_ABOUT,							/* 关于 */
-	SCREEN_ID_ADD_DEVICES,						/* 添加设备 */
-	SCREEN_ID_SETTING,							/* 密码 */
-	SCREEN_ID_SETTING_MENU,						/* 设置菜单 */
-	SCREEN_ID_PRINT_SETTING,					/* 打印设置 */
-	SCREEN_ID_SETTING_ALARM,					/* 温湿度上下限报警设置 */
-	SCREEN_ID_SETTING_ALARM_CODE,				/* 报警号码设置 */
- 	SCREEN_ID_UPDATE,							/* 系统更新 */
- 	SCREEN_ID_CURVE,							/* 曲线 */
- 	SCREEN_ID_PRINT_TIME_SELECT,				/* 打印时间选择 */
+	SCREEN_ID_SET_PASSWORD,						/* 密码 */
+	SCREEN_ID_SET_ALARM_LIMIT,					/* 报警上下限 */
+	SCREEN_ID_SET_ALARM_CODE,					/* 报警号码 */
+	SCREEN_ID_SET_MESSAGE,						/* 短信签名 */
+	SCREEN_ID_SET_UPDATE,						/* 固件升级 */
+	SCREEN_ID_SET_CHANGE_PASSWORD,				/* 修改密码 */
+	SCREEN_ID_ABOUT_DEVICE,						/* 关于设备 */
+	SCREEN_ID_ABOUT_LUGE,						/* 关于路格 */
+	SCREEN_ID_PRINT_TIME_SELECT,
 } TFTLCD_ScreenIDEnum;
 
 /******************************************************************************/
@@ -125,27 +147,44 @@ typedef enum
 
 typedef struct
 {
-	uint8_t ctrlIdH;											/* 画面ID */
-	uint8_t ctrlIdL;
-	uint8_t sizeH;
-	uint8_t sizeL;
-	char value[5];				/* 批量更新最大传4个字节 */
-} BatchUpdateTypedef;
+	uint8_t timeCtlIdH;
+	uint8_t timeCtlIdL;
+	uint8_t timeSizeH;
+	uint8_t timeSizeL;
+	char    year[4];
+	char    str1;
+	char    month[2];
+	char    str2;
+	char    day[2];
+	char    str3;
+	char    hour[2];
+	char    str4;
+	char    min[2];
+
+	uint8_t signalCtlIdH;
+	uint8_t signalCtlIdL;
+	uint8_t signalSizeH;
+	uint8_t signalSizeL;
+	char    signalQuality[3];
+} StatusBarUpdateTypedef;					/* 状态栏更新 */
 
 typedef struct
 {
-	char year[4];
-	char str1;
-	char month[2];
-	char str2;
-	char day[2];
-	char str3;
-	char hour[2];
-	char str4;
-	char min[2];
-	char str5;
-	char sec[2];
-} TFTLCD_TimeUpdateTypedef;
+	uint8_t ctrlIdH;
+	uint8_t ctrlIdL;
+	uint8_t sizeH;
+	uint8_t sizeL;
+	char value[5];							/* 模拟量数值5位数 */
+} AnalogTypedef;							/* 模拟量值更新 */
+
+typedef struct
+{
+	uint8_t ctrlIdH;
+	uint8_t ctrlIdL;
+	uint8_t sizeH;
+	uint8_t sizeL;
+	char value[5];
+} HistoryDateTypedef;						/* 历史数据更新 */
 
 typedef struct
 {
@@ -154,9 +193,8 @@ typedef struct
 	union
 	{
 		char date[TFTLCD_UART_RX_DATA_SIZE_MAX];
-		TFTLCD_TimeUpdateTypedef time;
+//		TFTLCD_TimeUpdateTypedef time;
 	}value;
-
 } UpdateTypedef;
 
 typedef struct
@@ -167,9 +205,15 @@ typedef struct
 	uint8_t screenIdL;
 	union
 	{
-		BatchUpdateTypedef batchDate[8];		/* 批量更新内容 */
-		UpdateTypedef data;						/* buffer */
-	}buf;
+		uint8_t data[TFTLCD_UART_RX_DATA_SIZE_MAX];
+		union
+		{
+			StatusBarUpdateTypedef statusBarUpdate;		/* 状态栏批量更新 */
+			AnalogTypedef          analogValue[8];		/* 模拟量批量更新 */
+			HistoryDateTypedef     HistoryDate;			/* 历史数据批量更新 */
+		} batch;
+		UpdateTypedef update;						/* buffer */
+	}buffer;
 	uint8_t tail[4];											/* 帧尾 */
 } TFTLCD_SendBufferTypedef;
 
@@ -196,18 +240,25 @@ typedef struct
 	uint8_t bufferSize;											/* 缓存大小 */
 } TFTLCD_RecvBufferTypedef;
 
+typedef struct
+{
+	TFTLCD_ScreenIDEnum curScreenID;							/* 当前界面ID */
+} TFTLCD_StatusTypedef;
+
 #pragma pack(pop)
 
 /******************************************************************************/
 extern TFTLCD_RecvBufferTypedef TFTLCD_RecvBuffer;
 
+extern TFTLCD_StatusTypedef TFTLCD_status;
+
 /******************************************************************************/
 void TFTLCD_Init(void);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
-void TFTLCD_RealtimeRefresh(RT_TimeTypedef* rt);
+void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
 void TFTLCD_UartIdleDeal(void);
 ErrorStatus TFTLCD_CheckHeadTail(void);
-void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
+//void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
 void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
 
 

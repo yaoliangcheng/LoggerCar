@@ -60,16 +60,17 @@ typedef struct
 } GPRS_StructTypedef;
 
 #pragma pack(pop)
-/******************************************************************************/
-//extern uint8_t GPRS_RecvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];
-extern GPRS_BufferStatusTypedef GPRS_BufferStatus;
 
 /******************************************************************************/
-void GPRS_Init(void);
-void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
+extern GPRS_BufferStatusTypedef GPRS_BufferStatus;
+extern uint8_t GPRS_signalQuality;			/* GPRS–≈∫≈÷ ¡ø */
+
+/******************************************************************************/
+void GPRS_Init(GPRS_StructTypedef* sendBuf);
 void GPRS_SendCmd(char* str);
-void GPRS_UartIdleDeal(void);
-void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack);
 void GPRS_RstModule(void);
+void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack);
 uint8_t GPRS_GetSignalQuality(uint8_t* buf);
+void GPRS_UartIdleDeal(void);
+
 #endif

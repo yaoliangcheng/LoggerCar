@@ -7,83 +7,32 @@
 /******************************************************************************/
 uint8_t GPRS_RecvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];
 GPRS_BufferStatusTypedef GPRS_BufferStatus;
+uint8_t GPRS_signalQuality;			/* GPRS信号质量 */
+
+/******************************************************************************/
+static void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
+static void GPRS_SendData(uint8_t *pData, uint16_t Size);
+static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
 
 /*******************************************************************************
- *
+ * function：GPRS初始化，包括发送结构体初始化、串口idle接收初始化
  */
-void GPRS_StructInit(GPRS_StructTypedef* sendBuf)
+void GPRS_Init(GPRS_StructTypedef* sendBuf)
 {
-	sendBuf->head = GPRS_PACK_HEAD;
-
-	sendBuf->locationType = FILE_DeviceParam.locationType;
-
-	/* eeprom中读出数据 */
-	memcpy(&sendBuf->seriaNumber, FILE_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
-	sendBuf->firmwareVersion = 	  FILE_DeviceParam.firmwareVersion;
-	sendBuf->recordInterval = 	  FILE_DeviceParam.recordInterval;
-	sendBuf->overLimitInterval =  FILE_DeviceParam.overLimitRecordInterval;
-
-	/* 设置通道类型 */
-	sendBuf->exitAnalogChannelNumb = FILE_DeviceParam.exitAnalogChannelNumb;
-	memcpy(&sendBuf->param[0], &FILE_DeviceParam.param[0], sizeof(sendBuf->param));
-
-	sendBuf->tail = GPRS_PACK_TAIL;
-}
-
-/*******************************************************************************
- *
- */
-void GPRS_Init(void)
-{
+	GPRS_StructInit(sendBuf);
 	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvBuffer, GPRS_UART_RX_DATA_SIZE_MAX);
 }
 
 /*******************************************************************************
- *
- */
-void GPRS_SendData(uint8_t *pData, uint16_t Size)
-{
-	HAL_UART_Transmit_DMA(&GPRS_UART, pData, Size);
-}
-
-/*******************************************************************************
- *
+ * function:GPRS发送命令
  */
 void GPRS_SendCmd(char* str)
 {
 	GPRS_SendData((uint8_t*)str, strlen(str));
 }
 
-/******************************************************************************/
-void GPRS_UartIdleDeal(void)
-{
-	uint32_t tmp_flag = 0, tmp_it_source = 0;
-
-	tmp_flag = __HAL_UART_GET_FLAG(&GPRS_UART, UART_FLAG_IDLE);
-	tmp_it_source = __HAL_UART_GET_IT_SOURCE(&GPRS_UART, UART_IT_IDLE);
-	if((tmp_flag != RESET) && (tmp_it_source != RESET))
-	{
-		__HAL_DMA_DISABLE(GPRS_UART.hdmarx);
-		__HAL_DMA_CLEAR_FLAG(GPRS_UART.hdmarx, DMA_FLAG_GL6);
-
-		/* Clear Uart IDLE Flag */
-		__HAL_UART_CLEAR_IDLEFLAG(&GPRS_UART);
-
-		GPRS_BufferStatus.bufferSize = GPRS_UART_RX_DATA_SIZE_MAX
-						- __HAL_DMA_GET_COUNTER(GPRS_UART.hdmarx);
-
-		memcpy(GPRS_BufferStatus.recvBuffer, GPRS_RecvBuffer, GPRS_BufferStatus.bufferSize);
-		memset(GPRS_RecvBuffer, 0, GPRS_BufferStatus.bufferSize);
-
-		osSignalSet(gprsprocessTaskHandle, GPRS_PROCESS_TASK_RECV_ENABLE);
-
-		GPRS_UART.hdmarx->Instance->CNDTR = GPRS_UART.RxXferSize;
-		__HAL_DMA_ENABLE(GPRS_UART.hdmarx);
-	}
-}
-
 /*******************************************************************************
- *
+ * function：GPRS模块复位
  */
 void GPRS_RstModule(void)
 {
@@ -93,22 +42,9 @@ void GPRS_RstModule(void)
 }
 
 /*******************************************************************************
- * gprs数据校验
- */
-uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size)
-{
-	uint8_t cal = 0;
-
-	while(size--)
-	{
-		cal += (*pBuffer++);
-	}
-
-	return cal;
-}
-
-/*******************************************************************************
- *
+ * function：GPRS发送协议到平台
+ * sendBuf：发送数据指针
+ * patch：该缓存中包含几个补传的数据
  */
 void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 {
@@ -151,7 +87,6 @@ void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 
 /*******************************************************************************
  * function：获取信号质量
- *
  */
 uint8_t GPRS_GetSignalQuality(uint8_t* buf)
 {
@@ -161,4 +96,77 @@ uint8_t GPRS_GetSignalQuality(uint8_t* buf)
 	return (uint8_t)(temp[0] * 10 + temp[1]);
 }
 
+/*******************************************************************************
+ * function:uart——idle接收处理
+ */
+void GPRS_UartIdleDeal(void)
+{
+	uint32_t tmp_flag = 0, tmp_it_source = 0;
 
+	tmp_flag = __HAL_UART_GET_FLAG(&GPRS_UART, UART_FLAG_IDLE);
+	tmp_it_source = __HAL_UART_GET_IT_SOURCE(&GPRS_UART, UART_IT_IDLE);
+	if((tmp_flag != RESET) && (tmp_it_source != RESET))
+	{
+		__HAL_DMA_DISABLE(GPRS_UART.hdmarx);
+		__HAL_DMA_CLEAR_FLAG(GPRS_UART.hdmarx, DMA_FLAG_GL6);
+
+		/* Clear Uart IDLE Flag */
+		__HAL_UART_CLEAR_IDLEFLAG(&GPRS_UART);
+
+		GPRS_BufferStatus.bufferSize = GPRS_UART_RX_DATA_SIZE_MAX
+						- __HAL_DMA_GET_COUNTER(GPRS_UART.hdmarx);
+
+		memcpy(GPRS_BufferStatus.recvBuffer, GPRS_RecvBuffer, GPRS_BufferStatus.bufferSize);
+		memset(GPRS_RecvBuffer, 0, GPRS_BufferStatus.bufferSize);
+
+		osSignalSet(gprsprocessTaskHandle, GPRS_PROCESS_TASK_RECV_ENABLE);
+
+		GPRS_UART.hdmarx->Instance->CNDTR = GPRS_UART.RxXferSize;
+		__HAL_DMA_ENABLE(GPRS_UART.hdmarx);
+	}
+}
+
+/*******************************************************************************
+ * function:发送到平台数据结构初始化
+ */
+static void GPRS_StructInit(GPRS_StructTypedef* sendBuf)
+{
+	sendBuf->head = GPRS_PACK_HEAD;
+
+	sendBuf->locationType = FILE_DeviceParam.locationType;
+
+	/* eeprom中读出数据 */
+	memcpy(&sendBuf->seriaNumber, FILE_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
+	sendBuf->firmwareVersion = 	  FILE_DeviceParam.firmwareVersion;
+	sendBuf->recordInterval = 	  FILE_DeviceParam.recordInterval;
+	sendBuf->overLimitInterval =  FILE_DeviceParam.overLimitRecordInterval;
+
+	/* 设置通道类型 */
+	sendBuf->exitAnalogChannelNumb = FILE_DeviceParam.exitAnalogChannelNumb;
+	memcpy(&sendBuf->param[0], &FILE_DeviceParam.param[0], sizeof(sendBuf->param));
+
+	sendBuf->tail = GPRS_PACK_TAIL;
+}
+
+/*******************************************************************************
+ * function:串口dma发送数据
+ */
+static void GPRS_SendData(uint8_t *pData, uint16_t Size)
+{
+	HAL_UART_Transmit_DMA(&GPRS_UART, pData, Size);
+}
+
+/*******************************************************************************
+ * function：gprs发送数据校验
+ */
+static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size)
+{
+	uint8_t cal = 0;
+
+	while(size--)
+	{
+		cal += (*pBuffer++);
+	}
+
+	return cal;
+}

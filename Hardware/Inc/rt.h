@@ -30,15 +30,17 @@ typedef struct
 {
 	RTC_DateTypeDef date;
 	RTC_TimeTypeDef time;
-	uint8_t oldWeekDay;				/* 上次记录星期,用于更新日期 */
+	uint8_t         oldWeekDay;				/* 上次记录星期,用于更新日期 */
 } RT_TimeTypedef;
 
 #pragma pack(pop)
 
 /******************************************************************************/
+extern RT_TimeTypedef RT_RealTime;
+
+/******************************************************************************/
+void RT_Init(void);
 void RT_BKUP_UpdateDate(RT_TimeTypedef* time);
-void RT_SetRealTime(RT_TimeTypedef* time);
-void RT_Init(RT_TimeTypedef* time);
 void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time);
 
 #endif

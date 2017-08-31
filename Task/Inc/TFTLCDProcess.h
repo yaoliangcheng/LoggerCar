@@ -7,6 +7,8 @@
 
 /******************************************************************************/
 #define TFTLCD_TASK_RECV_ENABLE				(1 << 0)
+#define TFTLCD_TASK_STATUS_BAR_UPDATE		(1 << 1)
+#define TFTLCD_TASK_ANALOG_UPDATE			(1 << 2)
 
 /******************************************************************************/
 typedef enum

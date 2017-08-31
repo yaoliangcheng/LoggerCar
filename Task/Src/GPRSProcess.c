@@ -24,11 +24,8 @@ void GPRSPROCESS_Task(void)
 	uint8_t moduleErrorCnt;										/* 模块接收错误指令计数 */
 	uint16_t curPatchPack;										/* 本次上传条数 */
 	BOOL gprsInited;											/* gprs功能初始化标志位 */
-	uint8_t signalQuality;										/* 信号质量值 */
 
-	GPRS_Init();
-	/* 初始化发送结构体 */
-	GPRS_StructInit(&sendStruct);
+	GPRS_Init(&sendStruct);
 
 	while(1)
 	{
@@ -457,8 +454,8 @@ void GPRSPROCESS_Task(void)
 				/* 获取信号质量完成 */
 				case GET_SIGNAL_QUALITY_FINISH:
 					DebugPrintf("获取信号质量完成\r\n");
-					signalQuality = GPRS_GetSignalQuality(GPRS_BufferStatus.recvBuffer);
-					printf("信号强度=%d\r\n", signalQuality);
+					GPRS_signalQuality = GPRS_GetSignalQuality(GPRS_BufferStatus.recvBuffer);
+					printf("信号强度=%d\r\n", GPRS_signalQuality);
 					moduleStatus = SET_SERVER_IP_ADDR;
 					break;
 

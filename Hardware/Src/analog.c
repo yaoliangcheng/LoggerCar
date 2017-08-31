@@ -5,17 +5,74 @@
 
 /******************************************************************************/
 static uint16_t convertValueBuffer[ANALOG_SAMPLE_NUMB][ANALOG_CHANNEL_NUMB_TOTLE];
+ANALOG_ValueTypedef ANALOG_value;
+
+/******************************************************************************/
+static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue);
+static uint8_t ANALOG_GetBatVoltage(uint16_t value);
 
 /*******************************************************************************
- *
+ * function:模拟量初始化
+ * 注意：没有经过电压校准的ADC采样会有较大偏差
  */
 void ANALOG_Init(void)
 {
+	/* 校准ADC */
 	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
 }
 
 /*******************************************************************************
- *
+ * function：使能ADC转换，转换之前需控制模拟量电源开关，并有适当的延时
+ */
+void ANALOG_ConvertEnable(void)
+{
+	/* 传感器电源控制到采集，加入适当的延时 */
+	ANALOG_PWR_ENABLE();
+	VBAT_PWR_CHECK_ENABLE();
+	osDelay(10);
+//	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
+	HAL_ADC_Start_DMA(&ANALOG_ADC, (uint32_t*)convertValueBuffer,
+								sizeof(convertValueBuffer));
+}
+
+/*******************************************************************************
+ * function：模拟量停止转换，并关闭模拟量电源开关
+ */
+void ANALOG_ConvertDisable(void)
+{
+	HAL_ADC_Stop_DMA(&ANALOG_ADC);
+	ANALOG_PWR_DISABLE();
+	VBAT_PWR_CHECK_DISABLE();
+}
+
+/*******************************************************************************
+ * function：获取模拟量的值
+ */
+void ANALOG_GetSensorValue(void)
+{
+	ANALOG_ConvertValueTypedef ANALOG_convertValue;
+
+	/* 获取AD转换值 */
+	ANALOG_GetAverageValue(&ANALOG_convertValue);
+
+	/* 获取温度 */
+	ANALOG_value.temp1 = NTC_GetTemp(ANALOG_convertValue.temp1);
+	ANALOG_value.temp2 = NTC_GetTemp(ANALOG_convertValue.temp2);
+	ANALOG_value.temp3 = NTC_GetTemp(ANALOG_convertValue.temp3);
+	ANALOG_value.temp4 = NTC_GetTemp(ANALOG_convertValue.temp4);
+
+	/* 获取湿度，并补偿 */
+	ANALOG_value.humi1 = HIH5030_GetHumi(ANALOG_convertValue.humi1, ANALOG_value.temp1);
+	ANALOG_value.humi2 = HIH5030_GetHumi(ANALOG_convertValue.humi2, ANALOG_value.temp2);
+	ANALOG_value.humi3 = HIH5030_GetHumi(ANALOG_convertValue.humi3, ANALOG_value.temp3);
+	ANALOG_value.humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, ANALOG_value.temp4);
+
+	/* 获取电池电压 */
+	ANALOG_value.batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage + 70);
+}
+
+/*******************************************************************************
+ * function：将AD值从大到小排序，取中间的数值
  */
 static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue)
 {
@@ -76,53 +133,5 @@ static uint8_t ANALOG_GetBatVoltage(uint16_t value)
 	return percent;
 }
 
-/*******************************************************************************
- *
- */
-void ANALOG_GetSensorValue(ANALOG_ValueTypedef* value)
-{
-	ANALOG_ConvertValueTypedef ANALOG_convertValue;
 
-	/* 获取AD转换值 */
-	ANALOG_GetAverageValue(&ANALOG_convertValue);
-
-	/* 获取温度 */
-	value->temp1 = NTC_GetTemp(ANALOG_convertValue.temp1);
-	value->temp2 = NTC_GetTemp(ANALOG_convertValue.temp2);
-	value->temp3 = NTC_GetTemp(ANALOG_convertValue.temp3);
-	value->temp4 = NTC_GetTemp(ANALOG_convertValue.temp4);
-
-	/* 获取湿度，并补偿 */
-	value->humi1 = HIH5030_GetHumi(ANALOG_convertValue.humi1, value->temp1);
-	value->humi2 = HIH5030_GetHumi(ANALOG_convertValue.humi2, value->temp2);
-	value->humi3 = HIH5030_GetHumi(ANALOG_convertValue.humi3, value->temp3);
-	value->humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, value->temp4);
-
-	/* 获取电池电压 */
-	value->batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage + 70);
-}
-
-/*******************************************************************************
- *
- */
-void ANALOG_ConvertEnable(void)
-{
-	/* 传感器电源控制到采集，加入适当的延时 */
-	ANALOG_PWR_ENABLE();
-	VBAT_PWR_CHECK_ENABLE();
-	osDelay(10);
-	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
-	HAL_ADC_Start_DMA(&ANALOG_ADC, (uint32_t*)convertValueBuffer,
-								sizeof(convertValueBuffer));
-}
-
-/*******************************************************************************
- *
- */
-void ANALOG_ConvertDisable(void)
-{
-	HAL_ADC_Stop_DMA(&ANALOG_ADC);
-	ANALOG_PWR_DISABLE();
-	VBAT_PWR_CHECK_DISABLE();
-}
 

@@ -120,6 +120,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   ANALOG_Init();
+  RT_Init();
 
   /* 文件名格式初始化 */
 	FILE_Init();
