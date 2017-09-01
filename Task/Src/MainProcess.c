@@ -19,10 +19,6 @@ void MAINPROCESS_Task(void)
 
 	RT_TimeTypedef time;
 	GPS_LocateTypedef* location;
-//	ANALOG_ValueTypedef* AnalogValue;
-
-//	FILE_InfoTypedef saveInfo;
-
 
 	FILE_PatchPackTypedef patchPack;
 	uint16_t curPatchPack;				/* 本次补传数据 */
@@ -80,40 +76,19 @@ void MAINPROCESS_Task(void)
 
 		/* 读取补传数据条数 */
 		/* 读取成功，则表明曾经有补传数据记录 */
-//		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
-//		{
-//			/* 补传数据全部上传完毕 */
-//			if (memcmp(patchPack.patchFileName, "\0\0\0\0\0\0", 6) != 0)
-//			{
-//				printf("读取补传文件名是%11s,补传开始结构体偏移=%d \r\n",
-//						patchPack.patchFileName, patchPack.patchStructOffset);
-////				curPatchPack = FILE_ReadPatchInfo(&patchPack, readInfoStruct);
-//			}
-//			else
-//			{
-//				FILE_ReadInfo(readInfoStruct);
-//				curPatchPack = 1;
-//			}
-//		}
-		/* 读取文件不成功，则说明该文件还未创建 */
-		else
+		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
 		{
-			FILE_ReadInfo(readInfoStruct);
-			curPatchPack = 1;
+			curPatchPack = FILE_ReadInfo(readInfoStruct, &patchPack);
 		}
 		printf("本次上传数据条数=%d\r\n", curPatchPack);
 
-		FILE_SendInfoFormatConvert(readInfoStruct, &GPRS_SendBuffer.dataPack[0], curPatchPack);
-
-		/* 通过GPRS上传到平台 */
-		/* 传递发送结构体 */
-//		osMessagePut(infoMessageQId, (uint32_t)&readInfoStruct, 1000);
+		FILE_SendInfoFormatConvert((uint8_t*)readInfoStruct,
+				(uint8_t*)&GPRS_SendBuffer.dataPack[0], curPatchPack);
 
 		/* 传递本次发送的数据条数，注意：curPatchPack是以数据形式传递，不是传递指针 */
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);
 
 		/* 使能MainProcess任务发送数据 */
-//		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_SEND_DATA_ENABLE);
 		osMessagePut(gprsTaskMessageQid, START_TASK_GPRS, 1000);
 
 		/* 等待GPRSProcess完成 */
@@ -126,13 +101,6 @@ void MAINPROCESS_Task(void)
 			/* 如果是本次发生的补传，则记录时间，否则是正在补传的过程，保持补传文件内容不变 */
 			if (curPatchPack == 1)
 			{
-				/* 根据时间生成文件名 */
-				BCD2ASCII(&patchPack.patchFileName[0], &time.date.Year,  1);
-				BCD2ASCII(&patchPack.patchFileName[2], &time.date.Month, 1);
-				BCD2ASCII(&patchPack.patchFileName[4], &time.date.Date,  1);
-				/* 补传信息文件名后缀 */
-				memcpy(&patchPack.patchFileName[6], ".txt\0", 5);
-
 				/* 记录当前文件前一次位置 */
 				patchPack.patchStructOffset = curFileStructCount - 1;
 

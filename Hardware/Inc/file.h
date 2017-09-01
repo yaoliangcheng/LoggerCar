@@ -18,7 +18,7 @@
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
-#define FILE_NAME_SAVE_DATA						("SaveData.csv")
+#define FILE_NAME_SAVE_DATA						("date1.csv")
 #define FILE_NAME_PATCH_PACK					("patch.txt")
 #define FILE_NAME_PARAM							("param.txt")
 
@@ -85,8 +85,7 @@ typedef struct
 
 typedef struct
 {
-	char patchFileName[11];						/* 开始补传的文件名 */
-	uint16_t patchStructOffset;					/* 开始补传的结构体在文件中的偏移 */
+	uint32_t patchStructOffset;					/* 开始补传的结构体在文件中的偏移 */
 	uint16_t patchPackOver_5;					/* 补传超过5条 */
 	uint16_t patchPackOver_10;					/* 补传超过10条 */
 	uint16_t patchPackOver_20;					/* 补传超过20条 */
@@ -101,13 +100,9 @@ typedef struct
 void FILE_Init(void);
 void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info);
 ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount);
-ErrorStatus FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo);
+uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* patch);
+void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t sendPackNumb);
 
-void FILE_SendInfoFormatConvert(FILE_SaveInfoTypedef* saveInfo,
-								GPRS_SendInfoTypedef*      sendInfo,
-								uint8_t 		      sendPackNumb);
-
-//uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo);
 ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_ParamFileInit(void);

@@ -89,103 +89,70 @@ ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCo
 /*******************************************************************************
  * function：从Flash中读出最近一个结构体
  * readInfo：储存读出结构体指针
+ * @patch：补传信息
  */
-ErrorStatus FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo)
+uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* patch)
 {
+	uint16_t readInfoCount;
+
 	/* 挂载文件系统 */
 	FATFS_FileLink();
 
 	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
 	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
 	{
-		/* 指针指向最后一个结构体 */
-		FATFS_FileSeekBackwardOnePack();
+		if (patch->patchStructOffset == 0)
+		{
+			readInfoCount = 1;
 
-		FATFS_FileRead((BYTE*)readInfo, sizeof(FILE_SaveInfoTypedef));
+			/* 指针指向最后一个结构体 */
+			FATFS_FileSeekBackwardOnePack();
+
+			FATFS_FileRead((BYTE*)readInfo, sizeof(FILE_SaveInfoTypedef));
+		}
+		else
+		{
+			FATFS_FileSeek(patch->patchStructOffset * sizeof(FILE_SaveInfoTypedef));
+
+			/* 当前文件还有多少个结构体可以读 */
+			readInfoCount = FATFS_GetFileStructCount() - patch->patchStructOffset;
+
+			/* 文件中结构体数不能一次读完 */
+			if (readInfoCount > GPRS_PATCH_PACK_NUMB_MAX)
+			{
+				readInfoCount = GPRS_PATCH_PACK_NUMB_MAX;
+				patch->patchStructOffset += GPRS_PATCH_PACK_NUMB_MAX;
+			}
+			/* 当前文件剩余的结构体能够被一次读完 */
+			else
+			{
+				patch->patchStructOffset = 0;
+			}
+
+			FATFS_FileRead((BYTE*)readInfo, (readInfoCount * sizeof(FILE_SaveInfoTypedef)));
+		}
+
 	}
 
 	FATFS_FileClose();
 
 	FATFS_FileUnlink();
 
-	return SUCCESS;
-}
-
-#if 0
-/*******************************************************************************
- * function:根据补传的信息获取数据
- * @patch：补传信息
- * @readInfo：读出缓存指针
- */
-uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo)
-{
-	uint16_t readInfoCount;
-
-	/* 挂载文件系统 */
-	if (ERROR == FATFS_FileLink())
-		return 0;
-
-	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
-	if (ERROR == FATFS_FileOpen(patch->patchFileName, FATFS_MODE_OPEN_EXISTING_READ))
-		return 0;
-
-	/* 将读指针指向文件的指定位置 */
-	if (ERROR == FATFS_FileSeek(patch->patchStructOffset * sizeof(FILE_InfoTypedef)))
-		return 0;
-
-	/* 当前文件还有多少个结构体可以读 */
-	readInfoCount = FATFS_GetFileStructCount() - patch->patchStructOffset;
-
-	/* 文件中结构体数不能一次读完 */
-	if (readInfoCount > GPRS_PATCH_PACK_NUMB_MAX)
-	{
-		readInfoCount = GPRS_PATCH_PACK_NUMB_MAX;
-		patch->patchStructOffset += GPRS_PATCH_PACK_NUMB_MAX;
-	}
-	/* 当前文件剩余的结构体能够被一次读完 */
-	else
-	{
-		patch->patchStructOffset = 0;
-
-		/* 比较当前补传文件是否是当前文件 */
-		if (memcmp(patch->patchFileName, FILE_FileName, 6) == 0)
-		{
-			/* 是，则证明全部数据补传完毕,补传文件清空 */
-			memcpy(patch->patchFileName, "\0\0\0\0\0\0", 6);
-		}
-		else
-		{
-			/* 否则传递到下一个文件 */
-			FILE_GetNextFileName(patch->patchFileName);
-		}
-	}
-
-	if (ERROR == FATFS_FileRead((BYTE*)readInfo, (readInfoCount * sizeof(FILE_InfoTypedef))))
-		return 0;
-
-	if (ERROR == FATFS_FileClose())
-		return 0;
-
-	FATFS_FileUnlink();
-
 	return readInfoCount;
 }
-#endif
 
 /*******************************************************************************
  * function：发送结构体格式转换
  */
-void FILE_SendInfoFormatConvert(FILE_SaveInfoTypedef* saveInfo,
-								GPRS_SendInfoTypedef* sendInfo,
-								uint8_t 		      sendPackNumb)
+void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t  sendPackNumb)
 {
 	uint8_t i;
 
 	for (i = 0; i < sendPackNumb; i++)
 	{
-		SaveInfoFormatConvert(saveInfo, sendInfo);
+		SaveInfoFormatConvert((FILE_SaveInfoTypedef*)saveInfo, (GPRS_SendInfoTypedef*)sendInfo);
 		saveInfo += sizeof(FILE_SaveInfoTypedef);
-		sendInfo += sizeof(GPRS_SendBufferTypedef);
+		sendInfo += sizeof(GPRS_SendInfoTypedef);
 	}
 }
 
@@ -234,7 +201,6 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 
 	return SUCCESS;
 }
-
 
 #if 0
 /*******************************************************************************
