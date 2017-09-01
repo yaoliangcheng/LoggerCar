@@ -12,71 +12,19 @@
 
 #include "rt.h"
 #include "analog.h"
+#include "gprs.h"
 #include "gps.h"
 #include "fatfs.h"
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
-#define PATCH_PACK_FILE_NAME					("patch.txt")
-#define PARAM_FILE_NAME							("param.txt")
+#define FILE_NAME_SAVE_DATA						("SaveData.csv")
+#define FILE_NAME_PATCH_PACK					("patch.txt")
+#define FILE_NAME_PARAM							("param.txt")
 
 #define FILE_PRINT_TO_END						(0xFFFF)
 
-/******************************************************************************/
-typedef enum
-{
-	LOCATION_BASE_SATTION,
-	LOCATION_GPS
-} LocationTypdEnum;
 
-typedef enum
-{
-	TYPE_TEMP = 1,									/* 温度 */
-	TYPE_HUMI,										/* 湿度 */
-	TYPE_RAINFALL,									/* 雨量 */
-	TYPE_SOIL_MOISTURE,								/* 土壤水分 */
-	TYPE_VOLTAGE,									/* 电压 */
-	TYPE_ELECTRIC_CURRENT,							/* 电流 */
-	TYPE_POWER,										/* 功率 */
-	TYPE_ILLUMINATION_INTENSITY,					/* 光照强度 */
-	TYPE_WIND_SPEED,								/* 风速 */
-	TYPE_WIND_DIR,									/* 风向 */
-	TYPE_CO2,										/* CO2 */
-	TYPE_BAROMETRIC_PRESSURE,						/* 大气压 */
-	TYPE_O2,										/* O2 */
-	TYPE_NUMB_OF_TIMES,								/* 次数 */
-	TYPE_WATER_LEVEL,								/* 水位 */
-	TYPE_PRESSURE,									/* 压力 */
-	TYPE_PH_VALUE,									/* PH值 */
-} ChannelTypeEnum;
-
-typedef enum
-{
-	UNIT_TEMP = 1,									/* 温度 */
-	UNIT_HUMI,										/* 湿度 */
-	UNIT_RAINFALL,									/* 雨量 */
-	UNIT_SOIL_MOISTURE,								/* 土壤水分 */
-	UNIT_VOLTAGE,									/* 电压 */
-	UNIT_ELECTRIC_CURRENT,							/* 电流 */
-	UNIT_POWER,										/* 功率 */
-	UNIT_ILLUMINATION_INTENSITY,					/* 光照强度 */
-	UNIT_WIND_SPEED,								/* 风速 */
-	UNIT_WIND_DIR,									/* 风向 */
-	UNIT_CO2,										/* CO2 */
-	UNIT_BAROMETRIC_PRESSURE,						/* 大气压 */
-	UNIT_O2,										/* O2 */
-	UNIT_NUMB_OF_TIMES,								/* 次数 */
-	UNIT_WATER_LEVEL,								/* 水位 */
-	UNIT_PRESSURE,									/* 压力 */
-	UNIT_PH_VALUE,									/* PH值 */
-} ChannelUnitEnum;
-
-typedef enum
-{
-	FORMAT_INT = 1,									/* 数据格式整数 */
-	FORMAT_ONE_DECIMAL,								/* 数据格式1位小数 */
-	FORMAT_TWO_DECIMAL,								/* 数据格式2位小数 */
-} DataFormatEnum;
 
 /******************************************************************************/
 #pragma pack(push)
@@ -109,14 +57,31 @@ typedef struct
 
 typedef struct
 {
-	FILE_RealTime realTime;						/* 时间 */
-	uint8_t  batteryLevel;						/* 电池电量 */
-	uint8_t  externalPowerStatus;				/* 外部电池状态 */
-	uint32_t longitude;							/* 经度 */
-	uint32_t latitude;							/* 纬度 */
-	uint8_t  resever;							/* 保留 */
-	FILE_AnalogValueTypedef analogValue;		/* 模拟量值 */
-} FILE_InfoTypedef;
+	char value[5];
+	char str;
+} SaveInfoAnalogTypedef;
+
+typedef struct
+{
+	char year[2];								/* 日期：年月日 时分秒，（14） */
+	char month[2];
+	char day[2];
+	char str1;
+	char hour[2];
+	char min[2];
+	char sec[2];
+	char str2;
+	char batQuality[3];							/* 电池电量，（4） */
+	char str3;
+	FunctionalState exPwrStatus;				/* 电池状态，（2） */
+	char str4;
+	char longitude[10];							/* 经度，（11） */
+	char str5;
+	char latitude[10];							/* 纬度，（11） */
+	char str6;
+	SaveInfoAnalogTypedef analogValue[8];		/* 模拟量，（6 x 8） */
+	char end[2];								/* 换行（2） */
+} FILE_SaveInfoTypedef;							/* 总共（92字节） */
 
 typedef struct
 {
@@ -128,51 +93,21 @@ typedef struct
 	uint16_t patchPackOver_30;					/* 补传超过30条 */
 } FILE_PatchPackTypedef;
 
-/**************************参数描述部分*******************************************/
-typedef struct
-{
-	ChannelTypeEnum channelType;					/* 通道类型 */
-	ChannelUnitEnum channelUnit;					/* 通道单位 */
-	DataFormatEnum  dataFormat;					/* 数据形式 */
-} ParamTypeTypedef;
 
-typedef struct
-{
-	float alarmValueUp;								/* 报警上限 */
-	float alarmValueLow;							/* 报警下限 */
-	float perwarningValueUp;						/* 预警上限 */
-	float perwarningValueLow;						/* 预警下限 */
-} ParamAlarmTypedef;
-
-typedef struct
-{
-	char    deviceSN[10];									/* 设备SN号 */
-	LocationTypdEnum locationType;							/* 定位标记 */
-	uint8_t firmwareVersion;								/* 固件版本号 */
-	uint8_t recordInterval;									/* 记录间隔 */
-	uint8_t overLimitRecordInterval;						/* 超标记录间隔 */
-	uint8_t exitAnalogChannelNumb;							/* 外部模拟量通道数 */
-	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* 模拟量参数 */
-	ParamAlarmTypedef temp1;								/* temp1报警值 */
-	ParamAlarmTypedef temp2;								/* temp2报警值 */
-	ParamAlarmTypedef temp3;								/* temp3报警值 */
-	ParamAlarmTypedef temp4;								/* temp4报警值 */
-} FILE_DeviceParamTypedef;
 
 #pragma pack(pop)
 
 /******************************************************************************/
-extern FILE_DeviceParamTypedef FILE_DeviceParam;	/* 设备参数信息 */
-
-/******************************************************************************/
 void FILE_Init(void);
-ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* saveInfo, uint16_t* fileStructCount);
-ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* readInfo);
-uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo);
-void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
-							RT_TimeTypedef*      realTime,
-							GPS_LocateTypedef*   location,
-							ANALOG_ValueTypedef* analogValue);
+void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info);
+ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount);
+ErrorStatus FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo);
+
+void FILE_SendInfoFormatConvert(FILE_SaveInfoTypedef* saveInfo,
+								GPRS_SendInfoTypedef*      sendInfo,
+								uint8_t 		      sendPackNumb);
+
+//uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* readInfo);
 ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_ParamFileInit(void);

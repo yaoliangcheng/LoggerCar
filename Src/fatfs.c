@@ -53,6 +53,7 @@ char USER_Path[4];  /* USER logical drive path */
 
 /* USER CODE BEGIN Variables */
 #include "file.h"
+#include "param.h"
 #include "osConfig.h"
 
 FATFS objFileSystem;			/* FatFs文件系统对象 */
@@ -71,7 +72,7 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-  FILE_ParamFileInit();
+  PARAM_ParamFileInit();
   /* 在文件系统初始化完成后，在启动GPRS任务 */
   osThreadResume(gprsprocessTaskHandle);
   /* USER CODE END Init */
@@ -271,7 +272,7 @@ ErrorStatus FATFS_FileSeekEnd(void)
  */
 ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 {
-	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_InfoTypedef)))
+	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_SaveInfoTypedef)))
 		return SUCCESS;
 	else
 		return ERROR;
@@ -318,7 +319,7 @@ ErrorStatus FATFS_CreateFile(char* fileName)
  */
 uint16_t FATFS_GetFileStructCount(void)
 {
-	return objFile.fsize / sizeof(FILE_InfoTypedef);
+	return objFile.fsize / sizeof(FILE_SaveInfoTypedef);
 }
 
 /* USER CODE END Application */

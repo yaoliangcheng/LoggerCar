@@ -19,14 +19,17 @@ void MAINPROCESS_Task(void)
 
 	RT_TimeTypedef time;
 	GPS_LocateTypedef* location;
-	ANALOG_ValueTypedef* AnalogValue;
+//	ANALOG_ValueTypedef* AnalogValue;
 
-	FILE_InfoTypedef saveInfo;
-	FILE_InfoTypedef readInfo[GPRS_PATCH_PACK_NUMB_MAX];
+//	FILE_InfoTypedef saveInfo;
+
 
 	FILE_PatchPackTypedef patchPack;
 	uint16_t curPatchPack;				/* 本次补传数据 */
-	uint16_t curFileStructCount;		/* 当前文件结构体总数 */
+	uint64_t curFileStructCount;		/* 当前文件结构体总数 */
+
+	FILE_SaveInfoTypedef saveInfoStruct;		/* 储存的结构体变量 */
+	FILE_SaveInfoTypedef readInfoStruct[GPRS_PATCH_PACK_NUMB_MAX];
 
 	while(1)
 	{		
@@ -34,74 +37,77 @@ void MAINPROCESS_Task(void)
 		signal = osMessageGet(realtimeMessageQId, 1000);
 		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
-		/* 获取模拟量数据 */
-		signal = osMessageGet(analogMessageQId, 1000);
-		AnalogValue = (ANALOG_ValueTypedef*)signal.value.v;
+		/* 时间转换成ASCII */
+		HEX2ASCII(&time.date.Year,  (uint8_t*)&saveInfoStruct.year[0],  1);
+		HEX2ASCII(&time.date.Month, (uint8_t*)&saveInfoStruct.month[0], 1);
+		HEX2ASCII(&time.date.Date,  (uint8_t*)&saveInfoStruct.day[0],   1);
+		HEX2ASCII(&time.time.Hours, (uint8_t*)&saveInfoStruct.hour[0],  3);
+
+		/* 模拟量转换为ASCII */
+		sprintf((char*)&saveInfoStruct.analogValue[0].value, "%5.1f", ANALOG_value.temp1);
+		sprintf((char*)&saveInfoStruct.analogValue[1].value, "%5.1f", ANALOG_value.humi1);
+		sprintf((char*)&saveInfoStruct.analogValue[2].value, "%5.1f", ANALOG_value.temp2);
+		sprintf((char*)&saveInfoStruct.analogValue[3].value, "%5.1f", ANALOG_value.humi2);
+		sprintf((char*)&saveInfoStruct.analogValue[4].value, "%5.1f", ANALOG_value.temp3);
+		sprintf((char*)&saveInfoStruct.analogValue[5].value, "%5.1f", ANALOG_value.humi3);
+		sprintf((char*)&saveInfoStruct.analogValue[6].value, "%5.1f", ANALOG_value.temp4);
+		sprintf((char*)&saveInfoStruct.analogValue[7].value, "%5.1f", ANALOG_value.humi4);
+		sprintf((char*)&saveInfoStruct.batQuality[0],        "%3d",   ANALOG_value.batVoltage);
 
 		/* 获取定位数据 */
-		/* 激活GPRSProcess任务，启动GPS转换 */
-//		osThreadResume(gprsprocessTaskHandle);
-//		osSignalSet(gprsprocessTaskHandle, GPRSPROCESS_GPS_ENABLE);
-
 		osMessagePut(gprsTaskMessageQid, START_TASK_GPS, 1000);
 
 		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，30s */
 		/* 刚启动模块的第一次定位耗时长，也不能得到定位数据，可以放弃 */
 		signal = osSignalWait(MAINPROCESS_GPS_CONVERT_FINISH, 30000);
 		if ((signal.value.signals & MAINPROCESS_GPS_CONVERT_FINISH)
-						!= MAINPROCESS_GPS_CONVERT_FINISH)
-		{
-			printf("GPS定位失败\r\n");
-		}
-		else
+						== MAINPROCESS_GPS_CONVERT_FINISH)
 		{
 			/* 获取定位值 */
 			signal = osMessageGet(infoMessageQId, 100);
 			location = (GPS_LocateTypedef*)signal.value.v;
+
+			/* 定位值转换成ASCII */
+			sprintf((char*)&saveInfoStruct.longitude[0], "%10.5f", location->longitude);
+			sprintf((char*)&saveInfoStruct.latitude[0],  "%9.5f",  location->latitude);
 		}
 
-		/* 将数据格式转换成协议格式 */
-		FILE_InfoFormatConvert(&saveInfo, &time, location, AnalogValue);
-
-		printf("当前记录时间是%02x.%02x.%02x %02x:%02x:%02x \r\n",
-				time.date.Year,  time.date.Month,   time.date.Date,
-				time.time.Hours, time.time.Minutes, time.time.Seconds);
-
-		printf("模拟量数据是：%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f\r\n,",
-				AnalogValue->temp1, AnalogValue->temp2, AnalogValue->temp3, AnalogValue->temp4,
-				AnalogValue->humi1, AnalogValue->humi2, AnalogValue->humi3, AnalogValue->humi4);
+		/* 储存信息符号初始化 */
+		FILE_SaveInfoSymbolInit(&saveInfoStruct);
 
 		/* 记录数据 */
-		FILE_SaveInfo(&saveInfo, &curFileStructCount);
+		FILE_SaveInfo(&saveInfoStruct, &curFileStructCount);
 
 		/* 读取补传数据条数 */
 		/* 读取成功，则表明曾经有补传数据记录 */
-		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
-		{
-			/* 补传数据全部上传完毕 */
-			if (memcmp(patchPack.patchFileName, "\0\0\0\0\0\0", 6) != 0)
-			{
-				printf("读取补传文件名是%11s,补传开始结构体偏移=%d \r\n",
-						patchPack.patchFileName, patchPack.patchStructOffset);
-				curPatchPack = FILE_ReadPatchInfo(&patchPack, readInfo);
-			}
-			else
-			{
-				FILE_ReadInfo(readInfo);
-				curPatchPack = 1;
-			}
-		}
+//		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
+//		{
+//			/* 补传数据全部上传完毕 */
+//			if (memcmp(patchPack.patchFileName, "\0\0\0\0\0\0", 6) != 0)
+//			{
+//				printf("读取补传文件名是%11s,补传开始结构体偏移=%d \r\n",
+//						patchPack.patchFileName, patchPack.patchStructOffset);
+////				curPatchPack = FILE_ReadPatchInfo(&patchPack, readInfoStruct);
+//			}
+//			else
+//			{
+//				FILE_ReadInfo(readInfoStruct);
+//				curPatchPack = 1;
+//			}
+//		}
 		/* 读取文件不成功，则说明该文件还未创建 */
 		else
 		{
-			FILE_ReadInfo(readInfo);
+			FILE_ReadInfo(readInfoStruct);
 			curPatchPack = 1;
 		}
 		printf("本次上传数据条数=%d\r\n", curPatchPack);
 
+		FILE_SendInfoFormatConvert(readInfoStruct, &GPRS_SendBuffer.dataPack[0], curPatchPack);
+
 		/* 通过GPRS上传到平台 */
 		/* 传递发送结构体 */
-		osMessagePut(infoMessageQId, (uint32_t)&readInfo, 1000);
+//		osMessagePut(infoMessageQId, (uint32_t)&readInfoStruct, 1000);
 
 		/* 传递本次发送的数据条数，注意：curPatchPack是以数据形式传递，不是传递指针 */
 		osMessagePut(infoCntMessageQId, (uint16_t)curPatchPack, 1000);

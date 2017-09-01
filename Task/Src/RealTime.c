@@ -14,7 +14,7 @@
 void REALTIME_Task(void)
 {
 	osEvent signal;
-	RT_TimeTypedef sTime;
+//	RT_TimeTypedef sTime;
 
 	while(1)
 	{
@@ -57,14 +57,14 @@ void REALTIME_Task(void)
 					if (RT_RealTime.time.Seconds % 60 == 0)
 					{
 						/* 把时间传递到GPRS进程，便于根据平台回文校准时间 */
-						osMessagePut(adjustTimeMessageQId, (uint32_t)&RT_RealTime, 1000);
+//						osMessagePut(adjustTimeMessageQId, (uint32_t)&RT_RealTime, 1000);
 
 						/* 发送记录时间数据,先把时间转换成BCD模式 */
-						HEX2BCD((uint8_t*)&RT_RealTime, (uint8_t*)&sTime, sizeof(RT_TimeTypedef));
-						osMessagePut(realtimeMessageQId, (uint32_t)&sTime, 100);
+//						HEX2BCD((uint8_t*)&RT_RealTime, (uint8_t*)&sTime, sizeof(RT_TimeTypedef));
+						osMessagePut(realtimeMessageQId, (uint32_t)&RT_RealTime, 100);
 
 						/* 发送模拟量数据 */
-						osMessagePut(analogMessageQId, (uint32_t)&ANALOG_value, 100);
+//						osMessagePut(analogMessageQId, (uint32_t)&ANALOG_value, 100);
 
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
@@ -73,9 +73,6 @@ void REALTIME_Task(void)
 						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
 					}
 				}
-
-
-
 			}
 		}
 	}

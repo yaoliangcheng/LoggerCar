@@ -53,6 +53,10 @@ void TFTLCD_Task(void)
 			/* 检测头和尾 */
 			if (ERROR != TFTLCD_CheckHeadTail())
 			{
+				/* 识别画面ID */
+				screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
+						| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
+
 				if (TFTLCD_RecvBuffer.date.recvBuf.cmd == TFTLCD_CMD_SCREEN_ID_GET)
 				{
 					TFTLCD_status.curScreenID = (TFTLCD_ScreenIDEnum)((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
@@ -60,12 +64,21 @@ void TFTLCD_Task(void)
 
 					/* 界面跳转后，需要刷新一次状态栏 */
 					osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+
+					/* 界面跳转后，默认出现的画面 */
+					switch (screenID)
+					{
+					case SCREEN_ID_HIS_DATA:
+						break;
+					default:
+						break;
+					}
+
+
 				}
 				else
 				{
-					/* 识别画面ID和控件ID */
-					screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
-							| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
+					/* 控件ID */
 					ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
 							| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
 
@@ -119,7 +132,7 @@ static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum*
 			*status = TFT_PRINT_END_TIME;
 			break;
 		case PRINT_CTRL_ID_START_PRINT:
-			FILE_PrintDependOnTime(startTime, stopTime, select);
+//			FILE_PrintDependOnTime(startTime, stopTime, select);
 			break;
 		case PRINT_CTRL_ID_CHANNEL_1_BUTTON:
 			TFTLCD_printChannelSelectICON(PRINT_CTRL_ID_CHANNEL_1_ICON,
@@ -239,7 +252,13 @@ static void ScreenTimeSelect(FILE_RealTime* pTime, uint16_t cmd,
 	}
 }
 
+/*******************************************************************************
+ *
+ */
+void HistoryDataDisplay(void)
+{
 
+}
 
 
 

@@ -15,7 +15,6 @@ void GPRSPROCESS_Task(void)
 	GPRS_ModuleStatusEnum moduleStatus = MODULE_INVALID;		/* GPRS模块状态 */
 	char* expectString;											/* 预期收到的字符串 */
 
-	GPRS_StructTypedef sendStruct;								/* 发送结构 */
 	GPS_LocateTypedef  location;
 	RT_TimeTypedef*    eTime;
 
@@ -25,7 +24,7 @@ void GPRSPROCESS_Task(void)
 	uint16_t curPatchPack;										/* 本次上传条数 */
 	BOOL gprsInited;											/* gprs功能初始化标志位 */
 
-	GPRS_Init(&sendStruct);
+	GPRS_Init(&GPRS_SendBuffer);
 
 	while(1)
 	{
@@ -83,9 +82,9 @@ void GPRSPROCESS_Task(void)
 				curPatchPack = signal.value.v;
 
 				/* 获取模拟量信息 */
-				signal = osMessageGet(infoMessageQId, 2000);
-				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
-						curPatchPack * sizeof(FILE_InfoTypedef));
+//				signal = osMessageGet(infoMessageQId, 2000);
+//				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
+//						curPatchPack * sizeof(FILE_InfoTypedef));
 				/* 获取当前时间用于校准 */
 				signal = osMessageGet(adjustTimeMessageQId, 2000);
 				eTime = (RT_TimeTypedef*)signal.value.v;
@@ -227,7 +226,7 @@ void GPRSPROCESS_Task(void)
 		case READY:
 			DebugPrintf("模块准备好了，发送数据\r\n");
 			/* 发送数据到平台 */
-			GPRS_SendProtocol(&sendStruct, curPatchPack);
+			GPRS_SendProtocol(&GPRS_SendBuffer, curPatchPack);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
@@ -330,7 +329,7 @@ void GPRSPROCESS_Task(void)
 			moduleTimeoutCnt = 0;
 
 			/* 寻找预期接收的字符串是否在接收的数据中 */
-			if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, expectString))
+			if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, expectString))
 			{
 				/* 正确接收，则接收错误清空 */
 				moduleErrorCnt = 0;
@@ -373,8 +372,8 @@ void GPRSPROCESS_Task(void)
 				case GET_GPS_GNRMC_FINISH:
 					DebugPrintf("获取GNRMC定位值完成\r\n");
 					/* 转换定位数据 */
-					GPS_GetLocation(GPRS_BufferStatus.recvBuffer, &location);
-					printf("定位数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
+					GPS_GetLocation(GPRS_RecvBuffer.recvBuffer, &location);
+					printf("定位数据是%50s\r\n",GPRS_RecvBuffer.recvBuffer);
 					/* 传递定位信息 */
 					osMessagePut(infoMessageQId, (uint32_t)&location, 100);
 					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPS_CONVERT_FINISH);
@@ -454,7 +453,7 @@ void GPRSPROCESS_Task(void)
 				/* 获取信号质量完成 */
 				case GET_SIGNAL_QUALITY_FINISH:
 					DebugPrintf("获取信号质量完成\r\n");
-					GPRS_signalQuality = GPRS_GetSignalQuality(GPRS_BufferStatus.recvBuffer);
+					GPRS_signalQuality = GPRS_GetSignalQuality(GPRS_RecvBuffer.recvBuffer);
 					printf("信号强度=%d\r\n", GPRS_signalQuality);
 					moduleStatus = SET_SERVER_IP_ADDR;
 					break;
@@ -468,10 +467,10 @@ void GPRSPROCESS_Task(void)
 				/* 数据发送完成 */
 				case DATA_SEND_FINISH:
 					DebugPrintf("数据发送成功\r\n");
-					printf("服务器返回数据是%50s\r\n",GPRS_BufferStatus.recvBuffer);
+					printf("服务器返回数据是%50s\r\n",GPRS_RecvBuffer.recvBuffer);
 
 					/* 将本地时间与云时间对比，时间校准 */
-					RT_TimeAdjustWithCloud(GPRS_BufferStatus.recvBuffer, eTime);
+					RT_TimeAdjustWithCloud(GPRS_RecvBuffer.recvBuffer, eTime);
 
 					moduleStatus = EXTI_SERIANET_MODE;
 
@@ -518,7 +517,7 @@ void GPRSPROCESS_Task(void)
 
 					/* 链接服务器地址出现“FAIL”或者“ERROR”，不能链接上服务器 */
 					case SET_SERVER_IP_ADDR_FINISH:
-						if (NULL != strstr((char*)GPRS_BufferStatus.recvBuffer, "FAIL ERROR"))
+						if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, "FAIL ERROR"))
 						{
 							/* 放弃本次发送 */
 							moduleStatus = INIT;
@@ -545,7 +544,7 @@ void GPRSPROCESS_Task(void)
 					}
 				}
 			}
-			memset(GPRS_BufferStatus.recvBuffer, 0, GPRS_BufferStatus.bufferSize);
+			memset(GPRS_RecvBuffer.recvBuffer, 0, GPRS_RecvBuffer.bufferSize);
 		}
 	}
 }

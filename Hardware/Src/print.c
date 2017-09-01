@@ -30,6 +30,7 @@ void PRINT_SetMode(void)
 	PRINT_SendData(3);
 }
 
+#if 0
 /*******************************************************************************
  * function:打印输出
  */
@@ -104,6 +105,7 @@ BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
 
 	return status;
 }
+#endif 
 
 /*******************************************************************************
  * function：打印标题数据

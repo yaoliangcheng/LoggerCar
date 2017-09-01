@@ -1,26 +1,27 @@
 #include "gprs.h"
 
-
 #include "GPRSProcess.h"
 #include "osConfig.h"
 
 /******************************************************************************/
-uint8_t GPRS_RecvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];
-GPRS_BufferStatusTypedef GPRS_BufferStatus;
+uint8_t GPRS_RecvData[GPRS_UART_RX_DATA_SIZE_MAX];
 uint8_t GPRS_signalQuality;			/* GPRS信号质量 */
 
+GPRS_SendBufferTypedef GPRS_SendBuffer;
+GPRS_RecvBufferTypedef GPRS_RecvBuffer;
+
 /******************************************************************************/
-static void GPRS_StructInit(GPRS_StructTypedef* sendBuf);
+static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf);
 static void GPRS_SendData(uint8_t *pData, uint16_t Size);
 static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
 
 /*******************************************************************************
  * function：GPRS初始化，包括发送结构体初始化、串口idle接收初始化
  */
-void GPRS_Init(GPRS_StructTypedef* sendBuf)
+void GPRS_Init(GPRS_SendBufferTypedef* sendBuf)
 {
 	GPRS_StructInit(sendBuf);
-	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvBuffer, GPRS_UART_RX_DATA_SIZE_MAX);
+	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvData, GPRS_UART_RX_DATA_SIZE_MAX);
 }
 
 /*******************************************************************************
@@ -46,7 +47,7 @@ void GPRS_RstModule(void)
  * sendBuf：发送数据指针
  * patch：该缓存中包含几个补传的数据
  */
-void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
+void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf, uint8_t patchPack)
 {
 	uint16_t dataSize = 0;
 
@@ -55,7 +56,7 @@ void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 //	dataSize = patchPack * (17 + 2 * ANALOG_CHANNEL_NUMB)
 //				+ sizeof(GPRS_ParamTypedef) * ANALOG_CHANNEL_NUMB
 //				+ 23;
-	dataSize = patchPack * 33 + 47;
+	dataSize = patchPack * sizeof(GPRS_SendInfoTypedef) + 47;
 
 	/* 获取数据长度 */
 	sendBuf->dateSizeH = HalfWord_GetHighByte(dataSize);
@@ -65,6 +66,7 @@ void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 	sendBuf->dataPackNumbH = HalfWord_GetHighByte(patchPack);
 	sendBuf->dataPackNumbL = HalfWord_GetLowByte(patchPack);
 
+	/* 如果缓存未被装在满，则在下一数据中加入帧尾 */
 	if (patchPack < GPRS_PATCH_PACK_NUMB_MAX)
 	{
 		/* 在数据的结尾，添加上帧尾 */
@@ -77,7 +79,7 @@ void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack)
 	if (patchPack < GPRS_PATCH_PACK_NUMB_MAX)
 	{
 		/* 数据最后添加上校验 */
-		memcpy((void*)(&(sendBuf->dataPack[patchPack].realTime.month)),
+		memcpy((void*)(&(sendBuf->dataPack[patchPack].month)),
 					&sendBuf->verifyData, 1);
 	}
 
@@ -113,11 +115,11 @@ void GPRS_UartIdleDeal(void)
 		/* Clear Uart IDLE Flag */
 		__HAL_UART_CLEAR_IDLEFLAG(&GPRS_UART);
 
-		GPRS_BufferStatus.bufferSize = GPRS_UART_RX_DATA_SIZE_MAX
+		GPRS_RecvBuffer.bufferSize = GPRS_UART_RX_DATA_SIZE_MAX
 						- __HAL_DMA_GET_COUNTER(GPRS_UART.hdmarx);
 
-		memcpy(GPRS_BufferStatus.recvBuffer, GPRS_RecvBuffer, GPRS_BufferStatus.bufferSize);
-		memset(GPRS_RecvBuffer, 0, GPRS_BufferStatus.bufferSize);
+		memcpy(GPRS_RecvBuffer.recvBuffer, GPRS_RecvData, GPRS_RecvBuffer.bufferSize);
+		memset(GPRS_RecvData, 0, GPRS_RecvBuffer.bufferSize);
 
 		osSignalSet(gprsprocessTaskHandle, GPRS_PROCESS_TASK_RECV_ENABLE);
 
@@ -129,21 +131,21 @@ void GPRS_UartIdleDeal(void)
 /*******************************************************************************
  * function:发送到平台数据结构初始化
  */
-static void GPRS_StructInit(GPRS_StructTypedef* sendBuf)
+static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf)
 {
 	sendBuf->head = GPRS_PACK_HEAD;
 
-	sendBuf->locationType = FILE_DeviceParam.locationType;
+	sendBuf->locationType = PARAM_DeviceParam.locationType;
 
 	/* eeprom中读出数据 */
-	memcpy(&sendBuf->seriaNumber, FILE_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
-	sendBuf->firmwareVersion = 	  FILE_DeviceParam.firmwareVersion;
-	sendBuf->recordInterval = 	  FILE_DeviceParam.recordInterval;
-	sendBuf->overLimitInterval =  FILE_DeviceParam.overLimitRecordInterval;
+	memcpy(&sendBuf->seriaNumber, PARAM_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
+	sendBuf->firmwareVersion = 	  PARAM_DeviceParam.firmwareVersion;
+	sendBuf->recordInterval = 	  PARAM_DeviceParam.recordInterval;
+	sendBuf->overLimitInterval =  PARAM_DeviceParam.overLimitRecordInterval;
 
 	/* 设置通道类型 */
-	sendBuf->exitAnalogChannelNumb = FILE_DeviceParam.exitAnalogChannelNumb;
-	memcpy(&sendBuf->param[0], &FILE_DeviceParam.param[0], sizeof(sendBuf->param));
+	sendBuf->exitAnalogChannelNumb = PARAM_DeviceParam.exitAnalogChannelNumb;
+	memcpy(&sendBuf->param[0], &PARAM_DeviceParam.param[0], sizeof(sendBuf->param));
 
 	sendBuf->tail = GPRS_PACK_TAIL;
 }

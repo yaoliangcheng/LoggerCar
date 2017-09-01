@@ -131,7 +131,7 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
   tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
 
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 2048);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 3000);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 

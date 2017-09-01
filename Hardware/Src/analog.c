@@ -2,6 +2,7 @@
 
 #include "ntc.h"
 #include "hih5030.h"
+#include "param.h"
 
 /******************************************************************************/
 static uint16_t convertValueBuffer[ANALOG_SAMPLE_NUMB][ANALOG_CHANNEL_NUMB_TOTLE];

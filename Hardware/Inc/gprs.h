@@ -5,8 +5,8 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#include "param.h"
 #include "exFlash.h"
-#include "file.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart2)
@@ -37,7 +37,23 @@ typedef struct
 {
 	uint8_t recvBuffer[GPRS_UART_RX_DATA_SIZE_MAX];			/* 接收缓存 */
 	uint8_t bufferSize;										/* 缓存大小 */
-} GPRS_BufferStatusTypedef;
+} GPRS_RecvBufferTypedef;
+
+typedef struct
+{
+	uint8_t  year;								/* 时间 */
+	uint8_t  month;
+	uint8_t  day;
+	uint8_t  hour;
+	uint8_t  min;
+	uint8_t  sec;
+	uint8_t  batteryLevel;						/* 电池电量 */
+	uint8_t  externalPowerStatus;				/* 外部电池状态 */
+	uint32_t longitude;							/* 经度 */
+	uint32_t latitude;							/* 纬度 */
+	uint8_t  resever;							/* 保留 */
+	uint16_t analogValue[8];					/* 模拟量值 */
+} GPRS_SendInfoTypedef;
 
 typedef struct
 {
@@ -54,22 +70,23 @@ typedef struct
 	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* n个通道参数 */
 	uint8_t dataPackNumbH;									/* 数据条数m高位 */
 	uint8_t dataPackNumbL;									/* 数据条数m低位 */
-	FILE_InfoTypedef dataPack[GPRS_PATCH_PACK_NUMB_MAX];	/* m条数据点 */
+	GPRS_SendInfoTypedef dataPack[GPRS_PATCH_PACK_NUMB_MAX];		/* m条数据点 */
 	uint8_t tail;											/* 数据尾 */
 	uint8_t verifyData;										/* 校验数据 */
-} GPRS_StructTypedef;
+} GPRS_SendBufferTypedef;
 
 #pragma pack(pop)
 
 /******************************************************************************/
-extern GPRS_BufferStatusTypedef GPRS_BufferStatus;
+extern GPRS_RecvBufferTypedef GPRS_RecvBuffer;
 extern uint8_t GPRS_signalQuality;			/* GPRS信号质量 */
+extern GPRS_SendBufferTypedef GPRS_SendBuffer;
 
 /******************************************************************************/
-void GPRS_Init(GPRS_StructTypedef* sendBuf);
+void GPRS_Init(GPRS_SendBufferTypedef* sendBuf);
 void GPRS_SendCmd(char* str);
 void GPRS_RstModule(void);
-void GPRS_SendProtocol(GPRS_StructTypedef* sendBuf, uint16_t patchPack);
+void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf, uint8_t patchPack);
 uint8_t GPRS_GetSignalQuality(uint8_t* buf);
 void GPRS_UartIdleDeal(void);
 

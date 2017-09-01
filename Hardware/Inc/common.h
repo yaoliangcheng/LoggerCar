@@ -24,6 +24,7 @@ uint8_t HalfWord_GetLowByte(uint16_t value);
 HAL_StatusTypeDef UART_DMAIdleConfig(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
 void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size);
 void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size);
+void ASCII2BCD(char* pASCII, uint8_t* pBCD, uint8_t size);
 void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size);
 void HEX2ASCII(uint8_t* pHEX, uint8_t* pASCII, uint8_t size);
 void DebugPrintf(char* str);

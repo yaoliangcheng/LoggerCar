@@ -1,23 +1,20 @@
 #include "file.h"
 #include "print.h"
 #include "fatfs.h"
-#include "gprs.h"
 
 char FILE_FileName[11];						/* 储存文件名 */
 char FILE_PrintFileName[11]; 				/* 打印文件名 */
 FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
-FILE_DeviceParamTypedef FILE_DeviceParam;	/* 设备参数信息 */
 
 /******************************************************************************/
-static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName);
-static void FILE_GetNextFileName(char* fileName);
-static void LocationFormatConvert(double value, uint8_t* pBuffer);
-static uint16_t SearchTimeInFile(FILE_RealTime* pTime);
-static void selectDataPrint(char* fileName,
-							uint16_t startPoint, uint16_t endPoint,
-							PRINT_ChannelSelectTypedef* select);
-static void AnalogDataFormatConvert(float value, DataFormatEnum format,
-							uint8_t* pBuffer);
+//static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName);
+//static void FILE_GetNextFileName(char* fileName);
+//static uint16_t SearchTimeInFile(FILE_RealTime* pTime);
+//static void selectDataPrint(char* fileName,
+//							uint16_t startPoint, uint16_t endPoint,
+//							PRINT_ChannelSelectTypedef* select);
+static void SaveInfoFormatConvert(FILE_SaveInfoTypedef* info,
+							GPRS_SendInfoTypedef* sendInfo);
 
 /*******************************************************************************
  *
@@ -32,47 +29,57 @@ void FILE_Init(void)
 /*******************************************************************************
  *
  */
-ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* saveInfo, uint16_t* fileStructCount)
+void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info)
+{
+	info->str1   			  = ' ';
+	info->str2   			  = ',';
+	info->str3  			  = ',';
+	info->str4   			  = ',';
+	info->str5   			  = ',';
+	info->str6   			  = ',';
+	info->analogValue[0].str  = ',';
+	info->analogValue[1].str  = ',';
+	info->analogValue[2].str  = ',';
+	info->analogValue[3].str  = ',';
+	info->analogValue[4].str  = ',';
+	info->analogValue[5].str  = ',';
+	info->analogValue[6].str  = ',';
+	info->analogValue[7].str  = ',';
+	info->end[0] 			  = 0x0D;
+	info->end[1] 			  = 0x0A;
+}
+
+/*******************************************************************************
+ * function:储存结构体到Flash
+ * saveInfo：储存结构体指针
+ * fileStructCount：当前文件结构体数
+ */
+ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount)
 {
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())
 		return ERROR;
 
 	/* 获取总空间和空闲空间 */
-	if (ERROR == FATFS_GetSpaceInfo())
-	{
-		printf("数据空间获取失败\r\n");
-	}
+	FATFS_GetSpaceInfo();
 
 	/* 根据时间获取文件名 */
-	FILE_GetFileNameDependOnTime(&saveInfo->realTime, FILE_FileName);
+//	FILE_GetFileNameDependOnTime(&saveInfo->realTime, FILE_FileName);
 
 	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
-	if (ERROR == FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_ALWAYS_WRITE))
+	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_ALWAYS_WRITE))
 	{
-		printf("文件打开失败\r\n");
-		return ERROR;
+		/* 将写指针指向文件的末尾 */
+		FATFS_FileSeekEnd();
+
+		/* 把结构体写入文件 */
+		FATFS_FileWrite((BYTE*)saveInfo, sizeof(FILE_SaveInfoTypedef));
+
+		/* 获取文件大小 */
+		*fileStructCount = FATFS_GetFileStructCount();
 	}
 
-	/* 将写指针指向文件的末尾 */
-	if (ERROR == FATFS_FileSeekEnd())
-	{
-		printf("指向文件末尾失败\r\n");
-		return ERROR;
-	}
-
-	/* 把结构体写入文件 */
-	if (ERROR == FATFS_FileWrite((BYTE*)saveInfo, sizeof(FILE_InfoTypedef)))
-	{
-		printf("结构体写入失败\r\n");
-		return ERROR;
-	}
-
-	/* 获取文件大小 */
-	*fileStructCount = FATFS_GetFileStructCount();
-
-	if (ERROR == FATFS_FileClose())
-		return ERROR;
+	FATFS_FileClose();
 
 	FATFS_FileUnlink();
 
@@ -80,43 +87,31 @@ ErrorStatus FILE_SaveInfo(FILE_InfoTypedef* saveInfo, uint16_t* fileStructCount)
 }
 
 /*******************************************************************************
- *
+ * function：从Flash中读出最近一个结构体
+ * readInfo：储存读出结构体指针
  */
-ErrorStatus FILE_ReadInfo(FILE_InfoTypedef* readInfo)
+ErrorStatus FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo)
 {
 	/* 挂载文件系统 */
-	if (ERROR == FATFS_FileLink())
-		return ERROR;
+	FATFS_FileLink();
 
 	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
-	if (ERROR == FATFS_FileOpen(FILE_FileName, FATFS_MODE_OPEN_EXISTING_READ))
+	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
 	{
-		printf("文件打开失败\r\n");
-		return ERROR;
+		/* 指针指向最后一个结构体 */
+		FATFS_FileSeekBackwardOnePack();
+
+		FATFS_FileRead((BYTE*)readInfo, sizeof(FILE_SaveInfoTypedef));
 	}
 
-	/* 将写指针指向文件的末尾 */
-	if (ERROR == FATFS_FileSeekBackwardOnePack())
-	{
-		printf("指向文件末尾失败\r\n");
-		return ERROR;
-	}
-
-	/* 把结构体写入文件 */
-	if (ERROR == FATFS_FileRead((BYTE*)readInfo, sizeof(FILE_InfoTypedef)))
-	{
-		printf("结构体写入失败\r\n");
-		return ERROR;
-	}
-
-	if (ERROR == FATFS_FileClose())
-		return ERROR;
+	FATFS_FileClose();
 
 	FATFS_FileUnlink();
 
 	return SUCCESS;
 }
 
+#if 0
 /*******************************************************************************
  * function:根据补传的信息获取数据
  * @patch：补传信息
@@ -175,53 +170,23 @@ uint16_t FILE_ReadPatchInfo(FILE_PatchPackTypedef* patch, FILE_InfoTypedef* read
 
 	return readInfoCount;
 }
+#endif
 
 /*******************************************************************************
- *
+ * function：发送结构体格式转换
  */
-void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
-							RT_TimeTypedef*      realTime,
-							GPS_LocateTypedef*   location,
-							ANALOG_ValueTypedef* analogValue)
+void FILE_SendInfoFormatConvert(FILE_SaveInfoTypedef* saveInfo,
+								GPRS_SendInfoTypedef* sendInfo,
+								uint8_t 		      sendPackNumb)
 {
-	/* 结构体复位，避免数据出错 */
-	memset(saveInfo, 0, sizeof(FILE_InfoTypedef));
+	uint8_t i;
 
-	/* 获取时钟 */
-	saveInfo->realTime.year  = realTime->date.Year;
-	saveInfo->realTime.month = realTime->date.Month;
-	saveInfo->realTime.day   = realTime->date.Date;
-	saveInfo->realTime.hour  = realTime->time.Hours;
-	saveInfo->realTime.min   = realTime->time.Minutes;
-	/* 为了数据的整齐，将秒置位0 */
-	saveInfo->realTime.sec = 0;
-
-	/* 储存电池电量 */
-	saveInfo->batteryLevel = analogValue->batVoltage;
-
-	/* 外部电池状态 */
-//	saveInfo->externalPowerStatus = INPUT_CheckPwrOnStatus();
-
-	LocationFormatConvert(location->latitude,  (uint8_t*)&saveInfo->latitude);
-	LocationFormatConvert(location->longitude, (uint8_t*)&saveInfo->longitude);
-
-	/* 模拟数据格式转换 */
-	AnalogDataFormatConvert(analogValue->temp1, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.temp1);
-	AnalogDataFormatConvert(analogValue->humi1, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.humi1);
-	AnalogDataFormatConvert(analogValue->temp2, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.temp2);
-	AnalogDataFormatConvert(analogValue->humi2, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.humi2);
-	AnalogDataFormatConvert(analogValue->temp3, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.temp3);
-	AnalogDataFormatConvert(analogValue->humi3, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.humi3);
-	AnalogDataFormatConvert(analogValue->temp4, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.temp4);
-	AnalogDataFormatConvert(analogValue->humi4, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&saveInfo->analogValue.humi4);
+	for (i = 0; i < sendPackNumb; i++)
+	{
+		SaveInfoFormatConvert(saveInfo, sendInfo);
+		saveInfo += sizeof(FILE_SaveInfoTypedef);
+		sendInfo += sizeof(GPRS_SendBufferTypedef);
+	}
 }
 
 /*******************************************************************************
@@ -231,18 +196,14 @@ void FILE_InfoFormatConvert(FILE_InfoTypedef*    saveInfo,
 ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer)
 {
 	/* 挂载文件系统 */
-	if (ERROR == FATFS_FileLink())
-		return ERROR;
+	FATFS_FileLink();
 
-	if (FATFS_FileOpen(PATCH_PACK_FILE_NAME, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
-		return ERROR;
+	if (FATFS_FileOpen(FILE_NAME_PATCH_PACK, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
+	{
+		FATFS_FileRead((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef));
+	}
 
-	/* 把结构体写入文件 */
-	if (FATFS_FileRead((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef)) == ERROR)
-		return ERROR;
-
-	if (FATFS_FileClose() == ERROR)
-		return ERROR;
+	FATFS_FileClose();
 
 	FATFS_FileUnlink();
 
@@ -259,7 +220,7 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 	if (ERROR == FATFS_FileLink())
 		return ERROR;
 
-	if (FATFS_FileOpen(PATCH_PACK_FILE_NAME, FATFS_MODE_OPEN_ALWAYS_WRITE) == ERROR)
+	if (FATFS_FileOpen(FILE_NAME_PATCH_PACK, FATFS_MODE_OPEN_ALWAYS_WRITE) == ERROR)
 		return ERROR;
 
 	/* 把结构体写入文件 */
@@ -274,83 +235,8 @@ ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
 	return SUCCESS;
 }
 
-/*******************************************************************************
- * function:设备参数文件初始化
- */
-ErrorStatus FILE_ParamFileInit(void)
-{
-	/* 挂载文件系统 */
-//	if (ERROR == FATFS_FileLink())
-//		return ERROR;
 
-	/* 如果文件不存在 */
-//	if (FATFS_FileOpen(PARAM_FILE_NAME, FATFS_MODE_OPEN_EXISTING_READ) == ERROR)
-	{
-		memcpy(FILE_DeviceParam.deviceSN, "1708151515", sizeof(FILE_DeviceParam.deviceSN));
-		FILE_DeviceParam.locationType    = LOCATION_GPS;
-		FILE_DeviceParam.firmwareVersion = 10;
-		FILE_DeviceParam.recordInterval  = 2;
-		FILE_DeviceParam.overLimitRecordInterval = 2;
-		FILE_DeviceParam.exitAnalogChannelNumb = ANALOG_CHANNEL_NUMB;
-		FILE_DeviceParam.param[0].channelType = TYPE_TEMP;
-		FILE_DeviceParam.param[0].channelUnit = UNIT_TEMP;
-		FILE_DeviceParam.param[0].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[1].channelType = TYPE_HUMI;
-		FILE_DeviceParam.param[1].channelUnit = UNIT_HUMI;
-		FILE_DeviceParam.param[1].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[2].channelType = TYPE_TEMP;
-		FILE_DeviceParam.param[2].channelUnit = UNIT_TEMP;
-		FILE_DeviceParam.param[2].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[3].channelType = TYPE_HUMI;
-		FILE_DeviceParam.param[3].channelUnit = UNIT_HUMI;
-		FILE_DeviceParam.param[3].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[4].channelType = TYPE_TEMP;
-		FILE_DeviceParam.param[4].channelUnit = UNIT_TEMP;
-		FILE_DeviceParam.param[4].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[5].channelType = TYPE_HUMI;
-		FILE_DeviceParam.param[5].channelUnit = UNIT_HUMI;
-		FILE_DeviceParam.param[5].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[6].channelType = TYPE_TEMP;
-		FILE_DeviceParam.param[6].channelUnit = UNIT_TEMP;
-		FILE_DeviceParam.param[6].dataFormat  = FORMAT_ONE_DECIMAL;
-		FILE_DeviceParam.param[7].channelType = TYPE_HUMI;
-		FILE_DeviceParam.param[7].channelUnit = UNIT_HUMI;
-		FILE_DeviceParam.param[7].dataFormat  = FORMAT_ONE_DECIMAL;
-
-		FILE_DeviceParam.temp1.alarmValueUp       = 40;
-		FILE_DeviceParam.temp1.alarmValueLow      = -10;
-		FILE_DeviceParam.temp1.perwarningValueUp  = 30;
-		FILE_DeviceParam.temp1.perwarningValueLow = -5;
-		FILE_DeviceParam.temp2.alarmValueUp       = 40;
-		FILE_DeviceParam.temp2.alarmValueLow      = -10;
-		FILE_DeviceParam.temp2.perwarningValueUp  = 30;
-		FILE_DeviceParam.temp2.perwarningValueLow = -5;
-		FILE_DeviceParam.temp3.alarmValueUp       = 40;
-		FILE_DeviceParam.temp3.alarmValueLow      = -10;
-		FILE_DeviceParam.temp3.perwarningValueUp  = 30;
-		FILE_DeviceParam.temp3.perwarningValueLow = -5;
-		FILE_DeviceParam.temp4.alarmValueUp       = 40;
-		FILE_DeviceParam.temp4.alarmValueLow      = -10;
-		FILE_DeviceParam.temp4.perwarningValueUp  = 30;
-		FILE_DeviceParam.temp4.perwarningValueLow = -5;
-
-		FATFS_FileOpen(PARAM_FILE_NAME, FATFS_MODE_OPEN_ALWAYS_WRITE);
-		FATFS_FileWrite((uint8_t*)&FILE_DeviceParam, sizeof(FILE_DeviceParam));
-	}
-	/* 打开成功则说明文件存在 */
-//	else
-//	{
-//		FATFS_FileRead((uint8_t*)&FILE_DeviceParam, sizeof(FILE_DeviceParam));
-//	}
-
-//	if (FATFS_FileClose() == ERROR)
-//		return ERROR;
-
-//	FATFS_FileUnlink();
-
-	return SUCCESS;
-}
-
+#if 0
 /*******************************************************************************
  * function:寻找文件中该时间点的数据，返回该数据所在结构体地址
  * @time：时间指针，注意：该时间是十进制format
@@ -516,15 +402,22 @@ static void FILE_GetNextFileName(char* fileName)
 	HEX2ASCII(&month, (uint8_t*)&fileName[2], 1);
 	HEX2ASCII(&day,   (uint8_t*)&fileName[4], 1);
 }
+#endif
 
 /*******************************************************************************
  * function:模拟量数据格式转换
  */
-static void AnalogDataFormatConvert(float value, DataFormatEnum format,
-							uint8_t* pBuffer)
+static void AnalogDataFormatConvert(char* analog, DataFormatEnum format, uint8_t* pBuffer)
 {
+	char str[6];
+	float value;
 	BOOL negative = FALSE;
 	uint16_t temp = 0;
+
+	/* 将字符串转为float */
+	memcpy(str, analog, 5);
+	str[5] = '\0';
+	value = (float)atof(str);
 
 	/* 判断是否为负数 */
 	if (value < 0)
@@ -556,12 +449,19 @@ static void AnalogDataFormatConvert(float value, DataFormatEnum format,
 }
 
 /*******************************************************************************
- *
+ * function：将字符串型的定位值转换成协议格式
  */
-static void LocationFormatConvert(double value, uint8_t* pBuffer)
+static void LocationFormatConvert(char* lacation, uint8_t* pBuffer)
 {
+	char str[11];
+	double value;
 	BOOL negative = FALSE;
 	uint32_t temp;
+
+	/* 将字符串转为double */
+	memcpy(str, lacation, 10);
+	str[10] = '\0';
+	value = atof(str);
 
 	if (value < 0)
 		negative = TRUE;
@@ -579,6 +479,56 @@ static void LocationFormatConvert(double value, uint8_t* pBuffer)
 	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
 }
 
+/*******************************************************************************
+ * funtion:将储存的格式（ASCII码）转换成协议规定的格式
+ */
+static void SaveInfoFormatConvert(FILE_SaveInfoTypedef* info,
+							GPRS_SendInfoTypedef* sendInfo)
+{
+	char str[4];
+
+	/* 结构体复位，避免数据出错 */
+	memset(sendInfo, 0, sizeof(GPRS_SendInfoTypedef));
+
+	/* 时间字符串转换成BCD */
+	ASCII2BCD(info->year,  &sendInfo->year,  2);
+	ASCII2BCD(info->month, &sendInfo->month, 2);
+	ASCII2BCD(info->day,   &sendInfo->day,   2);
+	ASCII2BCD(info->hour,  &sendInfo->hour,  2);
+	ASCII2BCD(info->min,   &sendInfo->min,   2);
+	ASCII2BCD(info->sec,   &sendInfo->sec,   2);
+
+	/* 转换电池电量 */
+	memcpy(str, info->batQuality, 3);
+	str[3] = '\0';
+	sendInfo->batteryLevel = atoi(str);
+
+	/* 转换外部电源状态 */
+	str2numb((uint8_t*)&info->exPwrStatus, &sendInfo->externalPowerStatus, 1);
+
+	/* 转换经度 */
+	LocationFormatConvert(info->longitude, (uint8_t*)&sendInfo->longitude);
+	LocationFormatConvert(info->latitude,  (uint8_t*)&sendInfo->latitude);
+
+	AnalogDataFormatConvert(info->analogValue[0].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[0]);
+	AnalogDataFormatConvert(info->analogValue[1].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[1]);
+	AnalogDataFormatConvert(info->analogValue[2].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[2]);
+	AnalogDataFormatConvert(info->analogValue[3].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[3]);
+	AnalogDataFormatConvert(info->analogValue[4].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[4]);
+	AnalogDataFormatConvert(info->analogValue[5].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[5]);
+	AnalogDataFormatConvert(info->analogValue[6].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[6]);
+	AnalogDataFormatConvert(info->analogValue[7].value, ANALOG_VALUE_FORMAT,
+			(uint8_t*)&sendInfo->analogValue[7]);
+}
+
+#if 0
 /*******************************************************************************
  * function:在文件内寻找时间点
  * @pTime:要寻找的时间点
@@ -666,7 +616,7 @@ static void selectDataPrint(char* fileName,
 	FATFS_FileClose();
 }
 
-
+#endif
 
 
 

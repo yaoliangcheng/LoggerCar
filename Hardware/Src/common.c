@@ -29,6 +29,20 @@ void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size)
 }
 
 /*******************************************************************************
+ * function：把ASCII码转换成BCD码，两个ASCII码转换成一个BCD码
+ */
+void ASCII2BCD(char* pASCII, uint8_t* pBCD, uint8_t size)
+{
+	uint8_t i;
+
+	for (i = 0; i < size;)
+	{
+		*(pBCD + (i / 2)) = (*(pASCII + i) - '0') * 16 + (*(pASCII + i + 1) - '0');
+		i += 2;
+	}
+}
+
+/*******************************************************************************
  * function:把数值转换成BCD码
  * @pHEX:数值指针
  * @pBCD：BCD存放指针
@@ -45,7 +59,7 @@ void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
 }
 
 /*******************************************************************************
- * function:把数值转换成BCD码
+ * function:把16进制的数值转换成ASCII，一个16进制数转换成2个ASCII码
  * @pHEX:数值指针
  * @pBCD：BCD存放指针
  * @size：要转换的数值长度
@@ -58,6 +72,28 @@ void HEX2ASCII(uint8_t* pHEX, uint8_t* pASCII, uint8_t size)
 	{
 		*(pASCII + (i * 2))     = (*(pHEX + i) / 10) + '0';
 		*(pASCII + (i * 2) + 1) = (*(pHEX + i) % 10) + '0';
+	}
+}
+
+/*******************************************************************************
+ * function：ASCII码转换成HEX， 两个ASCII码转换成一个HEX,
+ * 			注意：只支持转换1、2、3个字符
+ */
+void ASCII2HEX(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
+{
+	switch (size)
+	{
+	case 1:
+		*pHEX = (*pASCII) - '0';
+		break;
+	case 2:
+		*pHEX = ((*pASCII) - '0') * 10 + (*(pASCII + 1) - '0');
+		break;
+	case 3:
+		*pHEX = ((*pASCII) - '0') * 100 + (*(pASCII + 1) - '0') * 10 + (*(pASCII + 2) - '0');
+		break;
+	default:
+		break;
 	}
 }
 

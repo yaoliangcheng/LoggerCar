@@ -58,6 +58,8 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "analog.h"
+#include "file.h"
 #include "gprs.h"
 #include "lowPwr.h"
 

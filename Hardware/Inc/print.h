@@ -22,7 +22,7 @@
 
 /******************************************************************************/
 void PRINT_Date(char* fileName);
-BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select);
+//BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select);
 void PRINT_TitleOut(void);
 void PRINT_TailOut(void);
 void PRINT_SetMode(void);
