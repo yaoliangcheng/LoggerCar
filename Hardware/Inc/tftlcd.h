@@ -28,7 +28,7 @@
 #define TFTLCD_CMD_TAIL3							(0XFF)
 #define TFTLCD_CMD_TAIL4							(0XFF)
 
-#define TFTLCD_UART_RX_DATA_SIZE_MAX				(50)
+#define TFTLCD_UART_RX_DATA_SIZE_MAX				(100)
 
 /*******************************************************************************
  * 指令格式
@@ -55,6 +55,7 @@ typedef enum
 	CTL_ID_ALARM_ICON
 } TFTLCD_CommonCtlIdEnum;
 
+/* 实时数据界面控件ID */
 typedef enum
 {
 	CTL_ID_DATA_CH1 = 6,
@@ -72,6 +73,55 @@ typedef enum
 	CTL_ID_DATA_CH13,
 	CTL_ID_DATA_CH14,
 } TFTLCD_DataCtlIdEnum;
+
+/* 历史数据界面控件ID */
+typedef enum
+{
+	CTL_ID_DIS_DATA_1 = 6,
+	CTL_ID_DIS_DATA_2,
+	CTL_ID_DIS_DATA_3,
+	CTL_ID_DIS_DATA_4,
+	CTL_ID_PAGE_UP,
+	CTL_ID_PAGE_DOWN,
+	CTL_ID_DIS_CURVE,
+} TFTLCD_HisDataCtlIdEnum;
+
+/* 数据打印界面控件ID */
+typedef enum
+{
+	CTL_ID_PRINT_TIME_START_TEXT = 6,
+	CTL_ID_PRINT_TIME_END_TEXT,
+	CTL_ID_CHANNAL_SELECT_CH1_ICON,
+	CTL_ID_CHANNAL_SELECT_CH2_ICON,
+	CTL_ID_CHANNAL_SELECT_CH3_ICON,
+	CTL_ID_CHANNAL_SELECT_CH4_ICON,
+	CTL_ID_CHANNAL_SELECT_CH5_ICON,
+	CTL_ID_CHANNAL_SELECT_CH6_ICON,
+	CTL_ID_CHANNAL_SELECT_CH7_ICON,
+	CTL_ID_CHANNAL_SELECT_CH8_ICON,
+	CTL_ID_PRINT_TIME_START_TOUCH,
+	CTL_ID_PRINT_TIME_END_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH1_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH2_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH3_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH4_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH5_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH6_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH7_TOUCH,
+	CTL_ID_CHANNAL_SELECT_CH8_TOUCH,
+} TFTLCD_PrintDataCtlIdEnum;
+
+/* 时间选择界面控件ID */
+typedef enum
+{
+	CTL_ID_TIME_SELECT_YEAR,
+	CTL_ID_TIME_SELECT_MONTH,
+	CTL_ID_TIME_SELECT_DAY,
+	CTL_ID_TIME_SELECT_HOUR,
+	CTL_ID_TIME_SELECT_MIN,
+	CTL_ID_TIME_SELECT_CANCEL,
+	CTL_ID_TIME_SELECT_OK,
+} TFTLCD_TimeSelectCtlIdEnum;
 
 /****************************画面ID枚举******************************************/
 /* 画面编号 */
@@ -249,13 +299,16 @@ typedef struct
 
 /******************************************************************************/
 extern TFTLCD_RecvBufferTypedef TFTLCD_RecvBuffer;
-
+extern TFTLCD_SendBufferTypedef TFTLCD_SendBuffer;
 extern TFTLCD_StatusTypedef TFTLCD_status;
 
 /******************************************************************************/
 void TFTLCD_Init(void);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
+void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
+void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
+
 void TFTLCD_UartIdleDeal(void);
 ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);

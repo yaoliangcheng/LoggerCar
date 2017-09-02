@@ -6,6 +6,8 @@ char FILE_FileName[11];						/* 储存文件名 */
 char FILE_PrintFileName[11]; 				/* 打印文件名 */
 FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
 
+uint64_t dataFileStructCnt;					/* 当前文件结构体总数 */
+
 /******************************************************************************/
 //static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName);
 //static void FILE_GetNextFileName(char* fileName);
@@ -157,17 +159,23 @@ void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t  s
 }
 
 /*******************************************************************************
- * function：读补传文件patch.txt
- * pBuffer：接收指针
+ * function：读文件
+ * @offset:读指针偏移量
+ * @fileName:文件名
+ * @pBuffer：接收指针
+ * @size:读取长度
  */
-ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer)
+ErrorStatus FILE_ReadFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size)
 {
 	/* 挂载文件系统 */
-	FATFS_FileLink();
+	if (FATFS_FileLink() == ERROR)
+		return ERROR;
 
-	if (FATFS_FileOpen(FILE_NAME_PATCH_PACK, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
+	if (FATFS_FileOpen(fileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
 	{
-		FATFS_FileRead((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef));
+		FATFS_FileSeek(offset);
+
+		FATFS_FileRead(pBuffer, size);
 	}
 
 	FATFS_FileClose();
@@ -178,24 +186,26 @@ ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer)
 }
 
 /*******************************************************************************
- * function：写补传文件patch.txt
- * pBuffer：写入指针
+ * function：写文件
+ * @offset:写指针偏移量
+ * @fileName:文件名
+ * @pBuffer：写入指针
+ * @size:写入长度
  */
-ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer)
+ErrorStatus FILE_WriteFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size)
 {
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())
 		return ERROR;
 
-	if (FATFS_FileOpen(FILE_NAME_PATCH_PACK, FATFS_MODE_OPEN_ALWAYS_WRITE) == ERROR)
-		return ERROR;
+	if (FATFS_FileOpen(fileName, FATFS_MODE_OPEN_ALWAYS_WRITE) == SUCCESS)
+	{
+		FATFS_FileSeek(offset);
 
-	/* 把结构体写入文件 */
-	if (FATFS_FileWrite((BYTE*)pBuffer, sizeof(FILE_PatchPackTypedef)) == ERROR)
-		return ERROR;
+		FATFS_FileWrite(pBuffer, size);
+	}
 
-	if (FATFS_FileClose() == ERROR)
-		return ERROR;
+	FATFS_FileClose();
 
 	FATFS_FileUnlink();
 

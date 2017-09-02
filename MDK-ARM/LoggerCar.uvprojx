@@ -714,6 +714,11 @@
               <FileType>1</FileType>
               <FilePath>..\Hardware\Src\lowPwr.c</FilePath>
             </File>
+            <File>
+              <FileName>param.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\param.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

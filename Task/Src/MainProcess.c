@@ -22,7 +22,6 @@ void MAINPROCESS_Task(void)
 
 	FILE_PatchPackTypedef patchPack;
 	uint16_t curPatchPack;				/* 本次补传数据 */
-	uint64_t curFileStructCount;		/* 当前文件结构体总数 */
 
 	FILE_SaveInfoTypedef saveInfoStruct;		/* 储存的结构体变量 */
 	FILE_SaveInfoTypedef readInfoStruct[GPRS_PATCH_PACK_NUMB_MAX];
@@ -72,11 +71,12 @@ void MAINPROCESS_Task(void)
 		FILE_SaveInfoSymbolInit(&saveInfoStruct);
 
 		/* 记录数据 */
-		FILE_SaveInfo(&saveInfoStruct, &curFileStructCount);
+		FILE_SaveInfo(&saveInfoStruct, &dataFileStructCnt);
 
 		/* 读取补传数据条数 */
 		/* 读取成功，则表明曾经有补传数据记录 */
-		if (SUCCESS == FILE_ReadPatchPackFile(&patchPack))
+		if (SUCCESS == FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
+				(uint8_t*)&patchPack, sizeof(FILE_PatchPackTypedef)))
 		{
 			curPatchPack = FILE_ReadInfo(readInfoStruct, &patchPack);
 		}
@@ -102,9 +102,10 @@ void MAINPROCESS_Task(void)
 			if (curPatchPack == 1)
 			{
 				/* 记录当前文件前一次位置 */
-				patchPack.patchStructOffset = curFileStructCount - 1;
+				patchPack.patchStructOffset = dataFileStructCnt - 1;
 
-				FILE_WritePatchPackFile(&patchPack);
+				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
+						(uint8_t*)&patchPack, sizeof(FILE_PatchPackTypedef));
 			}
 		}
 		else
@@ -114,7 +115,8 @@ void MAINPROCESS_Task(void)
 
 			/* 有补传数据 */
 			if (curPatchPack > 1)
-				FILE_WritePatchPackFile(&patchPack);
+				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
+						(uint8_t*)&patchPack, sizeof(FILE_PatchPackTypedef));
 		}
 
 		osThreadSuspend(NULL);

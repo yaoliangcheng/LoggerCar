@@ -128,6 +128,91 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
 	TFTLCD_SendBuf(sizeof(StatusBarUpdateTypedef) + 11);
 }
 
+/*******************************************************************************
+ * function:将读出来的数据转换格式后输出到历史界面
+ * @saveInfo：读出的数据
+ * @typeID：更新的控件
+ */
+void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
+
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_HIS_DATA);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_HIS_DATA);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(typeID);
+
+	/* 历史数据显示的格式为：
+	 * [0][1][2][3][4][5][6][7][8][9][10][11][12][13][14][15][16][17][18]
+	 * |     |     |     |  |     |  |       |   |                  |   |
+	 *    年           月          日       空格     时         ：       分          空格                     通道1                     空格
+	 *
+	 *
+	 * [19][20][21][22][23][24][25][26][27][28][29][30][31][32][33][34][35]
+	 * |                   |   |                   |   |                  |
+	 *       通道2                           空格                 通道3                           空格                   通道4
+	 *
+	 * [36][37][38][39][40][41][42][43][44][45][46][47][48][49][50][51][52]
+	 * |                   |   |                   |   |                  |
+	 *         通道5                      空格                         通道6                   空格                     通道7
+	 *
+	 * [53][54][55][56][57][58]
+	 * |   |                  |
+	 *  空格          通道8
+	 */
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[0], saveInfo->year,  9);
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[10], saveInfo->min,  2);
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[13], saveInfo->analogValue[0].value, 23);
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[36], saveInfo->analogValue[4].value, 23);
+	TFTLCD_SendBuffer.buffer.update.value.date[9]  = ':';
+	TFTLCD_SendBuffer.buffer.update.value.date[12] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[18] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[24] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[30] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[41] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[47] = ' ';
+	TFTLCD_SendBuffer.buffer.update.value.date[53] = ' ';
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[59],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(70);
+}
+
+/*******************************************************************************
+ * function:打印通道选择图标显示
+ * @ctrl：通道选择控件编号
+ * @status：当前该通道的值，若选中则变成不选，反之亦然。
+ */
+void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
+
+	/* 界面ID */
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(typeID);
+
+	TFTLCD_SendBuffer.buffer.update.value.date[0] = status;
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[1],
+			TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(12);
+}
+
+/*******************************************************************************
+ *
+ */
+void TFTLCD_TimeSelectReset(void)
+{
+
+}
+
 #if 0
 /*******************************************************************************
  * function:打印时间更新
@@ -167,32 +252,7 @@ void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl)
 }
 #endif
 
-/*******************************************************************************
- * function:打印通道选择图标显示
- * @ctrl：通道选择控件编号
- * @status：当前该通道的值，若选中则变成不选，反之亦然。
- */
-void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status)
-{
-	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
 
-	/* 界面ID */
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_PRINT);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_PRINT);
-
-	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(ctrl);
-	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(ctrl);
-
-	if (status)
-		TFTLCD_SendBuffer.buffer.update.value.date[0] = 0;
-	else
-		TFTLCD_SendBuffer.buffer.update.value.date[0] = 1;
-
-	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[1],
-			TFTLCD_SendBuffer.tail, 4);
-
-	TFTLCD_SendBuf(12);
-}
 
 /*******************************************************************************
  * Uart接收中断函数
@@ -252,7 +312,8 @@ ErrorStatus TFTLCD_CheckHeadTail(void)
  */
 static void TFTLCD_SendBuf(uint8_t size)
 {
-	HAL_UART_Transmit_DMA(&TFTLCD_UART, (uint8_t*)&TFTLCD_SendBuffer.head, size);
+//	HAL_UART_Transmit_DMA(&TFTLCD_UART, (uint8_t*)&TFTLCD_SendBuffer.head, size);
+	HAL_UART_Transmit(&TFTLCD_UART, (uint8_t*)&TFTLCD_SendBuffer.head, size, 1000);
 }
 
 /*******************************************************************************

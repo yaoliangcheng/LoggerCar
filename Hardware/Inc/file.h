@@ -38,7 +38,7 @@ typedef struct
 	uint8_t hour;
 	uint8_t min;
 	uint8_t sec;
-} FILE_RealTime;
+} FILE_RealTimeTypedef;
 
 typedef struct
 {
@@ -92,21 +92,24 @@ typedef struct
 	uint16_t patchPackOver_30;					/* 补传超过30条 */
 } FILE_PatchPackTypedef;
 
-
-
 #pragma pack(pop)
+
+/******************************************************************************/
+extern uint64_t dataFileStructCnt;					/* 当前文件结构体总数 */
 
 /******************************************************************************/
 void FILE_Init(void);
 void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info);
+ErrorStatus FILE_ReadFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size);
+ErrorStatus FILE_WriteFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size);
+
+
 ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount);
 uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* patch);
 void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t sendPackNumb);
 
-ErrorStatus FILE_ReadPatchPackFile(FILE_PatchPackTypedef* pBuffer);
-ErrorStatus FILE_WritePatchPackFile(FILE_PatchPackTypedef* pBuffer);
 ErrorStatus FILE_ParamFileInit(void);
-ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
-		PRINT_ChannelSelectTypedef* select);
+//ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
+//		PRINT_ChannelSelectTypedef* select);
 
 #endif

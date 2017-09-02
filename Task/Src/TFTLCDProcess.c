@@ -3,12 +3,17 @@
 #include "tftlcd.h"
 #include "print.h"
 #include "gprs.h"
+#include "display.h"
 
 /******************************************************************************/
-static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
-		PRINT_ChannelSelectTypedef* select, FILE_RealTime* startTime, FILE_RealTime* stopTime);
+//static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum* status,
+//		PRINT_ChannelSelectTypedef* select, FILE_RealTime* startTime, FILE_RealTime* stopTime);
 static void ScreenTimeSelect(FILE_RealTime* pTime, uint16_t cmd,
 		CtrlID_TimeSelectEnum ctrl, uint8_t value, TFTTASK_StatusEnum status);
+
+/******************************************************************************/
+void ScreenDefaultDisplay(uint16_t screen);
+void ScreenTouchDisplay(uint16_t screenID, uint16_t typeID);
 
 /*******************************************************************************
  *
@@ -19,11 +24,11 @@ void TFTLCD_Task(void)
 	uint16_t screenID;
 	uint16_t ctrlID;
 
-	FILE_RealTime startPrintTime;		/* 打印起始时间 */
-	FILE_RealTime endPrintTime;			/* 打印起始时间 */
+//	FILE_RealTime startPrintTime;		/* 打印起始时间 */
+//	FILE_RealTime endPrintTime;			/* 打印起始时间 */
 
-	TFTTASK_StatusEnum status;
-	PRINT_ChannelSelectTypedef PrintChannelSelect;
+//	TFTTASK_StatusEnum status;
+//	PRINT_ChannelSelectTypedef PrintChannelSelect;
 
 	TFTLCD_Init();
 
@@ -66,15 +71,7 @@ void TFTLCD_Task(void)
 					osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
 
 					/* 界面跳转后，默认出现的画面 */
-					switch (screenID)
-					{
-					case SCREEN_ID_HIS_DATA:
-						break;
-					default:
-						break;
-					}
-
-
+					ScreenDefaultDisplay(screenID);
 				}
 				else
 				{
@@ -82,30 +79,33 @@ void TFTLCD_Task(void)
 					ctrlID = ((TFTLCD_RecvBuffer.date.recvBuf.ctrlIDH << 8)
 							| (TFTLCD_RecvBuffer.date.recvBuf.ctrlIDL));
 
-					/* 按照界面来划分 */
-					switch (screenID)
-					{
-					case SCREEN_ID_PRINT:
-						ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
-								&status, &PrintChannelSelect, &startPrintTime, &endPrintTime);
-						break;
+					/* 接收用户对触摸屏的操作信息 */
+					ScreenTouchDisplay(screenID, ctrlID);
 
-					case SCREEN_ID_PRINT_TIME_SELECT:
-	//					/* 固定字节，表示选择控件 */
-	//					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
-	//						break;
-						if (status == TFT_PRINT_START_TIME)
-							ScreenTimeSelect(&startPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
-									TFT_PRINT_START_TIME);
-						else if (status == TFT_PRINT_END_TIME)
-							ScreenTimeSelect(&endPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
-									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
-									TFT_PRINT_END_TIME);
-						break;
-					default:
-						break;
-					}
+					/* 按照界面来划分 */
+//					switch (screenID)
+//					{
+//					case SCREEN_ID_PRINT:
+//						ScreenPrint(TFTLCD_RecvBuffer.date.recvBuf.cmd, (CtrlID_PrintEnum)ctrlID,
+//								&status, &PrintChannelSelect, &startPrintTime, &endPrintTime);
+//						break;
+//
+//					case SCREEN_ID_PRINT_TIME_SELECT:
+//	//					/* 固定字节，表示选择控件 */
+//	//					if (TFTLCD_RecvBuffer.date.recvBuf.buf[0] != 0x1B)
+//	//						break;
+//						if (status == TFT_PRINT_START_TIME)
+//							ScreenTimeSelect(&startPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+//									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+//									TFT_PRINT_START_TIME);
+//						else if (status == TFT_PRINT_END_TIME)
+//							ScreenTimeSelect(&endPrintTime, TFTLCD_RecvBuffer.date.recvBuf.cmd,
+//									(CtrlID_TimeSelectEnum)ctrlID, TFTLCD_RecvBuffer.date.recvBuf.buf[1],
+//									TFT_PRINT_END_TIME);
+//						break;
+//					default:
+//						break;
+//					}
 				}
 			}
 		}
@@ -113,6 +113,45 @@ void TFTLCD_Task(void)
 
 }
 
+/*******************************************************************************
+ * function:界面跳转后，默认出现的信息
+ */
+void ScreenDefaultDisplay(uint16_t screen)
+{
+	switch(screen)
+	{
+	case SCREEN_ID_HIS_DATA:
+		/* 显示最新的一组数据 */
+		DISPLAY_Status.hisDataDispStructOffset =
+				dataFileStructCnt - DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
+		DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+		break;
+	default:
+		break;
+	}
+}
+
+/*******************************************************************************
+ * funtion:接收到用户操作时的显示
+ */
+void ScreenTouchDisplay(uint16_t screenID, uint16_t typeID)
+{
+	switch (screenID)
+	{
+	case SCREEN_ID_HIS_DATA:
+		DISPLAY_HistoryTouch(typeID);
+		break;
+
+	case SCREEN_ID_PRINT:
+		DISPLAY_PrintTouch(typeID);
+		break;
+
+	default:
+		break;
+	}
+}
+
+#if 0
 /*******************************************************************************
  *
  */
@@ -191,6 +230,7 @@ static void ScreenPrint(uint16_t cmd, CtrlID_PrintEnum ctrl, TFTTASK_StatusEnum*
 		break;
 	}
 }
+#endif
 
 /*******************************************************************************
  * function:时间选择控件数值上传

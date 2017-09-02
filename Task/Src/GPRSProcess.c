@@ -81,10 +81,6 @@ void GPRSPROCESS_Task(void)
 				signal = osMessageGet(infoCntMessageQId, 2000);
 				curPatchPack = signal.value.v;
 
-				/* 获取模拟量信息 */
-//				signal = osMessageGet(infoMessageQId, 2000);
-//				memcpy(&sendStruct.dataPack, (uint32_t*)signal.value.v,
-//						curPatchPack * sizeof(FILE_InfoTypedef));
 				/* 获取当前时间用于校准 */
 				signal = osMessageGet(adjustTimeMessageQId, 2000);
 				eTime = (RT_TimeTypedef*)signal.value.v;
