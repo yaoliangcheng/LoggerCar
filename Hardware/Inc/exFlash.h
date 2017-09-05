@@ -53,7 +53,8 @@
 #define Dummy_Byte                		(0xFF)
 
 #define exFLASH_SECTOR_SIZE_BYTES		(4096)
-#define exFLASH_SECTOR_COUNT			(1024)
+#define exFLASH_SECTOR_COUNT			(2048)
+#define exFLASH_SECTOR_OFFSET			(4096)
 #define exFLASH_BLOCK_SIZE				(1)		/* 扇区数 */
 
 #define WIP_Flag                  		(0x01)	/* WIP(busy)标志，FLASH内部正在写入 */

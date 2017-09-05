@@ -71,7 +71,7 @@ void MAINPROCESS_Task(void)
 		FILE_SaveInfoSymbolInit(&saveInfoStruct);
 
 		/* 记录数据 */
-		FILE_SaveInfo(&saveInfoStruct, &dataFileStructCnt);
+		FILE_SaveInfo(&saveInfoStruct);
 
 		/* 读取补传数据条数 */
 		/* 读取成功，则表明曾经有补传数据记录 */
@@ -102,7 +102,7 @@ void MAINPROCESS_Task(void)
 			if (curPatchPack == 1)
 			{
 				/* 记录当前文件前一次位置 */
-				patchPack.patchStructOffset = dataFileStructCnt - 1;
+				patchPack.patchStructOffset = FILE_DataSaveStructCnt - 1;
 
 				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
 						(uint8_t*)&patchPack, sizeof(FILE_PatchPackTypedef));

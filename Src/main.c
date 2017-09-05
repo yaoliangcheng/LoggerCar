@@ -125,9 +125,6 @@ int main(void)
   ANALOG_Init();
   RT_Init();
 
-  /* 文件名格式初始化 */
-	FILE_Init();
-
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */

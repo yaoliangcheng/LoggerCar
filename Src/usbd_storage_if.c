@@ -246,6 +246,7 @@ int8_t STORAGE_Read_FS (uint8_t lun,
                         uint16_t blk_len)
 {
   /* USER CODE BEGIN 6 */ 
+	blk_addr += exFLASH_SECTOR_OFFSET;
 	SPI_FLASH_BufferRead(buf, blk_addr << 12, blk_len << 12);
   return (USBD_OK);
   /* USER CODE END 6 */ 
@@ -266,6 +267,7 @@ int8_t STORAGE_Write_FS (uint8_t lun,
   /* USER CODE BEGIN 7 */ 
 	uint32_t write_addr;
 
+	blk_addr += exFLASH_SECTOR_OFFSET;
 	write_addr = blk_addr << 12;
 	SPI_FLASH_SectorErase(write_addr);
 	SPI_FLASH_BufferWrite((uint8_t *)buf, write_addr, blk_len << 12);

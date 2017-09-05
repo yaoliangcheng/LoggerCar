@@ -40,17 +40,22 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 	switch (typeID)
 	{
 	case CTL_ID_PAGE_UP:
-		DISPLAY_Status.hisDataDispStructOffset += DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
-		/* 避免翻过头，没有数据显示 */
-		if (DISPLAY_Status.hisDataDispStructOffset < dataFileStructCnt)
+		/* 避免翻过头 */
+		if (FILE_DataSaveStructCnt - DISPLAY_Status.hisDataDispStructOffset >
+				DISPLAY_HIS_DATA_ONE_SCREEN_CNT * 2)
+		{
+			DISPLAY_Status.hisDataDispStructOffset += DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
 			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
-		else
-			DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
+		}
 		break;
 
 	case CTL_ID_PAGE_DOWN:
-		DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
-		DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+		/* 避免翻过头 */
+		if (DISPLAY_Status.hisDataDispStructOffset > DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
+		{
+			DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+		}
 		break;
 
 	default:

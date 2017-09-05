@@ -95,7 +95,7 @@ typedef struct
 #pragma pack(pop)
 
 /******************************************************************************/
-extern uint64_t dataFileStructCnt;					/* 当前文件结构体总数 */
+extern uint64_t FILE_DataSaveStructCnt;			/* 当前文件结构体总数 */
 
 /******************************************************************************/
 void FILE_Init(void);
@@ -104,7 +104,7 @@ ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32
 ErrorStatus FILE_WriteFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
 
 
-ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount);
+ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo);
 uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* patch);
 void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t sendPackNumb);
 

@@ -72,6 +72,8 @@ void MX_FATFS_Init(void)
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
+  	/* 文件格式化，获取数据储存文件的结构体总数 */
+  	FILE_Init();
   PARAM_ParamFileInit();
   /* 在文件系统初始化完成后，在启动GPRS任务 */
   osThreadResume(gprsprocessTaskHandle);
@@ -132,6 +134,8 @@ ErrorStatus FATFS_FileUnlink(void)
  */
 ErrorStatus FATFS_FileMake(void)
 {
+	SPI_FLASH_BulkErase();
+	
 	if (FR_OK == f_mkfs(USER_Path, 0, 4096))
 	{
 		/* 格式化后，先取消挂载 */
@@ -265,6 +269,24 @@ ErrorStatus FATFS_FileSeekEnd(void)
 		return SUCCESS;
 	else
 		return ERROR;
+}
+
+/*******************************************************************************
+ * function:判断当前写入的地址是否结构体对齐，防止储存的数据错位，当结构体不对齐时，跳过当前的数据空间，
+ * 			直接在下一结构体位置写入。（这个函数用于数据储存过程）
+ */
+void FATFS_FileSeekSaveInfoStructAlign(void)
+{
+	if (objFile.fsize % sizeof(FILE_SaveInfoTypedef) == 0)
+	{
+		f_lseek(&objFile, objFile.fsize);
+	}
+	else
+	{
+		f_lseek(&objFile,
+				(objFile.fsize / sizeof(FILE_SaveInfoTypedef) + 1)
+				* sizeof(FILE_SaveInfoTypedef));
+	}
 }
 
 /*******************************************************************************

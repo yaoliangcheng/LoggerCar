@@ -307,7 +307,7 @@ __weak void HAL_IncTick(void)
   * @retval tick value
   */
 __weak uint32_t HAL_GetTick(void)
-{
+{ 
   return uwTick;
 }
 

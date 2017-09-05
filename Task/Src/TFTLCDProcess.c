@@ -85,7 +85,7 @@ void ScreenDefaultDisplay(uint16_t screen)
 	case SCREEN_ID_HIS_DATA:
 		/* 显示最新的一组数据 */
 		DISPLAY_Status.hisDataDispStructOffset =
-				dataFileStructCnt - DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
+				FILE_DataSaveStructCnt - DISPLAY_HIS_DATA_ONE_SCREEN_CNT + 1;
 		DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
 		break;
 	default:

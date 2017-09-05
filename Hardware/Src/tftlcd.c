@@ -39,6 +39,9 @@ void TFTLCD_Init(void)
  */
 void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	/* 切换界面 */
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
 	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
@@ -47,6 +50,9 @@ void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
 	memcpy(&TFTLCD_SendBuffer.buffer.data, &TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(9);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 
 	/* 界面跳转,并且更新状态栏 */
 	TFTLCD_status.curScreenID = screen;
@@ -58,6 +64,9 @@ void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
  */
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	/* 批量更新命令 */
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
@@ -89,7 +98,11 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 	/* todo */
 	TFTLCD_SendBuffer.tail[0] = 0xFF;
 
-	TFTLCD_SendBuf( sizeof(TFTLCD_SendBufferTypedef));
+	memcpy(&TFTLCD_SendBuffer.buffer.data[sizeof(AnalogTypedef) * 8],
+				TFTLCD_SendBuffer.tail, 4);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -100,6 +113,9 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
  */
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
@@ -145,6 +161,9 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
 			TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(sizeof(StatusBarUpdateTypedef) + 11);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -154,6 +173,9 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
  */
 void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
 	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_HIS_DATA);
@@ -198,6 +220,9 @@ void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlI
 				TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(70);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -207,6 +232,9 @@ void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlI
  */
 void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
 
 	/* 界面ID */
@@ -222,6 +250,9 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
 			TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(12);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -230,6 +261,9 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
  */
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time)
 {
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
 	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
@@ -248,6 +282,9 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 				TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(23);
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 #if 0

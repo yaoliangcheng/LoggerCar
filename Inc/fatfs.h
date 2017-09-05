@@ -79,6 +79,7 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size);
 ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size);
 ErrorStatus FATFS_FileClose(void);
 ErrorStatus FATFS_FileSeekEnd(void);
+void FATFS_FileSeekSaveInfoStructAlign(void);
 ErrorStatus FATFS_FileSeekBackwardOnePack(void);
 ErrorStatus FATFS_FileSeek(WORD byte);
 ErrorStatus FATFS_GetSpaceInfo(void);

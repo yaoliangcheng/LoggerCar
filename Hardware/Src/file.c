@@ -2,34 +2,35 @@
 #include "print.h"
 #include "fatfs.h"
 
-char FILE_FileName[11];						/* 储存文件名 */
-char FILE_PrintFileName[11]; 				/* 打印文件名 */
 FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
-
-uint64_t dataFileStructCnt;					/* 当前文件结构体总数 */
+uint64_t FILE_DataSaveStructCnt;			/* 数据储存文件结构体总数 */
 
 /******************************************************************************/
-//static void FILE_GetFileNameDependOnTime(FILE_RealTime* time, char* fileName);
-//static void FILE_GetNextFileName(char* fileName);
-//static uint16_t SearchTimeInFile(FILE_RealTime* pTime);
-//static void selectDataPrint(char* fileName,
-//							uint16_t startPoint, uint16_t endPoint,
-//							PRINT_ChannelSelectTypedef* select);
 static void SaveInfoFormatConvert(FILE_SaveInfoTypedef* info,
 							GPRS_SendInfoTypedef* sendInfo);
 
 /*******************************************************************************
- *
+ * function：文件系统初始化，获取数据储存文件的结构体总数
  */
 void FILE_Init(void)
 {
-	/* 向文件名添加固定的后缀名 */
-	memcpy(&FILE_FileName[6], ".txt\0", 5);
-	memcpy(&FILE_PrintFileName[6], ".txt\0", 5);
+	/* 挂载文件系统 */
+	FATFS_FileLink();
+
+	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
+	{
+		/* 获取文件大小 */
+		FILE_DataSaveStructCnt = FATFS_GetFileStructCount();
+	}
+
+	FATFS_FileClose();
+
+	FATFS_FileUnlink();
 }
 
 /*******************************************************************************
- *
+ * function：数据储存结构体中添加符号，使其能用Excel软件打开
  */
 void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info)
 {
@@ -56,7 +57,7 @@ void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info)
  * saveInfo：储存结构体指针
  * fileStructCount：当前文件结构体数
  */
-ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount)
+ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo)
 {
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())
@@ -65,20 +66,17 @@ ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCo
 	/* 获取总空间和空闲空间 */
 	FATFS_GetSpaceInfo();
 
-	/* 根据时间获取文件名 */
-//	FILE_GetFileNameDependOnTime(&saveInfo->realTime, FILE_FileName);
-
 	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
 	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_ALWAYS_WRITE))
 	{
-		/* 将写指针指向文件的末尾 */
-		FATFS_FileSeekEnd();
+		/* 先判断写入地址是否对齐，对齐才写入，不对齐则跳过当前结构体，写入到下一结构体 */
+		FATFS_FileSeekSaveInfoStructAlign();
 
 		/* 把结构体写入文件 */
 		FATFS_FileWrite((BYTE*)saveInfo, sizeof(FILE_SaveInfoTypedef));
 
 		/* 获取文件大小 */
-		*fileStructCount = FATFS_GetFileStructCount();
+		FILE_DataSaveStructCnt = FATFS_GetFileStructCount();
 	}
 
 	FATFS_FileClose();
@@ -100,9 +98,10 @@ uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* pa
 	/* 挂载文件系统 */
 	FATFS_FileLink();
 
-	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	/* 打开数据储存文件 */
 	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
 	{
+		/* 没有补传数据 */
 		if (patch->patchStructOffset == 0)
 		{
 			readInfoCount = 1;
@@ -114,6 +113,7 @@ uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* pa
 		}
 		else
 		{
+			/* 有补传数据 */
 			FATFS_FileSeek(patch->patchStructOffset * sizeof(FILE_SaveInfoTypedef));
 
 			/* 当前文件还有多少个结构体可以读 */
@@ -122,12 +122,14 @@ uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* pa
 			/* 文件中结构体数不能一次读完 */
 			if (readInfoCount > GPRS_PATCH_PACK_NUMB_MAX)
 			{
+				/* 最大上传的数据组数 */
 				readInfoCount = GPRS_PATCH_PACK_NUMB_MAX;
 				patch->patchStructOffset += GPRS_PATCH_PACK_NUMB_MAX;
 			}
 			/* 当前文件剩余的结构体能够被一次读完 */
 			else
 			{
+				/* 补传数据清空 */
 				patch->patchStructOffset = 0;
 			}
 
