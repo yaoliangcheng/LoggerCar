@@ -18,7 +18,7 @@
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
-#define FILE_NAME_SAVE_DATA						("date1.csv")
+#define FILE_NAME_SAVE_DATA						("date3.csv")
 #define FILE_NAME_PATCH_PACK					("patch.txt")
 #define FILE_NAME_PARAM							("param.txt")
 
@@ -100,8 +100,8 @@ extern uint64_t dataFileStructCnt;					/* 当前文件结构体总数 */
 /******************************************************************************/
 void FILE_Init(void);
 void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info);
-ErrorStatus FILE_ReadFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size);
-ErrorStatus FILE_WriteFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size);
+ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
+ErrorStatus FILE_WriteFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
 
 
 ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo, uint64_t* fileStructCount);

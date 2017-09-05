@@ -109,6 +109,8 @@ typedef enum
 	CTL_ID_CHANNAL_SELECT_CH6_TOUCH,
 	CTL_ID_CHANNAL_SELECT_CH7_TOUCH,
 	CTL_ID_CHANNAL_SELECT_CH8_TOUCH,
+	CTL_ID_PRINT_DEFAULT,								/* 默认打印 */
+	CTL_ID_PRINT_CUSTOM,								/* 自定义打印 */
 } TFTLCD_PrintDataCtlIdEnum;
 
 /* 时间选择界面控件ID */
@@ -145,7 +147,7 @@ typedef enum
 	SCREEN_ID_SET_CHANGE_PASSWORD,				/* 修改密码 */
 	SCREEN_ID_ABOUT_DEVICE,						/* 关于设备 */
 	SCREEN_ID_ABOUT_LUGE,						/* 关于路格 */
-	SCREEN_ID_PRINT_TIME_SELECT,
+	SCREEN_ID_TIME_SELECT,
 } TFTLCD_ScreenIDEnum;
 
 /******************************************************************************/
@@ -304,10 +306,12 @@ extern TFTLCD_StatusTypedef TFTLCD_status;
 
 /******************************************************************************/
 void TFTLCD_Init(void);
+void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
 void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
 void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
+void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time);
 
 void TFTLCD_UartIdleDeal(void);
 ErrorStatus TFTLCD_CheckHeadTail(void);

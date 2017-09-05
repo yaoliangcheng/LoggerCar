@@ -165,7 +165,7 @@ void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t  s
  * @pBuffer：接收指针
  * @size:读取长度
  */
-ErrorStatus FILE_ReadFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size)
+ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size)
 {
 	/* 挂载文件系统 */
 	if (FATFS_FileLink() == ERROR)
@@ -192,7 +192,7 @@ ErrorStatus FILE_ReadFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32
  * @pBuffer：写入指针
  * @size:写入长度
  */
-ErrorStatus FILE_WriteFile(char* fileName, uint32_t offset, BYTE* pBuffer, uint32_t size)
+ErrorStatus FILE_WriteFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size)
 {
 	/* 挂载文件系统 */
 	if (ERROR == FATFS_FileLink())

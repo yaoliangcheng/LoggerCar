@@ -5,6 +5,8 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#include "file.h"
+
 /******************************************************************************/
 #define DISPLAY_HIS_DATA_ONE_SCREEN_CNT				(4)		/* 历史数据一个界面显示4行 */
 
@@ -61,7 +63,7 @@ extern DISPLAY_StatusTypedef DISPLAY_Status;
 void DISPLAY_HistoryData(uint16_t offsetStruct);
 void DISPLAY_HistoryTouch(uint16_t typeID);
 void DISPLAY_PrintTouch(uint16_t typeID);
-
+void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value);
 
 
 

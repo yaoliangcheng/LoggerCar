@@ -1,11 +1,16 @@
 #include "print.h"
 
+
+
 /******************************************************************************/
 uint8_t PRINT_SendBuffer[PRINT_SEND_BYTES_MAX];
 
 /******************************************************************************/
 static void PRINT_SendData(uint16_t size);
 static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
+static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime);
+static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTypedef endTimePoint,
+		ChannelSelectTypedef* select);
 
 /*******************************************************************************
  * function:打印日期
@@ -30,82 +35,38 @@ void PRINT_SetMode(void)
 	PRINT_SendData(3);
 }
 
-#if 0
 /*******************************************************************************
  * function:打印输出
  */
-BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
+void PRINT_DataOut(FILE_RealTimeTypedef* startTime,
+		FILE_RealTimeTypedef* endTime, ChannelSelectTypedef* select)
 {
-	uint8_t index = 0;
-	BOOL    status = FALSE;
+	PRINT_TimeCompareTypedef startTimePoint, endTimePoint;
+	uint32_t offsetStruct;
+	PRINT_DataStatusEnum status;
 
-	/* 时间转换 */
-	BCD2ASCII((char*)&PRINT_SendBuffer[0], &info->realTime.hour, 1);
-	PRINT_SendBuffer[2] = ':';
-	BCD2ASCII((char*)&PRINT_SendBuffer[3], &info->realTime.min, 1);
-	PRINT_SendBuffer[5] = ':';
-	BCD2ASCII((char*)&PRINT_SendBuffer[6], &info->realTime.sec, 1);
-	index += 8;
+	startTimePoint.year = startTime->year;
+	startTimePoint.date = (startTime->month << 24) | (startTime->day << 16) |
+			(startTime->hour << 8) | (startTime->min);
 
-	/* 根据打印选择，输出数据 */
-	if (select->status.bit.ch1)
-	{
-		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp1, &PRINT_SendBuffer[index],
-				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
-		index += 6;
-	}
-	if (select->status.bit.ch2)
-	{
-		PRINT_GetAnalogAndAdjust(info->analogValue.humi1, &PRINT_SendBuffer[index],
-				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
-		index += 6;
-	}
-	if (select->status.bit.ch3)
-	{
-		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp2, &PRINT_SendBuffer[index],
-				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
-		index += 6;
-	}
-	if (select->status.bit.ch4)
-	{
-		PRINT_GetAnalogAndAdjust(info->analogValue.humi2, &PRINT_SendBuffer[index],
-				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
-		index += 6;
-	}
-	if (select->status.bit.ch5)
-	{
-		status = PRINT_GetAnalogAndAdjust(info->analogValue.temp3, &PRINT_SendBuffer[index],
-				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
-		index += 6;
-	}
-	if (select->status.bit.ch6)
-	{
-		PRINT_GetAnalogAndAdjust(info->analogValue.humi3, &PRINT_SendBuffer[index],
-				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
-		index += 6;
-	}
-	if (select->status.bit.ch7)
-	{
-		status = PRINT_GetAnalogAndAdjust(info->analogValue.humi4, &PRINT_SendBuffer[index],
-				FILE_DeviceParam.temp1.alarmValueUp, FILE_DeviceParam.temp1.alarmValueLow);
-		index += 6;
-	}
-	if (select->status.bit.ch8)
-	{
-		PRINT_GetAnalogAndAdjust(info->analogValue.temp1, &PRINT_SendBuffer[index],
-				PRINT_ALARM_INVALID, PRINT_ALARM_INVALID);
-		index += 6;
-	}
+	endTimePoint.year = endTime->year;
+	endTimePoint.date = (endTime->month << 24) | (endTime->day << 16) |
+			(endTime->hour << 8) | (endTime->min);
 
-	/* 打印换行 */
-	PRINT_SendBuffer[index] = '\n';
-	index++;
+	offsetStruct = PRINT_SearchStartTime(startTimePoint);
 
-	PRINT_SendData(index);
+	while (1)
+	{
+		status = PRINT_DataPrint(offsetStruct, endTimePoint, select);
 
-	return status;
+		if (PRINT_DATA_END == status)
+			break;
+		else if (PRINT_DATA_NORMAL == status)
+			offsetStruct += 5;
+		else if (PRINT_DATA_OVERlIMITED == status)
+			offsetStruct += 2;
+	}
 }
-#endif 
 
 /*******************************************************************************
  * function：打印标题数据
@@ -167,6 +128,74 @@ static void PRINT_SendData(uint16_t size)
 }
 
 /*******************************************************************************
+ * function:根据开始时间查找结构体偏移，返回结构体偏移
+ */
+static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime)
+{
+	PRINT_TimeCompareTypedef sourceTime;
+	uint8_t month, day, hour, min;
+	uint32_t fileStructStart, fileStructEnd, searchPoint;
+	FILE_SaveInfoTypedef info;
+
+	FATFS_FileLink();
+
+	FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ);
+
+	fileStructStart = 0;
+	fileStructEnd   = FATFS_GetFileStructCount();
+
+	while(1)
+	{
+		searchPoint = (fileStructStart + fileStructEnd) / 2;
+
+		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
+		if (searchPoint == fileStructStart)
+			break;
+
+		FATFS_FileSeek(searchPoint * sizeof(FILE_SaveInfoTypedef));
+		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_SaveInfoTypedef)) == SUCCESS)
+		{
+			ASCII2HEX((uint8_t*)info.year, &sourceTime.year, 2);
+
+			if (sourceTime.year == destTime.year)
+			{
+				ASCII2HEX((uint8_t*)info.month, &month, 2);
+				ASCII2HEX((uint8_t*)info.day,   &day,   2);
+				ASCII2HEX((uint8_t*)info.hour,  &hour,  2);
+				ASCII2HEX((uint8_t*)info.min,   &min,   2);
+
+				sourceTime.date = CHAR2LONG(month, day, hour, min);
+
+				if (sourceTime.date == destTime.date)
+					break;
+				else if (sourceTime.date > destTime.date)
+				{
+					fileStructEnd = searchPoint;
+				}
+				else
+				{
+					fileStructStart = searchPoint;
+				}
+			}
+			else if (sourceTime.year > destTime.year)
+			{
+				fileStructEnd = searchPoint;
+			}
+			else
+			{
+				fileStructStart = searchPoint;
+			}
+		}
+	}
+
+	FATFS_FileClose();
+
+	FATFS_FileUnlink();
+
+	return searchPoint;
+}
+
+/*******************************************************************************
  * function:获取模拟量的值，将其输出打印，并且判断是否超标
  * analog：模拟量值
  * buf：转换成字符串的指针
@@ -223,7 +252,121 @@ static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmU
 	return status;
 }
 
+/*******************************************************************************
+ * function:根据结构体偏移，读出数据，并根据打印通道选择，打印数据，并返回该数据是否超标
+ */
+static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTypedef endTimePoint,
+		ChannelSelectTypedef* select)
+{
+	FILE_SaveInfoTypedef saveInfo;
+	uint8_t index = 0;
+	PRINT_TimeCompareTypedef time;								/* 根据当前时间生成64位数值，用于比较 */
+	PRINT_DataStatusEnum status;
+	uint8_t month, day, hour, min;
 
+	/* 读取数据 */
+	FILE_ReadFile(FILE_NAME_SAVE_DATA, offset * sizeof(FILE_SaveInfoTypedef),
+			(uint8_t*)&saveInfo, sizeof(FILE_SaveInfoTypedef));
+
+	/* 生成时间数值 */
+	ASCII2HEX((uint8_t*)saveInfo.year,  &time.year, 2);
+	ASCII2HEX((uint8_t*)saveInfo.month, &month, 2);
+	ASCII2HEX((uint8_t*)saveInfo.day,   &day,   2);
+	ASCII2HEX((uint8_t*)saveInfo.hour,  &hour,  2);
+	ASCII2HEX((uint8_t*)saveInfo.min,   &min,   2);
+
+	time.date = CHAR2LONG(month, day, hour, min);
+
+	/* 如果时间超过了结束时间，则返回时间结束 */
+	if ((time.year >= endTimePoint.year) && (time.date > endTimePoint.date))
+		return PRINT_DATA_END;
+
+	/* 年月日时分秒 */
+	memcpy((char*)&PRINT_SendBuffer[0],  &saveInfo.year, 14);
+	index += 14;
+
+	/* 根据打印选择，输出数据 */
+	if (select->status.bit.ch1)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[0], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch2)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[1], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch3)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[2], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch4)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[3], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch5)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[4], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch6)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[5], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch7)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[6], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+	if (select->status.bit.ch8)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[7], 6);
+
+		/* 判断是否超标 */
+		/* todo */
+
+		index += 6;
+	}
+
+	/* 打印换行 */
+	PRINT_SendBuffer[index] = '\n';
+	index++;
+
+	PRINT_SendData(index);
+
+	return status;
+}
 
 
 

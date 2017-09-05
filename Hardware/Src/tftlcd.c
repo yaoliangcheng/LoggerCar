@@ -35,6 +35,25 @@ void TFTLCD_Init(void)
 }
 
 /*******************************************************************************
+ * function:设置界面ID（跳转界面）
+ */
+void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
+{
+	/* 切换界面 */
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+
+	memcpy(&TFTLCD_SendBuffer.buffer.data, &TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(9);
+
+	/* 界面跳转,并且更新状态栏 */
+	TFTLCD_status.curScreenID = screen;
+	osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+}
+
+/*******************************************************************************
  * function：模拟量更新
  */
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
@@ -206,11 +225,29 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
 }
 
 /*******************************************************************************
- *
+ * function:将时间选择界面选好的数值更新到指定的时间控件
+ * @time：选好的时间
  */
-void TFTLCD_TimeSelectReset(void)
+void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time)
 {
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(ctlID);
+
+	HEX2ASCII(&time->year, (uint8_t*)TFTLCD_SendBuffer.buffer.update.value.date, 3);
+	TFTLCD_SendBuffer.buffer.update.value.date[6] = ' ';
+	HEX2ASCII(&time->hour, (uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[7], 1);
+	TFTLCD_SendBuffer.buffer.update.value.date[9] = ':';
+	HEX2ASCII(&time->min, (uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[10], 1);
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[12],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(23);
 }
 
 #if 0
@@ -359,18 +396,7 @@ static void TFTLCD_ScreenStart(void)
 {
 	osDelay(3000);
 
-	/* 切换界面 */
-	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_CUR_DATA_8CH);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_CUR_DATA_8CH);
-
-	memcpy(&TFTLCD_SendBuffer.buffer.data, &TFTLCD_SendBuffer.tail, 4);
-
-	TFTLCD_SendBuf(9);
-
-	/* 界面跳转,并且更新状态栏 */
-	TFTLCD_status.curScreenID = SCREEN_ID_CUR_DATA_8CH;
-	osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+	TFTLCD_SetScreenId(SCREEN_ID_CUR_DATA_8CH);
 }
 
 

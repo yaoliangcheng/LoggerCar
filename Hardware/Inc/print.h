@@ -5,8 +5,11 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#include "common.h"
 #include "TFTLCDProcess.h"
+#include "display.h"
 #include "file.h"
+#include "fatfs.h"
 
 /******************************************************************************/
 #define PRINT_UART							(huart3)
@@ -21,12 +24,32 @@
 #define PRINT_ALARM_INVALID					(0xFF)
 
 /******************************************************************************/
+typedef enum
+{
+	PRINT_DATA_NORMAL,
+	PRINT_DATA_OVERlIMITED,
+	PRINT_DATA_END,
+} PRINT_DataStatusEnum;
+
+/******************************************************************************/
+#pragma pack(push)
+#pragma pack(1)
+
+typedef struct
+{
+	uint8_t  year;
+	uint32_t date;
+} PRINT_TimeCompareTypedef;
+
+#pragma pack(pop)
+
+/******************************************************************************/
 void PRINT_Date(char* fileName);
-//BOOL PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select);
 void PRINT_TitleOut(void);
 void PRINT_TailOut(void);
 void PRINT_SetMode(void);
-
+void PRINT_DataOut(FILE_RealTimeTypedef* startTime,
+		FILE_RealTimeTypedef* endTime, ChannelSelectTypedef* select);
 
 
 

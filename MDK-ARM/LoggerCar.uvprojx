@@ -719,6 +719,11 @@
               <FileType>1</FileType>
               <FilePath>..\Hardware\Src\param.c</FilePath>
             </File>
+            <File>
+              <FileName>display.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\Src\display.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

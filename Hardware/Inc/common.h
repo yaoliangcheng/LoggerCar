@@ -16,6 +16,12 @@
 /******************************************************************************/
 #define DEBUG_UART				(huart1)
 
+#define GET_COMPARE_TIME(year, month, day, hour, min) \
+	(((uint32_t)((year << 24) | (month << 16) | (day << 8) | hour) << 8) | min)
+
+#define CHAR2LONG(value24, value16, value8, value) \
+	(uint32_t)((value24 << 24) | (value16 << 16) | (value8 << 8) | value)
+
 /******************************************************************************/
 typedef enum {FALSE = 0, TRUE = !FALSE} BOOL;
 
@@ -27,6 +33,7 @@ void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size);
 void ASCII2BCD(char* pASCII, uint8_t* pBCD, uint8_t size);
 void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size);
 void HEX2ASCII(uint8_t* pHEX, uint8_t* pASCII, uint8_t size);
+void ASCII2HEX(uint8_t* pASCII, uint8_t* pHEX, uint8_t size);
 void DebugPrintf(char* str);
 
 #endif

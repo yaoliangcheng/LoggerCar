@@ -2,9 +2,13 @@
 
 #include "file.h"
 #include "tftlcd.h"
+#include "print.h"
 
 /******************************************************************************/
 DISPLAY_StatusTypedef DISPLAY_Status;
+
+/******************************************************************************/
+static void TimeSelectReturn(void);
 
 /*******************************************************************************
  * 历史数据界面
@@ -68,6 +72,8 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeStart;
 
+		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
+
 		/* 复位时间选择控件到当前时间 */
 		/* todo */
 		break;
@@ -78,6 +84,9 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeEnd;
+
+		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
+
 		/* 复位时间选择控件到当前时间 */
 		/* todo */
 		break;
@@ -138,6 +147,14 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 				DISPLAY_Status.printChannelStatus.status.bit.ch8);
 		break;
 
+	case CTL_ID_PRINT_DEFAULT:
+		PRINT_DataOut(&DISPLAY_Status.printTimeStart, &DISPLAY_Status.printTimeEnd,
+				&DISPLAY_Status.printChannelStatus);
+		break;
+
+	case CTL_ID_PRINT_CUSTOM:
+		break;
+
 	default:
 		break;
 	}
@@ -172,9 +189,12 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 
 	case CTL_ID_TIME_SELECT_CANCEL:
 		memset(DISPLAY_Status.selectTime, 0, sizeof(FILE_RealTimeTypedef));
+		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
 		break;
 
 	case CTL_ID_TIME_SELECT_OK:
+		/* 根据选择进入时间选择界面，返回时间 */
+		TimeSelectReturn();
 		break;
 
 	default:
@@ -183,16 +203,22 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 }
 
 /*******************************************************************************
- *
+ * function:时间选择界面点击确定，更新文本
  */
 static void TimeSelectReturn(void)
 {
 	switch(DISPLAY_Status.timeSelectStatus)
 	{
 	case TIME_SELECT_START_PRINT_TIME:
+		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
+				DISPLAY_Status.selectTime);
+		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
 		break;
 
 	case TIME_SELECT_END_PRINT_TIME:
+		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_END_TEXT,
+				DISPLAY_Status.selectTime);
+		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
 		break;
 
 	default:
