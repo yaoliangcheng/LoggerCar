@@ -272,8 +272,8 @@ ErrorStatus FATFS_FileSeekEnd(void)
 }
 
 /*******************************************************************************
- * function:判断当前写入的地址是否结构体对齐，防止储存的数据错位，当结构体不对齐时，跳过当前的数据空间，
- * 			直接在下一结构体位置写入。（这个函数用于数据储存过程）
+ * function:判断当前写入的地址是否结构体对齐，防止储存的数据错位，当结构体不对齐时，覆盖缺省的数据空间，
+ * 			。（这个函数用于数据储存过程）
  */
 void FATFS_FileSeekSaveInfoStructAlign(void)
 {
@@ -283,8 +283,9 @@ void FATFS_FileSeekSaveInfoStructAlign(void)
 	}
 	else
 	{
+		/* 覆盖当前结构体 */
 		f_lseek(&objFile,
-				(objFile.fsize / sizeof(FILE_SaveInfoTypedef) + 1)
+				(objFile.fsize / sizeof(FILE_SaveInfoTypedef))
 				* sizeof(FILE_SaveInfoTypedef));
 	}
 }

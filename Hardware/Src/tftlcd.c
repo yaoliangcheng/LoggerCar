@@ -101,6 +101,8 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 	memcpy(&TFTLCD_SendBuffer.buffer.data[sizeof(AnalogTypedef) * 8],
 				TFTLCD_SendBuffer.tail, 4);
 
+	TFTLCD_SendBuf(sizeof(AnalogTypedef) * 8 + 9);
+
 	/* ÍË³öÁÙ½çÇø */
 	taskEXIT_CRITICAL();
 }

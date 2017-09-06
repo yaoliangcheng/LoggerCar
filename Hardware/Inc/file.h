@@ -18,7 +18,7 @@
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)
-#define FILE_NAME_SAVE_DATA						("date3.csv")
+#define FILE_NAME_SAVE_DATA						("date4.csv")
 #define FILE_NAME_PATCH_PACK					("patch.txt")
 #define FILE_NAME_PARAM							("param.txt")
 
