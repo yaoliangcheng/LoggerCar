@@ -134,8 +134,6 @@ ErrorStatus FATFS_FileUnlink(void)
  */
 ErrorStatus FATFS_FileMake(void)
 {
-	SPI_FLASH_BulkErase();
-	
 	if (FR_OK == f_mkfs(USER_Path, 0, 4096))
 	{
 		/* 格式化后，先取消挂载 */
@@ -160,10 +158,17 @@ ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode)
 
 	switch (mode)
 	{
+	/* 打开文件，如果文件不存在，则创建文件 */
+	case FATFS_MODE_OPNE_ALWAYS:
+		status = f_open(&objFile, fileName, FA_OPEN_ALWAYS);
+		break;
+
+	/* 以写模式打开文件，如果文件不存在，则创建文件  */
 	case FATFS_MODE_OPEN_ALWAYS_WRITE:
 		status = f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE);
 		break;
 
+	/* 以读模式打开已存在的文件 */
 	case FATFS_MODE_OPEN_EXISTING_READ:
 		status = f_open(&objFile, fileName, FA_OPEN_EXISTING | FA_READ);
 		break;

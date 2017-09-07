@@ -63,25 +63,27 @@ typedef struct
 
 typedef struct
 {
-	char year[2];								/* 日期：年月日 时分秒，（14） */
+	char year[2];								/* 日期：年月日 时分秒，（16） */
 	char month[2];
 	char day[2];
 	char str1;
 	char hour[2];
-	char min[2];
-	char sec[2];
 	char str2;
-	char batQuality[3];							/* 电池电量，（4） */
+	char min[2];
 	char str3;
-	FunctionalState exPwrStatus;				/* 电池状态，（2） */
+	char sec[2];
 	char str4;
-	char longitude[10];							/* 经度，（11） */
+	char batQuality[3];							/* 电池电量，（4） */
 	char str5;
-	char latitude[10];							/* 纬度，（11） */
+	char exPwrStatus;							/* 电池状态，（2） */
 	char str6;
+	char longitude[10];							/* 经度，（11） */
+	char str7;
+	char latitude[10];							/* 纬度，（11） */
+	char str8;
 	SaveInfoAnalogTypedef analogValue[8];		/* 模拟量，（6 x 8） */
 	char end[2];								/* 换行（2） */
-} FILE_SaveInfoTypedef;							/* 总共（92字节） */
+} FILE_SaveInfoTypedef;							/* 总共（94字节） */
 
 typedef struct
 {

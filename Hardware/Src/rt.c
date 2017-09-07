@@ -57,9 +57,9 @@ void RT_BKUP_UpdateDate(RT_TimeTypedef* time)
  * @pBuffer：接收缓存数据（平台回文）
  * @pStruct：发送结构体
  */
-void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time)
+void RT_TimeAdjustWithCloud(uint8_t* pBuffer)
 {
-	uint8_t str[12] = {0};
+	uint8_t str[10] = {0};
 
 	RT_TimeTypedef   eTime;
 
@@ -71,11 +71,10 @@ void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time)
 	eTime.date.Date    = (str[4]  * 10)  + str[5];
 	eTime.time.Hours   = (str[6]  * 10)  + str[7];
 	eTime.time.Minutes = (str[8]  * 10)  + str[9];
-	eTime.time.Seconds = (str[10] * 10)  + str[11];
 
 	/* 接收到平台回文，与发送时间比较，若相差年月日时分有偏差，则校准，秒钟不计，校准字节长度为5 */
-	if ((0 != memcmp(&eTime.date, &time->date, 3)
-			|| (0 != memcmp(&eTime.time, &time->time, 2))))
+	if ((0 != memcmp(&eTime.date, &RT_RealTime.date, 3)
+			|| (0 != memcmp(&eTime.time, &RT_RealTime.time, 2))))
 	{
 		RT_SetRealTime(&eTime);
 	}

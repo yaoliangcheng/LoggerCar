@@ -17,10 +17,17 @@ void FILE_Init(void)
 	/* 挂载文件系统 */
 	FATFS_FileLink();
 
-	/* 获取文件，文件名存在则打开写入，不存在则创建写入 */
+	/* 打开文件，如果不存在则先创建文件，确保设备存在必要的文件 */
+	FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPNE_ALWAYS);
+	FATFS_FileClose();
+	FATFS_FileOpen(FILE_NAME_PATCH_PACK, FATFS_MODE_OPNE_ALWAYS);
+	FATFS_FileClose();
+	FATFS_FileOpen(FILE_NAME_PARAM, FATFS_MODE_OPNE_ALWAYS);
+	FATFS_FileClose();
+
+	/* 读数据文件的结构体大小 */
 	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
 	{
-		/* 获取文件大小 */
 		FILE_DataSaveStructCnt = FATFS_GetFileStructCount();
 	}
 
@@ -35,11 +42,13 @@ void FILE_Init(void)
 void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info)
 {
 	info->str1   			  = ' ';
-	info->str2   			  = ',';
-	info->str3  			  = ',';
+	info->str2   			  = ':';
+	info->str3  			  = ':';
 	info->str4   			  = ',';
 	info->str5   			  = ',';
 	info->str6   			  = ',';
+	info->str7   			  = ',';
+	info->str8   			  = ',';
 	info->analogValue[0].str  = ',';
 	info->analogValue[1].str  = ',';
 	info->analogValue[2].str  = ',';
@@ -531,7 +540,7 @@ static uint16_t SearchTimeInFile(FILE_RealTime* pTime)
 	while (1)
 	{
 		searchPoint = (fileStructNumbEnd + fileStructNumbStart) / 2;
-		
+
 		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
 		if (searchPoint == fileStructNumbStart)
 			break;
@@ -590,7 +599,7 @@ static void selectDataPrint(char* fileName,
 			}
 		}
 	}
-	
+
 	FATFS_FileClose();
 }
 

@@ -6,6 +6,10 @@
 #include "cmsis_os.h"
 
 /******************************************************************************/
-uint8_t INPUT_CheckPwrOnStatus(void);
+#define INPUT_CheckPwrOnStatus() \
+					HAL_GPIO_ReadPin(PWR_ON_CHECK_GPIO_Port, PWR_ON_CHECK_Pin)
+
+/******************************************************************************/
+//uint8_t INPUT_CheckPwrOnStatus(void);
 
 #endif

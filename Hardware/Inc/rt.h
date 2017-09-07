@@ -41,7 +41,7 @@ extern RT_TimeTypedef RT_RealTime;
 /******************************************************************************/
 void RT_Init(void);
 void RT_BKUP_UpdateDate(RT_TimeTypedef* time);
-void RT_TimeAdjustWithCloud(uint8_t* pBuffer, RT_TimeTypedef* time);
+void RT_TimeAdjustWithCloud(uint8_t* pBuffer);
 
 #endif
 

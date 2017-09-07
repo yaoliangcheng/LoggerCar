@@ -52,7 +52,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 {
 	uint8_t pressCnt = 0, releaseCnt = 0;
 
-	/* 检测PA0引脚上的电平为持续300 * 10ms = 3s的高电平 */
+	/* 检测PA0引脚上的电平为持续50 * 100ms = 5s的高电平 */
 	while (1)
 	{
 		if (HAL_GPIO_ReadPin(WKUP_GPIO_Port, WKUP_Pin) == GPIO_PIN_SET)
@@ -61,7 +61,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 			releaseCnt = 0;
 
 			GPRS_PWR_CTRL_ENABLE();
-			if (pressCnt >= 100)
+			if (pressCnt >= 50)
 			{
 				return ENABLE;
 			}
@@ -77,7 +77,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 				return DISABLE;
 			}
 		}
-		HAL_Delay(60);
+		HAL_Delay(100);
 	}
 }
 

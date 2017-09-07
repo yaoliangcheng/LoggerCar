@@ -16,7 +16,6 @@ void GPRSPROCESS_Task(void)
 	char* expectString;											/* 预期收到的字符串 */
 
 	GPS_LocateTypedef  location;
-	RT_TimeTypedef*    eTime;
 
 	GPRS_TaskStatusEnum taskStatus;
 	uint8_t moduleTimeoutCnt;									/* 模块超时计数 */
@@ -80,10 +79,6 @@ void GPRSPROCESS_Task(void)
 				/* 获取本次发送的条数 */
 				signal = osMessageGet(infoCntMessageQId, 2000);
 				curPatchPack = signal.value.v;
-
-				/* 获取当前时间用于校准 */
-				signal = osMessageGet(adjustTimeMessageQId, 2000);
-				eTime = (RT_TimeTypedef*)signal.value.v;
 
 				/* 如果模块已经初始化完成 */
 				if (gprsInited == TRUE)
@@ -466,7 +461,7 @@ void GPRSPROCESS_Task(void)
 					printf("服务器返回数据是%50s\r\n",GPRS_RecvBuffer.recvBuffer);
 
 					/* 将本地时间与云时间对比，时间校准 */
-					RT_TimeAdjustWithCloud(GPRS_RecvBuffer.recvBuffer, eTime);
+					RT_TimeAdjustWithCloud(GPRS_RecvBuffer.recvBuffer);
 
 					moduleStatus = EXTI_SERIANET_MODE;
 
