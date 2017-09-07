@@ -150,48 +150,29 @@ typedef enum
 	SCREEN_ID_TIME_SELECT,
 } TFTLCD_ScreenIDEnum;
 
-/******************************************************************************/
-/* 打印界面控件编号 */
+/**************************小图标控件*********************************************/
 typedef enum
 {
-	PRINT_CTRL_ID_BACK = 1,
-	PRINT_CTRL_ID_SET,
-	PRINT_CTRL_ID_START_TIME,
-	PRINT_CTRL_ID_END_TIME,
-	PRINT_CTRL_ID_START_TIME_BUTTON,
-	PRINT_CTRL_ID_END_TIME_BUTTON,
-	PRINT_CTRL_ID_START_PRINT,
-	PRINT_CTRL_ID_CHANNEL_1_ICON,
-	PRINT_CTRL_ID_CHANNEL_2_ICON,
-	PRINT_CTRL_ID_CHANNEL_3_ICON,
-	PRINT_CTRL_ID_CHANNEL_4_ICON,
-	PRINT_CTRL_ID_CHANNEL_5_ICON,
-	PRINT_CTRL_ID_CHANNEL_6_ICON,
-	PRINT_CTRL_ID_CHANNEL_7_ICON,
-	PRINT_CTRL_ID_CHANNEL_8_ICON,
-	PRINT_CTRL_ID_CHANNEL_1_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_2_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_3_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_4_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_5_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_6_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_7_BUTTON,
-	PRINT_CTRL_ID_CHANNEL_8_BUTTON,
-}CtrlID_PrintEnum;
+	ICON_BAT_CHARGE,							/* 正在充电 */
+	ICON_BAT_CAPACITY_80,						/* 电池电量>80% */
+	ICON_BAT_CAPACITY_60,						/* 电池电量>60% */
+	ICON_BAT_CAPACITY_40,						/* 电池电量>40% */
+	ICON_BAT_CAPACITY_20,						/* 电池电量>20% */
+	ICON_BAT_CAPACITY_0,						/* 电池电量>0% */
+} IconBatCapacityEnum;
 
-/* 打印时间选择界面控件编号 */
 typedef enum
 {
-	TIME_SELECT_CTRL_ID_YEAR,
-	TIME_SELECT_CTRL_ID_MONTH,
-	TIME_SELECT_CTRL_ID_DAY,
-	TIME_SELECT_CTRL_ID_HOUR,
-	TIME_SELECT_CTRL_ID_MIN,
-	TIME_SELECT_CTRL_ID_CANCEL,
-	TIME_SELECT_CTRL_ID_OK
-} CtrlID_TimeSelectEnum;
+	ICON_SIGNAL_QUALITY_31_21,					/* 31>信号强度>21 */
+	ICON_SIGNAL_QUALITY_21_11,					/* 21>信号强度>11 */
+	ICON_SIGNAL_QUALITY_11_0,					/* 11>信号强度>0 */
+} IconSignalQualityEnum;
 
-
+typedef enum
+{
+	ICON_ALARM_ON,								/* 有报警信号 */
+	ICON_ALARM_OFF,								/* 无报警信号 */
+} IconAlarmStatusEnum;
 
 /******************************************************************************/
 #pragma pack(push)
@@ -213,12 +194,36 @@ typedef struct
 	char    str4;
 	char    min[2];
 
-	uint8_t signalCtlIdH;
+	uint8_t batCtlIdH;
+	uint8_t batCtlIdL;
+	uint8_t batSizeH;
+	uint8_t batSizeL;
+	char    batCapacity[3];
+} StatusBarTextTypedef;					/* 状态栏文本更新 */
+
+typedef struct
+{
+	uint8_t batCtlIdH;					/* 电池电量图标 */
+	uint8_t batCtlIdL;
+	uint8_t batSizeH;
+	uint8_t batSizeL;
+	uint8_t batCapacityH;
+	uint8_t batCapacityL;
+
+	uint8_t signalCtlIdH;				/* 信号强度图标 */
 	uint8_t signalCtlIdL;
 	uint8_t signalSizeH;
 	uint8_t signalSizeL;
-	char    signalQuality[3];
-} StatusBarUpdateTypedef;					/* 状态栏更新 */
+	uint8_t signalCapacityH;
+	uint8_t signalCapacityL;
+
+	uint8_t alarmCtlIdH;				/* 报警图标 */
+	uint8_t alarmCtlIdL;
+	uint8_t alarmSizeH;
+	uint8_t alarmSizeL;
+	uint8_t alarmCapacityH;
+	uint8_t alarmCapacityL;
+} StatusBarIconTypedef;					/* 状态栏图标更新 */
 
 typedef struct
 {
@@ -260,9 +265,10 @@ typedef struct
 		uint8_t data[TFTLCD_UART_RX_DATA_SIZE_MAX];
 		union
 		{
-			StatusBarUpdateTypedef statusBarUpdate;		/* 状态栏批量更新 */
-			AnalogTypedef          analogValue[8];		/* 模拟量批量更新 */
-			HistoryDateTypedef     HistoryDate;			/* 历史数据批量更新 */
+			StatusBarTextTypedef statusBarText;			/* 状态栏文本更新 */
+			StatusBarIconTypedef statusBarIcon;			/* 状态栏图标更新 */
+			AnalogTypedef        analogValue[8];		/* 模拟量批量更新 */
+			HistoryDateTypedef   HistoryDate;			/* 历史数据批量更新 */
 		} batch;
 		UpdateTypedef update;						/* buffer */
 	}buffer;
@@ -309,6 +315,7 @@ void TFTLCD_Init(void);
 void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
+void TFTLCD_StatusBarIconRefresh(uint16_t screenID);
 void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
 void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time);
@@ -316,7 +323,7 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 void TFTLCD_UartIdleDeal(void);
 ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
-void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
+//void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
 
 
 

@@ -6,6 +6,7 @@
 #include "cmsis_os.h"
 
 #include "adc.h"
+#include "common.h"
 
 /******************************************************************************/
 #define ANALOG_ADC								(hadc1)
@@ -57,10 +58,31 @@ typedef struct
 	uint8_t batVoltage;				/* µÁ≥ÿµÁ—π */
 } ANALOG_ValueTypedef;
 
+typedef struct
+{
+	union
+	{
+		struct
+		{
+			uint8_t ch1:1;
+			uint8_t ch2:1;
+			uint8_t ch3:1;
+			uint8_t ch4:1;
+			uint8_t ch5:1;
+			uint8_t ch6:1;
+			uint8_t ch7:1;
+			uint8_t ch8:1;
+		} bit;
+		uint8_t all;
+	} status;
+} ANALOG_AlarmStatusTypedef;
+
 #pragma pack(pop)
 
 /******************************************************************************/
 extern ANALOG_ValueTypedef ANALOG_value;
+extern ANALOG_AlarmStatusTypedef ANALOG_alarmStatus;
+extern BOOL ANALOG_alarmOccur;
 
 /******************************************************************************/
 void ANALOG_Init(void);

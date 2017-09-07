@@ -7,6 +7,8 @@
 /******************************************************************************/
 static uint16_t convertValueBuffer[ANALOG_SAMPLE_NUMB][ANALOG_CHANNEL_NUMB_TOTLE];
 ANALOG_ValueTypedef ANALOG_value;
+ANALOG_AlarmStatusTypedef ANALOG_alarmStatus;
+BOOL ANALOG_alarmOccur = FALSE;				/* 模拟量报警发生 */
 
 /******************************************************************************/
 static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue);

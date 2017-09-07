@@ -29,8 +29,12 @@ void TFTLCD_Task(void)
 		if ((signal.value.signals & TFTLCD_TASK_STATUS_BAR_UPDATE) ==
 				TFTLCD_TASK_STATUS_BAR_UPDATE)
 		{
+			/* 更新状态栏文本 */
 			TFTLCD_StatusBarTextRefresh(TFTLCD_status.curScreenID, &RT_RealTime,
 					ANALOG_value.batVoltage);
+
+			/* 更新状态栏图标 */
+			TFTLCD_StatusBarIconRefresh(TFTLCD_status.curScreenID);
 		}
 
 		/* 刷新实时数据 */

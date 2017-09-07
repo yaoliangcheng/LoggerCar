@@ -22,6 +22,9 @@
 #define CHAR2LONG(value24, value16, value8, value) \
 	(uint32_t)((value24 << 24) | (value16 << 16) | (value8 << 8) | value)
 
+#define HALFWORD_BYTE_H(value)      ((uint8_t)((value & 0xFF00) >> 8))
+#define HALFWORD_BYTE_L(value)      ((uint8_t)(value & 0x00FF))
+
 /******************************************************************************/
 typedef enum {FALSE = 0, TRUE = !FALSE} BOOL;
 
