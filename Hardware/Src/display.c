@@ -51,7 +51,7 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 
 	case CTL_ID_PAGE_DOWN:
 		/* ±ÜÃâ·­¹ýÍ· */
-		if (DISPLAY_Status.hisDataDispStructOffset > DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
+		if (DISPLAY_Status.hisDataDispStructOffset >= DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
 		{
 			DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
 			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
