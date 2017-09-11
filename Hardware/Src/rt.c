@@ -113,4 +113,5 @@ static void RT_SetRealTime(RT_TimeTypedef* time)
 
 	/* 将更新的日期备份 */
 	RT_BKUP_UpdateDate(time);
+	HAL_RTC_GetDate(&hrtc, &RT_RealTime.date, RTC_FORMAT_BIN);
 }

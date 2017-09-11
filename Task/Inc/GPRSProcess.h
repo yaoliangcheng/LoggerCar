@@ -22,7 +22,7 @@
 #define AT_CMD_CHECK_SIM_STATUS_RESPOND	  		("+CPIN: READY")
 #define AT_CMD_SEARCH_NET_STATUS		  		("AT+CREG?\r\n")	  			/* 查询找网络状态 */
 //#define AT_CMD_SEARCH_NET_STATUS_RESPOND  	("+CREG: 0,1")
-#define AT_CMD_SEARCH_NET_STATUS_RESPOND  		("+CREG: 0,5")
+#define AT_CMD_SEARCH_NET_STATUS_RESPOND  		("+CREG: 0")
 #define AT_CMD_CHECK_GPRS_STATUS		  		("AT+CGATT?\r\n")				/* 查询GPRS附着是否成功 */
 #define AT_CMD_CHECK_GPRS_STATUS_RESPOND  		("+CGATT: 1")
 
