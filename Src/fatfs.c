@@ -309,7 +309,7 @@ ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 /*******************************************************************************
  *
  */
-ErrorStatus FATFS_FileSeek(WORD byte)
+ErrorStatus FATFS_FileSeek(DWORD byte)
 {
 	if (byte <= objFile.fsize)
 	{

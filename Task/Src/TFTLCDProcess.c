@@ -87,13 +87,13 @@ void ScreenDefaultDisplay(uint16_t screen)
 	switch(screen)
 	{
 	case SCREEN_ID_HIS_DATA:
-		if (FILE_DataSaveStructCnt > DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
+		if (FILE_DataSaveStructCnt >= DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
 		{
 			/* 显示最新的一组数据 */
 			DISPLAY_Status.hisDataDispStructOffset =
 					FILE_DataSaveStructCnt - DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
 
-			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
 		break;
 	default:

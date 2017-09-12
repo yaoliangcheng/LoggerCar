@@ -16,19 +16,17 @@ static void TimeSelectReturn(void);
 /*******************************************************************************
  * 历史数据显示
  */
-void DISPLAY_HistoryData(uint16_t offsetStruct)
+void DISPLAY_HistoryData(uint16_t startStructOffset, uint8_t structCnt)
 {
 	uint8_t i;
-	FILE_SaveInfoTypedef saveInfo;
+	FILE_SaveInfoTypedef saveInfo[4];
 
-	for (i = 0; i < DISPLAY_HIS_DATA_ONE_SCREEN_CNT; i++)
+	FILE_ReadFile(FILE_NAME_SAVE_DATA, startStructOffset * sizeof(FILE_SaveInfoTypedef),
+					(uint8_t*)saveInfo, structCnt * sizeof(FILE_SaveInfoTypedef));
+
+	for (i = 0; i < structCnt; i++)
 	{
-		FILE_ReadFile(FILE_NAME_SAVE_DATA, offsetStruct * sizeof(FILE_SaveInfoTypedef),
-				(uint8_t*)&saveInfo, sizeof(FILE_SaveInfoTypedef));
-
-		TFTLCD_HistoryDataFormat(&saveInfo, (TFTLCD_HisDataCtlIdEnum)(CTL_ID_DIS_DATA_1 + i));
-
-		offsetStruct++;
+		TFTLCD_HistoryDataFormat(&saveInfo[i], (TFTLCD_HisDataCtlIdEnum)(CTL_ID_DIS_DATA_1 + i));
 	}
 }
 
@@ -45,7 +43,7 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 				DISPLAY_HIS_DATA_ONE_SCREEN_CNT * 2)
 		{
 			DISPLAY_Status.hisDataDispStructOffset += DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
-			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
 		break;
 
@@ -54,7 +52,7 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 		if (DISPLAY_Status.hisDataDispStructOffset >= DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
 		{
 			DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
-			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset);
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
 		break;
 

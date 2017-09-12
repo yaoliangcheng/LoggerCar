@@ -5,6 +5,7 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
+#include "common.h"
 #include "rtc.h"
 
 /******************************************************************************/
@@ -37,6 +38,7 @@ typedef struct
 
 /******************************************************************************/
 extern RT_TimeTypedef RT_RealTime;
+extern BOOL RT_recodeFlag;
 
 /******************************************************************************/
 void RT_Init(void);

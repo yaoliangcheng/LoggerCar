@@ -381,7 +381,16 @@ void GPRSPROCESS_Task(void)
 				/* 查找网络状态完成 */
 				case SEARCH_NET_STATUS_FINISH:
 					DebugPrintf("查找网络状态完成\r\n");
-					moduleStatus = GET_OPERATOR;
+					/* 注册到本地网络，或者注册到漫游网络 */
+					if ((GPRS_RecvBuffer.recvBuffer[11] == '1') ||
+							(GPRS_RecvBuffer.recvBuffer[11] == '5'))
+					{
+						moduleStatus = GET_OPERATOR;
+					}
+					else
+					{
+						moduleStatus = INIT;
+					}
 					break;
 
 				/* 获取运营商信息完成 */

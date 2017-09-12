@@ -60,7 +60,7 @@ typedef struct
 extern DISPLAY_StatusTypedef DISPLAY_Status;
 
 /******************************************************************************/
-void DISPLAY_HistoryData(uint16_t offsetStruct);
+void DISPLAY_HistoryData(uint16_t startStructOffset, uint8_t structCnt);
 void DISPLAY_HistoryTouch(uint16_t typeID);
 void DISPLAY_PrintTouch(uint16_t typeID);
 void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value);

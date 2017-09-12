@@ -184,9 +184,11 @@ ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32
 
 	if (FATFS_FileOpen(fileName, FATFS_MODE_OPEN_EXISTING_READ) == SUCCESS)
 	{
-		FATFS_FileSeek(offset);
-
-		FATFS_FileRead(pBuffer, size);
+		if (offset % sizeof(FILE_SaveInfoTypedef) == 0)
+		{
+			FATFS_FileSeek(offset);
+			FATFS_FileRead(pBuffer, size);
+		}
 	}
 
 	FATFS_FileClose();
