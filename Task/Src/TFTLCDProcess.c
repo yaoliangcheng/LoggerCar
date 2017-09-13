@@ -96,6 +96,18 @@ void ScreenDefaultDisplay(uint16_t screen)
 			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
 		break;
+
+	/* 历史曲线界面 */
+	case SCREEN_ID_HIS_DATA_CURVE:
+		if (FILE_DataSaveStructCnt >= DISPLAY_HIS_DATA_CURVE_CNT)
+		{
+			DISPLAY_Status.hisDataDispStructOffset =
+					FILE_DataSaveStructCnt - DISPLAY_HIS_DATA_CURVE_CNT;
+
+			DISPLAY_HistoryDataCurve(DISPLAY_Status.hisDataDispStructOffset);
+		}
+		break;
+
 	default:
 		break;
 	}

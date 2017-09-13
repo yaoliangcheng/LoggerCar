@@ -18,6 +18,7 @@ static void TFTLCD_UartInit(void);
 static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, AnalogTypedef* batch);
 static void TFTLCD_SendBuf(uint8_t size);
 static void TFTLCD_ScreenStart(void);
+static void TFTLCD_HistoryDataCurveDisplay(uint8_t channel, uint8_t data);
 
 /*******************************************************************************
  * function:触摸屏初始化
@@ -314,6 +315,28 @@ void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlI
 }
 
 /*******************************************************************************
+ *
+ */
+void TFTLCD_HistoryDataCurveFormat(FILE_SaveInfoTypedef* saveInfo)
+{
+	char  str[6];
+	float value;
+	uint8_t i;
+
+	for (i = 0; i < 8; i++)
+	{
+		/* 将字符串转为float */
+		memcpy(str, saveInfo->analogValue[i].value, 5);
+		str[5] = '\0';
+		value = (float)atof(str);
+
+		/* 显示通道曲线，值相对底部偏移30 */
+		TFTLCD_HistoryDataCurveDisplay(i, (uint8_t)(value + 30));
+	}
+}
+
+
+/*******************************************************************************
  * function:打印通道选择图标显示
  * @ctrl：通道选择控件编号
  * @status：当前该通道的值，若选中则变成不选，反之亦然。
@@ -524,8 +547,39 @@ static void TFTLCD_ScreenStart(void)
 	TFTLCD_SetScreenId(SCREEN_ID_CUR_DATA_8CH);
 }
 
+/*******************************************************************************
+ * function:历史数据曲线显示
+ * @channel：曲线通道
+ * @data：该通道的值
+ */
+static void TFTLCD_HistoryDataCurveDisplay(uint8_t channel, uint8_t data)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_CURVE_ADD_DATA_TAIL;
 
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_HIS_DATA_CURVE);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_HIS_DATA_CURVE);
 
+	TFTLCD_SendBuffer.buffer.curve.ctlIdH = HALFWORD_BYTE_H(CTL_ID_HIS_DATA_CURVE);
+	TFTLCD_SendBuffer.buffer.curve.ctlIdL = HALFWORD_BYTE_L(CTL_ID_HIS_DATA_CURVE);
+
+	TFTLCD_SendBuffer.buffer.curve.channel     = channel;
+	TFTLCD_SendBuffer.buffer.curve.dataLengthH = 0;
+	TFTLCD_SendBuffer.buffer.curve.dataLengthL = 1;
+	TFTLCD_SendBuffer.buffer.curve.data        = data;
+
+	memcpy(&TFTLCD_SendBuffer.buffer.data[sizeof(CurveTypedef)],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(sizeof(CurveTypedef) + 11);
+}
+
+/*******************************************************************************
+ *
+ */
+static void TFTLCD_CurveAddChannel(uint8_t channel)
+{
+
+}
 
 
 

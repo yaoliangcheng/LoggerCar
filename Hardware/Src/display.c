@@ -16,7 +16,7 @@ static void TimeSelectReturn(void);
 /*******************************************************************************
  * 历史数据显示
  */
-void DISPLAY_HistoryData(uint16_t startStructOffset, uint8_t structCnt)
+void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt)
 {
 	uint8_t i;
 	FILE_SaveInfoTypedef saveInfo[4];
@@ -28,6 +28,30 @@ void DISPLAY_HistoryData(uint16_t startStructOffset, uint8_t structCnt)
 	{
 		TFTLCD_HistoryDataFormat(&saveInfo[i], (TFTLCD_HisDataCtlIdEnum)(CTL_ID_DIS_DATA_1 + i));
 	}
+}
+
+/*******************************************************************************
+ * 历史曲线显示
+ */
+void DISPLAY_HistoryDataCurve(uint32_t startStructOffset)
+{
+	uint8_t i, j;
+	FILE_SaveInfoTypedef info[DISPLAY_HIS_DATA_READ_ONCE_CNT];
+
+	for (j = 0; j < DISPLAY_HIS_DATA_READ_CNT; j++)
+	{
+		FILE_ReadFile(FILE_NAME_SAVE_DATA,
+					  startStructOffset * sizeof(FILE_SaveInfoTypedef),
+					  (uint8_t*)info,
+					  sizeof(info));
+		for (i = 0; i < DISPLAY_HIS_DATA_READ_ONCE_CNT; i++)
+		{
+			TFTLCD_HistoryDataCurveFormat(&info[i]);
+		}
+
+		startStructOffset += DISPLAY_HIS_DATA_READ_ONCE_CNT;
+	}
+
 }
 
 /*******************************************************************************

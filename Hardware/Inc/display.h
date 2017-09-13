@@ -9,6 +9,9 @@
 
 /******************************************************************************/
 #define DISPLAY_HIS_DATA_ONE_SCREEN_CNT				(4)		/* 历史数据一个界面显示4行 */
+#define DISPLAY_HIS_DATA_READ_ONCE_CNT				(5)		/* 历史曲线界面，一次读取5组数据 */
+#define DISPLAY_HIS_DATA_READ_CNT					(18)	/* 一个界面90个数据，读取16次可完成 */
+#define DISPLAY_HIS_DATA_CURVE_CNT					(DISPLAY_HIS_DATA_READ_ONCE_CNT * DISPLAY_HIS_DATA_READ_CNT)
 
 /******************************************************************************/
 typedef enum
@@ -45,7 +48,7 @@ typedef struct
 
 typedef struct
 {
-	uint16_t hisDataDispStructOffset;			/* 历史数据显示结构体偏移 */
+	uint32_t hisDataDispStructOffset;			/* 历史数据显示结构体偏移 */
 	ChannelSelectTypedef printChannelStatus;	/* 打印界面通道状态 */
 	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
 	FILE_RealTimeTypedef* selectTime;			/* 已被选择的时间 */
@@ -60,8 +63,9 @@ typedef struct
 extern DISPLAY_StatusTypedef DISPLAY_Status;
 
 /******************************************************************************/
-void DISPLAY_HistoryData(uint16_t startStructOffset, uint8_t structCnt);
+void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt);
 void DISPLAY_HistoryTouch(uint16_t typeID);
+void DISPLAY_HistoryDataCurve(uint32_t startStructOffset);
 void DISPLAY_PrintTouch(uint16_t typeID);
 void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value);
 

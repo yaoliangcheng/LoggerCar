@@ -43,6 +43,12 @@
 #define TFTLCD_CMD_SELECT					(uint16_t)(0x14B1)		/* 选择控件值上传 */
 #define TFTLCD_CMD_ICON_DISP				(uint16_t)(0x23B1)		/* 图标控件显示 */
 
+#define TFTLCD_CMD_CURVE_ADD_CHANNEL		(uint16_t)(0x30B1)		/* 曲线添加数据通道 */
+#define TFTLCD_CMD_CURVE_DELETE_CHANNEL		(uint16_t)(0x31B1)		/* 曲线删除数据通道 */
+#define TFTLCD_CMD_CURVE_SET_PARAM  		(uint16_t)(0x34B1)		/* 曲线设置垂直水平的缩放、平移 */
+#define TFTLCD_CMD_CURVE_ADD_DATA_TAIL		(uint16_t)(0x32B1)		/* 指定通道末端添加新数据 */
+#define TFTLCD_CMD_CURVE_ADD_DATA_FRONT		(uint16_t)(0x35B1)		/* 指定通道前端添加新数据 */
+#define TFTLCD_CMD_CURVE_CLEAR_DATA			(uint16_t)(0x33B1)		/* 清空指定通道的数据 */
 
 /****************************控件ID枚举******************************************/
 /* 状态栏公共控件ID */
@@ -86,6 +92,11 @@ typedef enum
 	CTL_ID_DIS_CURVE,
 } TFTLCD_HisDataCtlIdEnum;
 
+/* 历史曲线界面控件ID */
+typedef enum
+{
+	CTL_ID_HIS_DATA_CURVE = 6,
+} TFTLCD_HisDataCurveCtlIdEnum;
 /* 数据打印界面控件ID */
 typedef enum
 {
@@ -256,6 +267,29 @@ typedef struct
 
 typedef struct
 {
+	uint8_t dataLengthH;					/* 数据长度 */
+	uint8_t dataLengthL;
+	uint8_t data;							/* 数据 */
+} CurveDataTypedef;
+
+typedef struct
+{
+	uint8_t ctlIdH;
+	uint8_t ctlIdL;
+	uint8_t channel;						/* 数据通道，最多支持8个 */
+//	union
+//	{
+//		CurveDataTypedef curveData;
+//		uint16_t         curveColor;
+//
+//	};
+	uint8_t dataLengthH;					/* 数据长度 */
+	uint8_t dataLengthL;
+	uint8_t data;							/* 数据 */
+} CurveTypedef;
+
+typedef struct
+{
 	uint8_t head;												/* 帧头 */
 	uint16_t cmd;												/* 指令 */
 	uint8_t screenIdH;											/* 画面ID */
@@ -270,7 +304,8 @@ typedef struct
 			AnalogTypedef        analogValue[8];		/* 模拟量批量更新 */
 			HistoryDateTypedef   HistoryDate;			/* 历史数据批量更新 */
 		} batch;
-		UpdateTypedef update;						/* buffer */
+		UpdateTypedef update;							/* buffer */
+		CurveTypedef  curve;							/* 曲线 */
 	}buffer;
 	uint8_t tail[4];											/* 帧尾 */
 } TFTLCD_SendBufferTypedef;
@@ -325,6 +360,6 @@ ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
 //void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
 
-
+void TFTLCD_HistoryDataCurveFormat(FILE_SaveInfoTypedef* saveInfo);
 
 #endif
