@@ -608,6 +608,18 @@ static void selectDataPrint(char* fileName,
 #endif
 
 
+/*******************************************************************************
+ * function:将储存的ASCII码转换成float
+ * @value:模拟量ASCII码
+ */
+float FILE_Analog2Float(SaveInfoAnalogTypedef* value)
+{
+	char str[6];
+
+	memcpy(str, value->value, 5);
+	str[5] = '\0';
+	return (float)atof(str);
+}
 
 
 

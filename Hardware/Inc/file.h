@@ -114,4 +114,6 @@ ErrorStatus FILE_ParamFileInit(void);
 //ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
 //		PRINT_ChannelSelectTypedef* select);
 
+float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
+
 #endif

@@ -46,22 +46,22 @@ ErrorStatus PARAM_ParamFileInit(void)
 		PARAM_DeviceParam.param[7].channelUnit = UNIT_HUMI;
 		PARAM_DeviceParam.param[7].dataFormat  = FORMAT_ONE_DECIMAL;
 
-		PARAM_DeviceParam.temp1.alarmValueUp       = 40;
-		PARAM_DeviceParam.temp1.alarmValueLow      = -10;
-		PARAM_DeviceParam.temp1.perwarningValueUp  = 30;
-		PARAM_DeviceParam.temp1.perwarningValueLow = -5;
-		PARAM_DeviceParam.temp2.alarmValueUp       = 40;
-		PARAM_DeviceParam.temp2.alarmValueLow      = -10;
-		PARAM_DeviceParam.temp2.perwarningValueUp  = 30;
-		PARAM_DeviceParam.temp2.perwarningValueLow = -5;
-		PARAM_DeviceParam.temp3.alarmValueUp       = 40;
-		PARAM_DeviceParam.temp3.alarmValueLow      = -10;
-		PARAM_DeviceParam.temp3.perwarningValueUp  = 30;
-		PARAM_DeviceParam.temp3.perwarningValueLow = -5;
-		PARAM_DeviceParam.temp4.alarmValueUp       = 40;
-		PARAM_DeviceParam.temp4.alarmValueLow      = -10;
-		PARAM_DeviceParam.temp4.perwarningValueUp  = 30;
-		PARAM_DeviceParam.temp4.perwarningValueLow = -5;
+		PARAM_DeviceParam.channel[0].alarmValueUp       = 40;
+		PARAM_DeviceParam.channel[0].alarmValueLow      = -10;
+		PARAM_DeviceParam.channel[0].perwarningValueUp  = 30;
+		PARAM_DeviceParam.channel[0].perwarningValueLow = -5;
+		PARAM_DeviceParam.channel[1].alarmValueUp       = 40;
+		PARAM_DeviceParam.channel[1].alarmValueLow      = -10;
+		PARAM_DeviceParam.channel[1].perwarningValueUp  = 30;
+		PARAM_DeviceParam.channel[1].perwarningValueLow = -5;
+		PARAM_DeviceParam.channel[2].alarmValueUp       = 40;
+		PARAM_DeviceParam.channel[2].alarmValueLow      = -10;
+		PARAM_DeviceParam.channel[2].perwarningValueUp  = 30;
+		PARAM_DeviceParam.channel[2].perwarningValueLow = -5;
+		PARAM_DeviceParam.channel[3].alarmValueUp       = 40;
+		PARAM_DeviceParam.channel[3].alarmValueLow      = -10;
+		PARAM_DeviceParam.channel[3].perwarningValueUp  = 30;
+		PARAM_DeviceParam.channel[3].perwarningValueLow = -5;
 
 //		FATFS_FileOpen(FILE_NAME_PARAM, FATFS_MODE_OPEN_ALWAYS_WRITE);
 //		FATFS_FileWrite((uint8_t*)&PARAM_DeviceParam, sizeof(PARAM_DeviceParam));

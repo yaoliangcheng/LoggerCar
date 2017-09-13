@@ -196,60 +196,21 @@ static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime)
 }
 
 /*******************************************************************************
- * function:获取模拟量的值，将其输出打印，并且判断是否超标
- * analog：模拟量值
- * buf：转换成字符串的指针
- * alarmUp:报警上限
- * alarmLow：报警下限
- * return: true->超标，  false->正常
+ * function：判断数值是否超标
  */
-static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow)
+static PRINT_DataStatusEnum PRINT_AdjustOverLimited(SaveInfoAnalogTypedef* analog,
+													ParamAlarmTypedef* param)
 {
-	float    temp;
-	uint16_t data;
-	BOOL     status = FALSE;
+	float value;
 
-	data = (HalfWord_GetLowByte(analog) << 8) | HalfWord_GetHighByte(analog);
+	/* 转换成float */
+	value = FILE_Analog2Float(analog);
 
-	/* 判断正负 */
-	if ((data & 0x8000) != 0)
-		temp = -((float)(data & 0x7FFF) / 10);
+	/* 比较上下限 */
+	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
+		return PRINT_DATA_OVERlIMITED;
 	else
-		temp = (float)(data & 0x7FFF) / 10;
-
-	/* 调用这个函数导致设备死机，还未找到问题，后续继续研究 */
-//	sprintf((char*)buf, "%6.1f", temp);
-
-	*buf = ' ';
-
-	/* 如果为负数 */
-	if ((data & 0x8000) != 0)
-	{
-		*(buf + 1) = '-';
-		/* 转换为正数 */
-		data &= 0x7FFF;
-	}
-	else
-	{
-		/* 正数的话才有可能是三位数 */
-		*(buf + 1) = ((data % 10000) / 1000) + '0';
-		if (*(buf + 1) == '0')
-			*(buf + 1) = ' ';
-	}
-
-	*(buf + 2) = ((data % 1000) / 100)   + '0';
-	*(buf + 3) = ((data % 100) / 10)     + '0';
-	*(buf + 4) = '.';
-	*(buf + 5) = (data % 10)             + '0';
-
-	/* 报警上限值有效，并且超标 */
-	if ((alarmUp != PRINT_ALARM_INVALID) && (temp > alarmUp))
-		status = TRUE;
-
-	if ((alarmLow != PRINT_ALARM_INVALID) && (temp < alarmLow))
-		status = TRUE;
-
-	return status;
+		return PRINT_DATA_NORMAL;
 }
 
 /*******************************************************************************
@@ -289,73 +250,57 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTy
 	if (select->status.bit.ch1)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[0], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[0], &PARAM_DeviceParam.channel[0]);
 		index += 6;
 	}
 	if (select->status.bit.ch2)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[1], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[1], &PARAM_DeviceParam.channel[1]);
 		index += 6;
 	}
 	if (select->status.bit.ch3)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[2], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[2], &PARAM_DeviceParam.channel[2]);
 		index += 6;
 	}
 	if (select->status.bit.ch4)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[3], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[3], &PARAM_DeviceParam.channel[3]);
 		index += 6;
 	}
 	if (select->status.bit.ch5)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[4], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[4], &PARAM_DeviceParam.channel[4]);
 		index += 6;
 	}
 	if (select->status.bit.ch6)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[5], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[5], &PARAM_DeviceParam.channel[5]);
 		index += 6;
 	}
 	if (select->status.bit.ch7)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[6], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[6], &PARAM_DeviceParam.channel[6]);
 		index += 6;
 	}
 	if (select->status.bit.ch8)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[7], 6);
-
 		/* 判断是否超标 */
-		/* todo */
-
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[7], &PARAM_DeviceParam.channel[7]);
 		index += 6;
 	}
 
