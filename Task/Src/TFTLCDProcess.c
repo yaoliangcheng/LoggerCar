@@ -108,6 +108,13 @@ void ScreenDefaultDisplay(uint16_t screen)
 		}
 		break;
 
+	/* 密码界面 */
+	case SCREEN_ID_SET_PASSWORD:
+		/* 清空密码缓存和位指示 */
+		memcpy(DISPLAY_Status.passwordBuffer, "    ", 4);
+		DISPLAY_Status.passwordBufferIndex = 0;
+		TFTLCD_SetPasswordUpdate(DISPLAY_Status.passwordBufferIndex);
+		break;
 	default:
 		break;
 	}
@@ -130,6 +137,10 @@ void ScreenTouchDisplay(uint16_t screenID, uint16_t typeID)
 
 	case SCREEN_ID_TIME_SELECT:
 		DISPLAY_TimeSelectTouch(typeID, TFTLCD_RecvBuffer.date.recvBuf.buf[1]);
+		break;
+
+	case SCREEN_ID_SET_PASSWORD:
+		DISPLAY_SetPassword(typeID);
 		break;
 
 	default:

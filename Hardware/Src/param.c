@@ -63,6 +63,8 @@ ErrorStatus PARAM_ParamFileInit(void)
 		PARAM_DeviceParam.channel[3].perwarningValueUp  = 30;
 		PARAM_DeviceParam.channel[3].perwarningValueLow = -5;
 
+		memcpy(PARAM_DeviceParam.password, "0000", 4);
+
 //		FATFS_FileOpen(FILE_NAME_PARAM, FATFS_MODE_OPEN_ALWAYS_WRITE);
 //		FATFS_FileWrite((uint8_t*)&PARAM_DeviceParam, sizeof(PARAM_DeviceParam));
 	}

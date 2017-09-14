@@ -94,6 +94,7 @@ typedef struct
 	uint8_t exitAnalogChannelNumb;							/* 外部模拟量通道数 */
 	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* 模拟量参数 */
 	ParamAlarmTypedef channel[ANALOG_CHANNEL_NUMB];			/* 报警值 */
+	char password[4];
 } PARAM_DeviceParamTypedef;
 
 /******************************************************************************/

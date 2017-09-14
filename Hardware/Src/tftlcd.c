@@ -398,6 +398,26 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 	taskEXIT_CRITICAL();
 }
 
+/*******************************************************************************
+ * function:密码设置界面文本框更新，显示当前输入的密码位数
+ */
+void TFTLCD_SetPasswordUpdate(uint8_t numb)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
+
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_SET_PASSWORD);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_SET_PASSWORD);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(CTL_ID_SET_PASSWORD_TEXT);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(CTL_ID_SET_PASSWORD_TEXT);
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[0], "****", numb);
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[numb],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(numb + 11);
+}
+
 #if 0
 /*******************************************************************************
  * function:打印时间更新

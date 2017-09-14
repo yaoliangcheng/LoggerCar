@@ -7,7 +7,7 @@ uint8_t PRINT_SendBuffer[PRINT_SEND_BYTES_MAX];
 
 /******************************************************************************/
 static void PRINT_SendData(uint16_t size);
-static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
+//static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
 static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime);
 static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTypedef endTimePoint,
 		ChannelSelectTypedef* select);

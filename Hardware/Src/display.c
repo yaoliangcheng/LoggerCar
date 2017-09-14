@@ -9,6 +9,7 @@ DISPLAY_StatusTypedef DISPLAY_Status;
 
 /******************************************************************************/
 static void TimeSelectReturn(void);
+static void PasswordSelect(char numb);
 
 /*******************************************************************************
  * 历史数据界面
@@ -230,6 +231,79 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 }
 
 /*******************************************************************************
+ * function:密码设置界面，接收用户按键输入
+ */
+void DISPLAY_SetPassword(uint16_t typeID)
+{
+	switch (typeID)
+	{
+	case CTL_ID_SET_PASSWORD_NUMB_1:
+		PasswordSelect('1');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_2:
+		PasswordSelect('2');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_3:
+		PasswordSelect('3');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_4:
+		PasswordSelect('4');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_5:
+		PasswordSelect('5');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_6:
+		PasswordSelect('6');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_7:
+		PasswordSelect('7');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_8:
+		PasswordSelect('8');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_9:
+		PasswordSelect('9');
+		break;
+
+	case CTL_ID_SET_PASSWORD_NUMB_0:
+		PasswordSelect('0');
+		break;
+
+	case CTL_ID_SET_PASSWORD_CLEAR:
+		/* 清空密码缓存和位指示 */
+		memcpy(DISPLAY_Status.passwordBuffer, "    ", 4);
+		DISPLAY_Status.passwordBufferIndex = 0;
+		TFTLCD_SetPasswordUpdate(DISPLAY_Status.passwordBufferIndex);
+		break;
+
+	case CTL_ID_SET_PASSWORD_ENTER:
+		if ((DISPLAY_Status.passwordBuffer[0] == PARAM_DeviceParam.password[0])
+			&& (DISPLAY_Status.passwordBuffer[1] == PARAM_DeviceParam.password[1])
+			&& (DISPLAY_Status.passwordBuffer[2] == PARAM_DeviceParam.password[2])
+			&& (DISPLAY_Status.passwordBuffer[3] == PARAM_DeviceParam.password[3]))
+		{
+			TFTLCD_SetScreenId(SCREEN_ID_SET_ALARM_LIMIT);
+		}
+		else/* 密码错误 */
+		{
+			/* 清空密码缓存和位指示 */
+			memcpy(DISPLAY_Status.passwordBuffer, "    ", 4);
+			DISPLAY_Status.passwordBufferIndex = 0;
+			TFTLCD_SetPasswordUpdate(DISPLAY_Status.passwordBufferIndex);
+		}
+		break;
+	}
+}
+
+/*******************************************************************************
  * function:时间选择界面点击确定，更新文本
  */
 static void TimeSelectReturn(void)
@@ -253,7 +327,22 @@ static void TimeSelectReturn(void)
 	}
 }
 
-
+/*******************************************************************************
+ * function：密码界面接收用户数值选择并做界面处理
+ */
+static void PasswordSelect(char numb)
+{
+	/* 密码不能超过4位数 */
+	if (DISPLAY_Status.passwordBufferIndex < 4)
+	{
+		/* 选择的数值进密码缓存 */
+		DISPLAY_Status.passwordBuffer[DISPLAY_Status.passwordBufferIndex] = numb;
+		/* 更新缓存位 */
+		DISPLAY_Status.passwordBufferIndex++;
+		/* 更新界面文本框密码位数 */
+		TFTLCD_SetPasswordUpdate(DISPLAY_Status.passwordBufferIndex);
+	}
+}
 
 
 

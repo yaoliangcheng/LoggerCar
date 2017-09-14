@@ -97,6 +97,7 @@ typedef enum
 {
 	CTL_ID_HIS_DATA_CURVE = 6,
 } TFTLCD_HisDataCurveCtlIdEnum;
+
 /* 数据打印界面控件ID */
 typedef enum
 {
@@ -135,6 +136,23 @@ typedef enum
 	CTL_ID_TIME_SELECT_CANCEL,
 	CTL_ID_TIME_SELECT_OK,
 } TFTLCD_TimeSelectCtlIdEnum;
+
+typedef enum
+{
+	CTL_ID_SET_PASSWORD_TEXT = 6,
+	CTL_ID_SET_PASSWORD_NUMB_1,
+	CTL_ID_SET_PASSWORD_NUMB_2,
+	CTL_ID_SET_PASSWORD_NUMB_3,
+	CTL_ID_SET_PASSWORD_NUMB_4,
+	CTL_ID_SET_PASSWORD_NUMB_5,
+	CTL_ID_SET_PASSWORD_NUMB_6,
+	CTL_ID_SET_PASSWORD_NUMB_7,
+	CTL_ID_SET_PASSWORD_NUMB_8,
+	CTL_ID_SET_PASSWORD_NUMB_9,
+	CTL_ID_SET_PASSWORD_CLEAR,
+	CTL_ID_SET_PASSWORD_NUMB_0,
+	CTL_ID_SET_PASSWORD_ENTER,
+} TFTLCD_SetPasswordCtlIdEnum;
 
 /****************************画面ID枚举******************************************/
 /* 画面编号 */
@@ -361,5 +379,5 @@ ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
 
 void TFTLCD_HistoryDataCurveFormat(FILE_SaveInfoTypedef* saveInfo);
-
+void TFTLCD_SetPasswordUpdate(uint8_t numb);
 #endif
