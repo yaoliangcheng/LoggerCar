@@ -69,6 +69,9 @@ typedef enum
 } DataFormatEnum;
 
 /**************************参数描述部分*******************************************/
+#pragma pack(push)
+#pragma pack(1)
+
 typedef struct
 {
 	ChannelTypeEnum channelType;					/* 通道类型 */
@@ -86,21 +89,31 @@ typedef struct
 
 typedef struct
 {
+	char numb[11];
+} ParamAlarmCodeTypedef;
+
+typedef struct
+{
 	char    deviceSN[10];									/* 设备SN号 */
 	LocationTypdEnum locationType;							/* 定位标记 */
 	uint8_t firmwareVersion;								/* 固件版本号 */
 	uint8_t recordInterval;									/* 记录间隔 */
 	uint8_t overLimitRecordInterval;						/* 超标记录间隔 */
 	uint8_t exitAnalogChannelNumb;							/* 外部模拟量通道数 */
-	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];			/* 模拟量参数 */
-	ParamAlarmTypedef channel[ANALOG_CHANNEL_NUMB];			/* 报警值 */
+	ParamTypeTypedef      param[ANALOG_CHANNEL_NUMB];		/* 模拟量参数 */
+	ParamAlarmTypedef     channel[ANALOG_CHANNEL_NUMB];		/* 报警值 */
+	ParamAlarmCodeTypedef alarmCode[3];						/* 报警号码 */
 	char password[4];
 } PARAM_DeviceParamTypedef;
+
+#pragma pack(pop)
 
 /******************************************************************************/
 extern PARAM_DeviceParamTypedef PARAM_DeviceParam;
 
 /******************************************************************************/
-ErrorStatus PARAM_ParamFileInit(void);
+void PARAM_ParamFileInit(void);
+void PARAM_SaveStruct(PARAM_DeviceParamTypedef* param);
+void PARAM_ReadStruct(PARAM_DeviceParamTypedef* param);
 
 #endif

@@ -3,6 +3,7 @@
 #include "file.h"
 #include "tftlcd.h"
 #include "print.h"
+#include "param.h"
 
 /******************************************************************************/
 DISPLAY_StatusTypedef DISPLAY_Status;
@@ -10,6 +11,8 @@ DISPLAY_StatusTypedef DISPLAY_Status;
 /******************************************************************************/
 static void TimeSelectReturn(void);
 static void PasswordSelect(char numb);
+static void GetAlarmLimitValue(float* value);
+static void GetAlarmCode(char* code);
 
 /*******************************************************************************
  * 历史数据界面
@@ -233,7 +236,7 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 /*******************************************************************************
  * function:密码设置界面，接收用户按键输入
  */
-void DISPLAY_SetPassword(uint16_t typeID)
+void DISPLAY_SetPasswordTouch(uint16_t typeID)
 {
 	switch (typeID)
 	{
@@ -304,6 +307,252 @@ void DISPLAY_SetPassword(uint16_t typeID)
 }
 
 /*******************************************************************************
+ * function：设置报警上下限值
+ */
+void DISPLAY_SetAlarmLimitTouch(uint16_t typeID)
+{
+	switch (typeID)
+	{
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH1:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH1:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH1:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH1:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH2:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH2:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH2:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH2:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH3:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH3:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH3:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH3:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH4:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH4:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH4:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH4:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_SAVE:
+		PARAM_SaveStruct(&PARAM_DeviceParam);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*******************************************************************************
+ * function：设置报警上下限值
+ */
+void DISPLAY_SetAlarmLimit2Touch(uint16_t typeID)
+{
+	switch (typeID)
+	{
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH5:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH5:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH5:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH5:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH6:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH6:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH6:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH6:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH7:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH7:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH7:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH7:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH8:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].alarmValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH8:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].alarmValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH8:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].perwarningValueUp);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH8:
+		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].perwarningValueLow);
+		break;
+
+	case CTL_ID_SET_ALARM_LIMIT_2_SAVE:
+		PARAM_SaveStruct(&PARAM_DeviceParam);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*******************************************************************************
+ *
+ */
+void DISPLAY_SetMessageTouch(uint16_t typeID)
+{
+	switch (typeID)
+	{
+	case CTL_ID_SET_ALARM_CODE_1:
+		GetAlarmCode((char*)&PARAM_DeviceParam.alarmCode[0]);
+		break;
+
+	case CTL_ID_SET_ALARM_CODE_2:
+		GetAlarmCode((char*)&PARAM_DeviceParam.alarmCode[1]);
+		break;
+
+	case CTL_ID_SET_ALARM_CODE_3:
+		GetAlarmCode((char*)&PARAM_DeviceParam.alarmCode[2]);
+		break;
+
+	case CTL_ID_SET_ALARM_CODE_SAVE:
+		PARAM_SaveStruct(&PARAM_DeviceParam);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*******************************************************************************
+ *
+ */
+void DISPLAY_SetPasswordChangeTouch(uint16_t typeID)
+{
+	switch (typeID)
+	{
+	case CTL_ID_SET_PASSWORD_CHANGE_OLD:
+		memcpy(DISPLAY_Status.passwordBuffer,
+				(char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), 4);
+		break;
+	case CTL_ID_SET_PASSWORD_CHANGE_NEW:
+		memcpy(DISPLAY_Status.passwordBufferNew,
+				(char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), 4);
+		break;
+	case CTL_ID_SET_PASSWORD_CHANGE_NEW_AGAIN:
+		memcpy(DISPLAY_Status.passwordBufferNewAgain,
+				(char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), 4);
+		break;
+	case CTL_ID_SET_PASSWORD_CHANGE_SAVE:
+		if ((DISPLAY_Status.passwordBuffer[0] == PARAM_DeviceParam.password[0])
+				&& (DISPLAY_Status.passwordBuffer[1] == PARAM_DeviceParam.password[1])
+				&& (DISPLAY_Status.passwordBuffer[2] == PARAM_DeviceParam.password[2])
+				&& (DISPLAY_Status.passwordBuffer[3] == PARAM_DeviceParam.password[3]))
+		{
+			if ((DISPLAY_Status.passwordBufferNew[0] == DISPLAY_Status.passwordBufferNewAgain[0])
+				&& (DISPLAY_Status.passwordBufferNew[1] == DISPLAY_Status.passwordBufferNewAgain[1])
+				&& (DISPLAY_Status.passwordBufferNew[2] == DISPLAY_Status.passwordBufferNewAgain[2])
+				&& (DISPLAY_Status.passwordBufferNew[3] == DISPLAY_Status.passwordBufferNewAgain[3]))
+			{
+				memcpy(PARAM_DeviceParam.password, DISPLAY_Status.passwordBufferNewAgain, 4);
+				PARAM_SaveStruct(&PARAM_DeviceParam);
+				TFTLCD_TextValueUpdate(SCREEN_ID_SET_CHANGE_PASSWORD, CTL_ID_SET_PASSWORD_CHANGE_NEW_AGAIN,
+					"密码修改成功", 12);
+			}
+			else
+			{
+				TFTLCD_TextValueUpdate(SCREEN_ID_SET_CHANGE_PASSWORD, CTL_ID_SET_PASSWORD_CHANGE_NEW_AGAIN,
+					"新密码错误", 10);
+			}
+		}
+		else
+		{
+			TFTLCD_TextValueUpdate(SCREEN_ID_SET_CHANGE_PASSWORD, CTL_ID_SET_PASSWORD_CHANGE_NEW_AGAIN,
+					"旧密码错误", 10);
+		}
+		
+		TFTLCD_TextValueUpdate(SCREEN_ID_SET_CHANGE_PASSWORD, CTL_ID_SET_PASSWORD_CHANGE_OLD,
+					"    ", 4);
+		TFTLCD_TextValueUpdate(SCREEN_ID_SET_CHANGE_PASSWORD, CTL_ID_SET_PASSWORD_CHANGE_NEW,
+					"    ", 4);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*******************************************************************************
  * function:时间选择界面点击确定，更新文本
  */
 static void TimeSelectReturn(void)
@@ -344,9 +593,28 @@ static void PasswordSelect(char numb)
 	}
 }
 
+/*******************************************************************************
+ *
+ */
+static void GetAlarmLimitValue(float* value)
+{
+	char str[6];
+	uint8_t length = TFTLCD_RecvBuffer.bufferSize - 12;
 
+	/* 获取文本值，值的长度为接收长度-其他信息 */
+	memcpy(str, (char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), length);
 
+//	str[length] = '\0';
+	*value = atof(str);
+}
 
+/*******************************************************************************
+ * function:获取报警手机号码
+ */
+static void GetAlarmCode(char* code)
+{
+	memcpy(code, (char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), 11);
+}
 
 
 

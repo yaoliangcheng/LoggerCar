@@ -61,6 +61,27 @@ void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
 }
 
 /*******************************************************************************
+ * function:设置文本控件的值
+ */
+void TFTLCD_TextValueUpdate(uint16_t screenID, uint16_t ctlID, char* str, uint8_t size)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
+
+	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screenID);
+	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screenID);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(ctlID);
+
+	memcpy(TFTLCD_SendBuffer.buffer.update.value.date, str, size);
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[size],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(11 + size);
+}
+
+/*******************************************************************************
  * function：模拟量更新
  */
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)

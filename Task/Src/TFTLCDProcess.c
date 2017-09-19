@@ -54,6 +54,7 @@ void TFTLCD_Task(void)
 				screenID = ((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
 						| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
 
+				/* 界面更新的指令 */
 				if (TFTLCD_RecvBuffer.date.recvBuf.cmd == TFTLCD_CMD_SCREEN_ID_GET)
 				{
 					TFTLCD_status.curScreenID = (TFTLCD_ScreenIDEnum)((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
@@ -140,7 +141,23 @@ void ScreenTouchDisplay(uint16_t screenID, uint16_t typeID)
 		break;
 
 	case SCREEN_ID_SET_PASSWORD:
-		DISPLAY_SetPassword(typeID);
+		DISPLAY_SetPasswordTouch(typeID);
+		break;
+
+	case SCREEN_ID_SET_ALARM_LIMIT:
+		DISPLAY_SetAlarmLimitTouch(typeID);
+		break;
+
+	case SCREEN_ID_SET_ALARM_LIMIT_2:
+		DISPLAY_SetAlarmLimit2Touch(typeID);
+		break;
+
+	case SCREEN_ID_SET_ALARM_CODE:
+		DISPLAY_SetMessageTouch(typeID);
+		break;
+
+	case SCREEN_ID_SET_CHANGE_PASSWORD:
+		DISPLAY_SetPasswordChangeTouch(typeID);
 		break;
 
 	default:

@@ -56,6 +56,8 @@ typedef struct
 	FILE_RealTimeTypedef printTimeEnd;			/* 结束打印时间 */
 
 	char    passwordBuffer[4];					/* 密码缓存 */
+	char    passwordBufferNew[4];
+	char    passwordBufferNewAgain[4];
 	uint8_t passwordBufferIndex;				/* 密码位指示 */
 } DISPLAY_StatusTypedef;
 
@@ -71,7 +73,11 @@ void DISPLAY_HistoryTouch(uint16_t typeID);
 void DISPLAY_HistoryDataCurve(uint32_t startStructOffset);
 void DISPLAY_PrintTouch(uint16_t typeID);
 void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value);
-void DISPLAY_SetPassword(uint16_t typeID);
+void DISPLAY_SetPasswordTouch(uint16_t typeID);
+void DISPLAY_SetAlarmLimitTouch(uint16_t typeID);
+void DISPLAY_SetAlarmLimit2Touch(uint16_t typeID);
+void DISPLAY_SetMessageTouch(uint16_t typeID);
+void DISPLAY_SetPasswordChangeTouch(uint16_t typeID);
 
 
 #endif
