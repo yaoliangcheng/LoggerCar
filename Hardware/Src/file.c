@@ -29,6 +29,7 @@ void FILE_Init(void)
 	if (SUCCESS == FATFS_FileOpen(FILE_NAME_SAVE_DATA, FATFS_MODE_OPEN_EXISTING_READ))
 	{
 		FILE_DataSaveStructCnt = FATFS_GetFileStructCount();
+		PARAM_DeviceParam.deviceCapacity = FATFS_GetSpaceInfo();
 	}
 
 	FATFS_FileClose();

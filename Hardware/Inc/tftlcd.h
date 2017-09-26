@@ -217,6 +217,17 @@ typedef enum
 	CTL_ID_SET_PASSWORD_CHANGE_SAVE,
 } TFTLCD_SetPasswordChangeCtlIdEnum;
 
+/* 本机信息界面控件ID */
+typedef enum
+{
+	CTL_ID_ABOUT_DEVICE_SN,
+	CTL_ID_ABOUT_DEVICE_TYPE,
+	CTL_ID_ABOUT_CHANNEL_NUMB,
+	CTL_ID_ABOUT_FIRM_VERSION,
+	CTL_ID_ABOUT_OS_VERSION,
+	CTL_ID_ABOUT_DEVICE_CAPACITY,
+} TFTLCD_AboutCtlIdEnum;
+
 /****************************画面ID枚举******************************************/
 /* 画面编号 */
 typedef enum

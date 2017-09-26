@@ -99,7 +99,10 @@ typedef struct
 	uint8_t firmwareVersion;								/* 固件版本号 */
 	uint8_t recordInterval;									/* 记录间隔 */
 	uint8_t overLimitRecordInterval;						/* 超标记录间隔 */
-	uint8_t exitAnalogChannelNumb;							/* 外部模拟量通道数 */
+	uint8_t exAnalogChannelNumb;							/* 外部模拟量通道数 */
+	uint8_t deviceType;										/* 设备型号 */
+	uint8_t osVersion;										/* OS型号 */
+	uint8_t deviceCapacity;									/* 设备容量（剩余） */
 	ParamTypeTypedef      param[ANALOG_CHANNEL_NUMB];		/* 模拟量参数 */
 	ParamAlarmTypedef     channel[ANALOG_CHANNEL_NUMB];		/* 报警值 */
 	ParamAlarmCodeTypedef alarmCode[3];						/* 报警号码 */

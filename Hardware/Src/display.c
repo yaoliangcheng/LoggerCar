@@ -515,9 +515,9 @@ void DISPLAY_SetPasswordChangeTouch(uint16_t typeID)
 		break;
 	case CTL_ID_SET_PASSWORD_CHANGE_SAVE:
 		if ((DISPLAY_Status.passwordBuffer[0] == PARAM_DeviceParam.password[0])
-				&& (DISPLAY_Status.passwordBuffer[1] == PARAM_DeviceParam.password[1])
-				&& (DISPLAY_Status.passwordBuffer[2] == PARAM_DeviceParam.password[2])
-				&& (DISPLAY_Status.passwordBuffer[3] == PARAM_DeviceParam.password[3]))
+			&& (DISPLAY_Status.passwordBuffer[1] == PARAM_DeviceParam.password[1])
+			&& (DISPLAY_Status.passwordBuffer[2] == PARAM_DeviceParam.password[2])
+			&& (DISPLAY_Status.passwordBuffer[3] == PARAM_DeviceParam.password[3]))
 		{
 			if ((DISPLAY_Status.passwordBufferNew[0] == DISPLAY_Status.passwordBufferNewAgain[0])
 				&& (DISPLAY_Status.passwordBufferNew[1] == DISPLAY_Status.passwordBufferNewAgain[1])
@@ -550,6 +550,25 @@ void DISPLAY_SetPasswordChangeTouch(uint16_t typeID)
 	default:
 		break;
 	}
+}
+
+/*******************************************************************************
+ * function:关于设备界面数据显示
+ */
+void DISPLAY_About(void)
+{
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_SN,
+				PARAM_DeviceParam.deviceSN, 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_TYPE,
+				(char*)&PARAM_DeviceParam.deviceType, 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_CHANNEL_NUMB,
+				(char*)&PARAM_DeviceParam.exAnalogChannelNumb, 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_FIRM_VERSION,
+				(char*)&PARAM_DeviceParam.firmwareVersion, 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_OS_VERSION,
+				(char*)&PARAM_DeviceParam.osVersion, 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_CAPACITY,
+				(char*)&PARAM_DeviceParam.deviceCapacity, 10);
 }
 
 /*******************************************************************************

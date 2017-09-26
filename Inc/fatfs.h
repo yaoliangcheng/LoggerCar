@@ -83,7 +83,7 @@ ErrorStatus FATFS_FileSeekEnd(void);
 void FATFS_FileSeekSaveInfoStructAlign(void);
 ErrorStatus FATFS_FileSeekBackwardOnePack(void);
 ErrorStatus FATFS_FileSeek(DWORD byte);
-ErrorStatus FATFS_GetSpaceInfo(void);
+BYTE FATFS_GetSpaceInfo(void);
 ErrorStatus FATFS_CreateFile(char* fileName);
 uint16_t FATFS_GetFileStructCount(void);
 

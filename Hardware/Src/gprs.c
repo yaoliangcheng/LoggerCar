@@ -144,7 +144,7 @@ static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf)
 	sendBuf->overLimitInterval =  PARAM_DeviceParam.overLimitRecordInterval;
 
 	/* 设置通道类型 */
-	sendBuf->exitAnalogChannelNumb = PARAM_DeviceParam.exitAnalogChannelNumb;
+	sendBuf->exitAnalogChannelNumb = PARAM_DeviceParam.exAnalogChannelNumb;
 	memcpy(&sendBuf->param[0], &PARAM_DeviceParam.param[0], sizeof(sendBuf->param));
 
 	sendBuf->tail = GPRS_PACK_TAIL;

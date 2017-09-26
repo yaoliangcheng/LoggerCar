@@ -237,9 +237,9 @@ ErrorStatus FATFS_FileClose(void)
 }
 
 /*******************************************************************************
- *
+ * function:获取设备剩余容量
  */
-ErrorStatus FATFS_GetSpaceInfo(void)
+BYTE FATFS_GetSpaceInfo(void)
 {
 	FATFS* pfs;
 
@@ -250,19 +250,10 @@ ErrorStatus FATFS_GetSpaceInfo(void)
 		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
 		freeSect = freeClust           * pfs->csize * 4;
 
-		printf("设备剩余储存空间：%d%%\r\n", freeSect * 100 / totSect);
-
-		/* 没有空间可写 */
-		if (freeSect == 0)
-		{
-			printf("无可用空间！！请备份好数据，格式化磁盘\r\n");
-			return ERROR;
-		}
-		else
-			return SUCCESS;
+		return (freeSect * 100 / totSect);
 	}
 	else
-		return ERROR;
+		return 0;
 }
 
 /*******************************************************************************
