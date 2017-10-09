@@ -146,7 +146,7 @@ DSTATUS USER_status (
     Stat = STA_NOINIT;
 
 	/* SPI Flash状态检测：读取SPI Flash 设备ID */
-	if(sFLASH_ID == SPI_FLASH_ReadID())
+//	if(sFLASH_ID == SPI_FLASH_ReadID())
 	{
 		/* 设备ID读取结果正确 */
 		Stat &= ~STA_NOINIT;

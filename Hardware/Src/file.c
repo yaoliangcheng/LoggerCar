@@ -430,8 +430,8 @@ static void AnalogDataFormatConvert(char* analog, DataFormatEnum format, uint8_t
 		break;
 	}
 
-	*pBuffer = HalfWord_GetHighByte(temp);
-	*(pBuffer + 1) = HalfWord_GetLowByte(temp);
+	*pBuffer = HALFWORD_BYTE_H(temp);
+	*(pBuffer + 1) = HALFWORD_BYTE_L(temp);
 
 	/* 负数则最高位置一 */
 	if (negative)

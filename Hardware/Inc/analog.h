@@ -6,21 +6,21 @@
 #include "cmsis_os.h"
 
 #include "adc.h"
-#include "common.h"
+#include "public.h"
 
 /******************************************************************************/
 #define ANALOG_ADC								(hadc1)
 /* 传感器电源控制引脚 */
 #define ANALOG_PWR_ENABLE() \
-	HAL_GPIO_WritePin(SENSOR_PWR_CTRL_GPIO_Port, SENSOR_PWR_CTRL_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(O_VSENSOR_GPIO_Port, O_VSENSOR_Pin, GPIO_PIN_RESET);
 #define ANALOG_PWR_DISABLE() \
-	HAL_GPIO_WritePin(SENSOR_PWR_CTRL_GPIO_Port, SENSOR_PWR_CTRL_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(O_VSENSOR_GPIO_Port, O_VSENSOR_Pin, GPIO_PIN_SET);
 
 /* 锂电池电压采集电源控制引脚 */
 #define VBAT_PWR_CHECK_ENABLE() \
-	HAL_GPIO_WritePin(VBAT_CTRL_GPIO_Port, VBAT_CTRL_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(O_VBAT_GPIO_Port, O_VBAT_Pin, GPIO_PIN_RESET);
 #define VBAT_PWR_CHECK_DISABLE() \
-	HAL_GPIO_WritePin(VBAT_CTRL_GPIO_Port, VBAT_CTRL_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(O_VBAT_GPIO_Port, O_VBAT_Pin, GPIO_PIN_SET);
 
 #define ANALOG_SAMPLE_NUMB						(20)	/* 模拟量采样数 */
 

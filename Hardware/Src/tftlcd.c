@@ -45,8 +45,8 @@ void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
 
 	/* 切换界面 */
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screen);
 
 	memcpy(&TFTLCD_SendBuffer.buffer.data, &TFTLCD_SendBuffer.tail, 4);
 
@@ -67,11 +67,11 @@ void TFTLCD_TextValueUpdate(uint16_t screenID, uint16_t ctlID, char* str, uint8_
 {
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screenID);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screenID);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screenID);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screenID);
 
-	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(ctlID);
-	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
 
 	memcpy(TFTLCD_SendBuffer.buffer.update.value.date, str, size);
 
@@ -93,8 +93,8 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_CUR_DATA_8CH);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_CUR_DATA_8CH);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_CUR_DATA_8CH);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_CUR_DATA_8CH);
 
 	/* 模拟量更新 */
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH1, analog->temp1,
@@ -143,13 +143,13 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screenID);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screenID);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screenID);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screenID);
 
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeCtlIdH =
-			HalfWord_GetHighByte(CTL_ID_REALTIME);
+			HALFWORD_BYTE_H(CTL_ID_REALTIME);
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeCtlIdL =
-			HalfWord_GetLowByte(CTL_ID_REALTIME);
+			HALFWORD_BYTE_L(CTL_ID_REALTIME);
 
 	/* 时间长度是16个字符 */
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeSizeH = 0;
@@ -169,9 +169,9 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
 	HEX2ASCII(&rt->time.Minutes, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.min[0], 1);
 
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.batCtlIdH =
-			HalfWord_GetHighByte(CTL_ID_BAT_QUANTITY_PERCENT);
+			HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY_PERCENT);
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.batCtlIdL =
-			HalfWord_GetLowByte(CTL_ID_BAT_QUANTITY_PERCENT);
+			HALFWORD_BYTE_L(CTL_ID_BAT_QUANTITY_PERCENT);
 
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.batSizeH = 0;
 	TFTLCD_SendBuffer.buffer.batch.statusBarText.batSizeL = 3;
@@ -202,11 +202,11 @@ void TFTLCD_StatusBarIconRefresh(uint16_t screenID)
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screenID);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screenID);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screenID);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screenID);
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdH = HalfWord_GetHighByte(CTL_ID_BAT_QUANTITY);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdL = HalfWord_GetLowByte(CTL_ID_BAT_QUANTITY);
+	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdH = HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY);
+	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdL = HALFWORD_BYTE_L(CTL_ID_BAT_QUANTITY);
 	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batSizeH = 0;
 	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batSizeL = 2;
 	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityH = 0;
@@ -288,11 +288,11 @@ void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlI
 
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(SCREEN_ID_HIS_DATA);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(SCREEN_ID_HIS_DATA);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_HIS_DATA);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_HIS_DATA);
 
-	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(typeID);
-	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(typeID);
 
 	/* 历史数据显示的格式为：
 	 * [0][1][2][3][4][5][6][7][8][9][10][11][12][13][14][15][16][17][18]
@@ -370,11 +370,11 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
 
 	/* 界面ID */
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screen);
 
-	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(typeID);
-	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(typeID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(typeID);
 
 	TFTLCD_SendBuffer.buffer.update.value.date[0] = status;
 
@@ -398,11 +398,11 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
-	TFTLCD_SendBuffer.screenIdH = HalfWord_GetHighByte(screen);
-	TFTLCD_SendBuffer.screenIdL = HalfWord_GetLowByte(screen);
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screen);
 
-	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HalfWord_GetHighByte(ctlID);
-	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HalfWord_GetLowByte(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
 
 	HEX2ASCII(&time->year, (uint8_t*)TFTLCD_SendBuffer.buffer.update.value.date, 3);
 	TFTLCD_SendBuffer.buffer.update.value.date[6] = ' ';
@@ -570,12 +570,12 @@ static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, AnalogTypedef* ba
 {
 	uint16_t size;
 
-	batch->ctrlIdH = HalfWord_GetHighByte(typeID);
-	batch->ctrlIdL = HalfWord_GetLowByte(typeID);
+	batch->ctrlIdH = HALFWORD_BYTE_H(typeID);
+	batch->ctrlIdL = HALFWORD_BYTE_L(typeID);
 	/* %5.1表示有效数据长度为5，小数1位 */
 	size = sprintf((char*)&batch->value[0], "%5.1f", analog);
-	batch->sizeH = HalfWord_GetHighByte(size);
-	batch->sizeL = HalfWord_GetLowByte(size);
+	batch->sizeH = HALFWORD_BYTE_H(size);
+	batch->sizeL = HALFWORD_BYTE_L(size);
 }
 
 /*******************************************************************************

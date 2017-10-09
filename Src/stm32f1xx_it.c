@@ -53,12 +53,6 @@
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern DMA_HandleTypeDef hdma_adc1;
 extern RTC_HandleTypeDef hrtc;
-extern DMA_HandleTypeDef hdma_uart4_rx;
-extern DMA_HandleTypeDef hdma_uart4_tx;
-extern DMA_HandleTypeDef hdma_usart2_tx;
-extern DMA_HandleTypeDef hdma_usart2_rx;
-extern UART_HandleTypeDef huart4;
-extern UART_HandleTypeDef huart2;
 
 extern TIM_HandleTypeDef htim6;
 
@@ -222,66 +216,6 @@ void DMA1_Channel1_IRQHandler(void)
 }
 
 /**
-* @brief This function handles DMA1 channel6 global interrupt.
-*/
-void DMA1_Channel6_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel6_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart2_rx);
-  /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
-
-
-  /* USER CODE END DMA1_Channel6_IRQn 1 */
-}
-
-/**
-* @brief This function handles DMA1 channel7 global interrupt.
-*/
-void DMA1_Channel7_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
-
-  /* USER CODE END DMA1_Channel7_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart2_tx);
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel7_IRQn 1 */
-}
-
-/**
-* @brief This function handles USART2 global interrupt.
-*/
-void USART2_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART2_IRQn 0 */
-	GPRS_UartIdleDeal();
-
-  /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
-  /* USER CODE BEGIN USART2_IRQn 1 */
-
-
-  /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
-* @brief This function handles UART4 global interrupt.
-*/
-void UART4_IRQHandler(void)
-{
-  /* USER CODE BEGIN UART4_IRQn 0 */
-	TFTLCD_UartIdleDeal();
-
-  /* USER CODE END UART4_IRQn 0 */
-  HAL_UART_IRQHandler(&huart4);
-  /* USER CODE BEGIN UART4_IRQn 1 */
-
-  /* USER CODE END UART4_IRQn 1 */
-}
-
-/**
 * @brief This function handles TIM6 global interrupt.
 */
 void TIM6_IRQHandler(void)
@@ -293,34 +227,6 @@ void TIM6_IRQHandler(void)
   /* USER CODE BEGIN TIM6_IRQn 1 */
 
   /* USER CODE END TIM6_IRQn 1 */
-}
-
-/**
-* @brief This function handles DMA2 channel3 global interrupt.
-*/
-void DMA2_Channel3_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Channel3_IRQn 0 */
-
-  /* USER CODE END DMA2_Channel3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart4_rx);
-  /* USER CODE BEGIN DMA2_Channel3_IRQn 1 */
-
-  /* USER CODE END DMA2_Channel3_IRQn 1 */
-}
-
-/**
-* @brief This function handles DMA2 channel5 global interrupt.
-*/
-void DMA2_Channel5_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Channel5_IRQn 0 */
-
-  /* USER CODE END DMA2_Channel5_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart4_tx);
-  /* USER CODE BEGIN DMA2_Channel5_IRQn 1 */
-
-  /* USER CODE END DMA2_Channel5_IRQn 1 */
 }
 
 /**

@@ -7,7 +7,7 @@
 
 /******************************************************************************/
 #define INPUT_CheckPwrOnStatus() \
-					HAL_GPIO_ReadPin(PWR_ON_CHECK_GPIO_Port, PWR_ON_CHECK_Pin)
+					HAL_GPIO_ReadPin(I_PWR_ON_GPIO_Port, I_PWR_ON_Pin)
 
 /******************************************************************************/
 //uint8_t INPUT_CheckPwrOnStatus(void);

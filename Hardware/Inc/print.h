@@ -5,11 +5,11 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "common.h"
 #include "TFTLCDProcess.h"
 #include "display.h"
 #include "file.h"
 #include "fatfs.h"
+#include "public.h"
 
 /******************************************************************************/
 #define PRINT_UART							(huart3)

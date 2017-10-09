@@ -6,7 +6,6 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "common.h"
 #include "TFTLCDProcess.h"
 
 
@@ -15,6 +14,7 @@
 #include "gprs.h"
 #include "gps.h"
 #include "fatfs.h"
+#include "public.h"
 
 /******************************************************************************/
 #define ANALOG_VALUE_FORMAT						(FORMAT_ONE_DECIMAL)

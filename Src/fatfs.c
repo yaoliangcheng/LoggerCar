@@ -49,7 +49,9 @@
 #include "fatfs.h"
 
 uint8_t retUSER;    /* Return value for USER */
-char USER_Path[4];  /* USER logical drive path */
+char USERPath[4];   /* USER logical drive path */
+FATFS USERFatFS;    /* File system object for USER logical drive */
+FIL USERFile;       /* File object for USER */
 
 /* USER CODE BEGIN Variables */
 #include "file.h"
@@ -68,15 +70,15 @@ ErrorStatus FATFS_FileMake(void);
 void MX_FATFS_Init(void) 
 {
   /*## FatFS: Link the USER driver ###########################*/
-  retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
+  retUSER = FATFS_LinkDriver(&USER_Driver, USERPath);
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
   	/* 文件格式化，获取数据储存文件的结构体总数 */
   	FILE_Init();
   PARAM_ParamFileInit();
-  /* 在文件系统初始化完成后，在启动GPRS任务 */
-  osThreadResume(gprsprocessTaskHandle);
+//  /* 在文件系统初始化完成后，在启动GPRS任务 */
+//  osThreadResume(gprsprocessTaskHandle);
   /* USER CODE END Init */
 }
 
@@ -89,7 +91,7 @@ ErrorStatus FATFS_FileLink(void)
 	FRESULT status;
 
 	/* 挂载spi flash */
-	status = f_mount(&objFileSystem, USER_Path, 1);
+	status = f_mount(&objFileSystem, USERPath, 1);
 
 	if (status == FR_OK)
 	{
@@ -119,7 +121,7 @@ ErrorStatus FATFS_FileLink(void)
 ErrorStatus FATFS_FileUnlink(void)
 {
 	/* 不再使用文件系统，取消挂载文件系统 */
-	 if (FR_OK == f_mount(NULL, USER_Path, 1))
+	 if (FR_OK == f_mount(NULL, USERPath, 1))
 	 {
 		 /* 退出临界区 */
 		 taskEXIT_CRITICAL();
@@ -134,13 +136,13 @@ ErrorStatus FATFS_FileUnlink(void)
  */
 ErrorStatus FATFS_FileMake(void)
 {
-	if (FR_OK == f_mkfs(USER_Path, 0, 4096))
+	if (FR_OK == f_mkfs(USERPath, 0, 4096))
 	{
 		/* 格式化后，先取消挂载 */
-		f_mount(NULL, USER_Path, 1);
+		f_mount(NULL, USERPath, 1);
 
 		/* 重新挂载	*/
-		if (FR_OK == f_mount(&objFileSystem, USER_Path, 1))
+		if (FR_OK == f_mount(&objFileSystem, USERPath, 1))
 			return SUCCESS;
 		else
 			return ERROR;
@@ -244,7 +246,7 @@ BYTE FATFS_GetSpaceInfo(void)
 	FATFS* pfs;
 
 	/* 获取设备信息和空簇大小 */
-	if (FR_OK == f_getfree(USER_Path, &freeClust, &pfs))
+	if (FR_OK == f_getfree(USERPath, &freeClust, &pfs))
 	{
 		/* 单位为KB */
 		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;

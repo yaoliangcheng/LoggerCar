@@ -14,7 +14,7 @@
 #include "usart.h"
 
 /******************************************************************************/
-#define DEBUG_UART				(huart1)
+#define DEBUG_UART				(huart4)
 
 #define GET_COMPARE_TIME(year, month, day, hour, min) \
 	(((uint32_t)((year << 24) | (month << 16) | (day << 8) | hour) << 8) | min)
@@ -28,8 +28,7 @@
 /******************************************************************************/
 typedef enum {FALSE = 0, TRUE = !FALSE} BOOL;
 
-uint8_t HalfWord_GetHighByte(uint16_t value);
-uint8_t HalfWord_GetLowByte(uint16_t value);
+/******************************************************************************/
 HAL_StatusTypeDef UART_DMAIdleConfig(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size);
 void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size);
 void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size);

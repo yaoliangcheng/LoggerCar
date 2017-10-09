@@ -11,6 +11,7 @@ void LED_Task(void)
 		HAL_Delay(50);
 		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 		HAL_Delay(3000);
+		printf("FreeRTOS正在运行..........\r\n");
 	}
 }
 

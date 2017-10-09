@@ -5,7 +5,7 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "common.h"
+#include "public.h"
 
 /******************************************************************************/
 #define ANALOG_CHANNEL_NUMB_MAX					(14)	/* 最大支持14通道的模拟量 */

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../Inc/public.h"
 
 /*******************************************************************************
  *
@@ -95,19 +95,6 @@ void ASCII2HEX(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
 	default:
 		break;
 	}
-}
-
-/*******************************************************************************
- *
- */
-uint8_t HalfWord_GetHighByte(uint16_t value)
-{
-	return (uint8_t)((value & 0xFF00) >> 8);
-}
-
-uint8_t HalfWord_GetLowByte(uint16_t value)
-{
-	return (uint8_t)(value & 0x00FF);
 }
 
 /******************************************************************************/

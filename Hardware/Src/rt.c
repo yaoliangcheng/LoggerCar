@@ -1,7 +1,6 @@
 #include "rt.h"
 
-#include "common.h"
-
+#include "../Inc/public.h"
 #include "RealTime.h"
 #include "osConfig.h"
 

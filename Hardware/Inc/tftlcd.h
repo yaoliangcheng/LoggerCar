@@ -5,10 +5,10 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-#include "common.h"
 #include "analog.h"
 #include "rt.h"
 #include "file.h"
+#include "public.h"
 
 #define TFTLCD_UART					(huart4)
 

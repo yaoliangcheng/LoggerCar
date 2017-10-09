@@ -11,14 +11,14 @@
 /******************************************************************************/
 #define GPRS_UART 						(huart2)
 #define GPRS_PWR_CTRL_ENABLE() \
-		HAL_GPIO_WritePin(GPRS_PWRKEY_CTRL_GPIO_Port, GPRS_PWRKEY_CTRL_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(O_GSM_PWR_GPIO_Port, O_GSM_PWR_Pin, GPIO_PIN_SET);
 #define GPRS_PWR_CTRL_DISABLE() \
-		HAL_GPIO_WritePin(GPRS_PWRKEY_CTRL_GPIO_Port, GPRS_PWRKEY_CTRL_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(O_GSM_PWR_GPIO_Port, O_GSM_PWR_Pin, GPIO_PIN_RESET);
 
 #define GPRS_RST_CTRL_ENABLE() \
-		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(O_GSM_RST_GPIO_Port, O_GSM_RST_Pin, GPIO_PIN_RESET);
 #define GPRS_RST_CTRL_DISABLE() \
-		HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(O_GSM_RST_GPIO_Port, O_GSM_RST_Pin, GPIO_PIN_SET);
 
 /******************************************************************************/
 #define GPRS_PATCH_PACK_NUMB_MAX		  (30)				/* 最多支持补传数据组数 */

@@ -59,12 +59,12 @@ void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf, uint8_t patchPack)
 	dataSize = patchPack * sizeof(GPRS_SendInfoTypedef) + 47;
 
 	/* 获取数据长度 */
-	sendBuf->dateSizeH = HalfWord_GetHighByte(dataSize);
-	sendBuf->dateSizeL = HalfWord_GetLowByte(dataSize);
+	sendBuf->dateSizeH = HALFWORD_BYTE_H(dataSize);
+	sendBuf->dateSizeL = HALFWORD_BYTE_L(dataSize);
 
 	/* 获取数据包数 */
-	sendBuf->dataPackNumbH = HalfWord_GetHighByte(patchPack);
-	sendBuf->dataPackNumbL = HalfWord_GetLowByte(patchPack);
+	sendBuf->dataPackNumbH = HALFWORD_BYTE_H(patchPack);
+	sendBuf->dataPackNumbL = HALFWORD_BYTE_L(patchPack);
 
 	/* 如果缓存未被装在满，则在下一数据中加入帧尾 */
 	if (patchPack < GPRS_PATCH_PACK_NUMB_MAX)
