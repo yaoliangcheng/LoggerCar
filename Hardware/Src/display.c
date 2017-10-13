@@ -23,10 +23,10 @@ static void GetAlarmCode(char* code);
 void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt)
 {
 	uint8_t i;
-	FILE_SaveInfoTypedef saveInfo[4];
+	FILE_SaveStructTypedef saveInfo[4];
 
-	FILE_ReadFile(FILE_NAME_SAVE_DATA, startStructOffset * sizeof(FILE_SaveInfoTypedef),
-					(uint8_t*)saveInfo, structCnt * sizeof(FILE_SaveInfoTypedef));
+	FILE_ReadFile(FILE_NAME_SAVE_DATA, startStructOffset * sizeof(FILE_SaveStructTypedef),
+					(uint8_t*)saveInfo, structCnt * sizeof(FILE_SaveStructTypedef));
 
 	for (i = 0; i < structCnt; i++)
 	{
@@ -40,12 +40,12 @@ void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt)
 void DISPLAY_HistoryDataCurve(uint32_t startStructOffset)
 {
 	uint8_t i, j;
-	FILE_SaveInfoTypedef info[DISPLAY_HIS_DATA_READ_ONCE_CNT];
+	FILE_SaveStructTypedef info[DISPLAY_HIS_DATA_READ_ONCE_CNT];
 
 	for (j = 0; j < DISPLAY_HIS_DATA_READ_CNT; j++)
 	{
 		FILE_ReadFile(FILE_NAME_SAVE_DATA,
-					  startStructOffset * sizeof(FILE_SaveInfoTypedef),
+					  startStructOffset * sizeof(FILE_SaveStructTypedef),
 					  (uint8_t*)info,
 					  sizeof(info));
 		for (i = 0; i < DISPLAY_HIS_DATA_READ_ONCE_CNT; i++)

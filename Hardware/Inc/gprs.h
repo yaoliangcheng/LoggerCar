@@ -21,7 +21,7 @@
 		HAL_GPIO_WritePin(O_GSM_RST_GPIO_Port, O_GSM_RST_Pin, GPIO_PIN_SET);
 
 /******************************************************************************/
-#define GPRS_PATCH_PACK_NUMB_MAX		  (30)				/* 最多支持补传数据组数 */
+#define GPRS_PATCH_PACK_NUMB_MAX		  (20)				/* 最多支持补传数据组数 */
 #define GPRS_PACK_HEAD					  (uint8_t)(0X31)
 #define GPRS_PACK_TAIL					  (uint8_t)(0x32)
 

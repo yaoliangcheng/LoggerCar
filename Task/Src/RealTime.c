@@ -96,20 +96,19 @@ void REALTIME_Task(void)
 					/* 更新液晶屏显示 */
 					if (TFTLCD_status.curScreenID == SCREEN_ID_CUR_DATA_8CH)
 					{
-						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_ANALOG_UPDATE);
+//						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_ANALOG_UPDATE);
 					}
 
 					/* 如果记录间隔时间到，则触发记录 */
 					if (RT_RealTime.time.Seconds % 60 == 0)
 					{
-						/* 发送记录时间数据,先把时间转换成BCD模式 */
-						osMessagePut(realtimeMessageQId, (uint32_t)&RT_RealTime, 100);
+						/* 发送记录时间数据 */
+						memcpy(&RT_RecordTime, &RT_RealTime, sizeof(RT_TimeTypedef));
 
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
-
 						/* 更新状态栏 */
-						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+//						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
 					}
 				}
 			}

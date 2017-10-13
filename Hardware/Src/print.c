@@ -135,7 +135,7 @@ static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime)
 	PRINT_TimeCompareTypedef sourceTime;
 	uint8_t month, day, hour, min;
 	uint32_t fileStructStart, fileStructEnd, searchPoint;
-	FILE_SaveInfoTypedef info;
+	FILE_SaveStructTypedef info;
 
 	FATFS_FileLink();
 
@@ -152,8 +152,8 @@ static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime)
 		if (searchPoint == fileStructStart)
 			break;
 
-		FATFS_FileSeek(searchPoint * sizeof(FILE_SaveInfoTypedef));
-		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_SaveInfoTypedef)) == SUCCESS)
+		FATFS_FileSeek(searchPoint * sizeof(FILE_SaveStructTypedef));
+		if (FATFS_FileRead((BYTE*)&info, sizeof(FILE_SaveStructTypedef)) == SUCCESS)
 		{
 			ASCII2HEX((uint8_t*)info.year, &sourceTime.year, 2);
 
@@ -219,15 +219,15 @@ static PRINT_DataStatusEnum PRINT_AdjustOverLimited(SaveInfoAnalogTypedef* analo
 static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTypedef endTimePoint,
 		ChannelSelectTypedef* select)
 {
-	FILE_SaveInfoTypedef saveInfo;
+	FILE_SaveStructTypedef saveInfo;
 	uint8_t index = 0;
 	PRINT_TimeCompareTypedef time;								/* 根据当前时间生成64位数值，用于比较 */
 	PRINT_DataStatusEnum status;
 	uint8_t month, day, hour, min;
 
 	/* 读取数据 */
-	FILE_ReadFile(FILE_NAME_SAVE_DATA, offset * sizeof(FILE_SaveInfoTypedef),
-			(uint8_t*)&saveInfo, sizeof(FILE_SaveInfoTypedef));
+	FILE_ReadFile(FILE_NAME_SAVE_DATA, offset * sizeof(FILE_SaveStructTypedef),
+			(uint8_t*)&saveInfo, sizeof(FILE_SaveStructTypedef));
 
 	/* 生成时间数值 */
 	ASCII2HEX((uint8_t*)saveInfo.year,  &time.year, 2);

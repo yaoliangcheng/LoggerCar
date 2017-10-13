@@ -80,7 +80,8 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, O_VSENSOR_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin|O_GSM_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, O_VSENSOR_Pin|O_VSCREEN_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin 
+                          |O_GSM_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(O_VBAT_GPIO_Port, O_VBAT_Pin, GPIO_PIN_SET);
@@ -97,17 +98,13 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(O_VUSB_GPIO_Port, O_VUSB_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PEPin PEPin PEPin PEPin */
-  GPIO_InitStruct.Pin = O_VSENSOR_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin|O_GSM_RST_Pin;
+  /*Configure GPIO pins : PEPin PEPin PEPin PEPin 
+                           PEPin */
+  GPIO_InitStruct.Pin = O_VSENSOR_Pin|O_VSCREEN_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin 
+                          |O_GSM_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = O_VSCREEN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(O_VSCREEN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = WKUP_Pin;

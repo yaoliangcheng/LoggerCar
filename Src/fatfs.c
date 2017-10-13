@@ -275,7 +275,7 @@ ErrorStatus FATFS_FileSeekEnd(void)
  */
 void FATFS_FileSeekSaveInfoStructAlign(void)
 {
-	if (objFile.fsize % sizeof(FILE_SaveInfoTypedef) == 0)
+	if (objFile.fsize % sizeof(FILE_SaveStructTypedef) == 0)
 	{
 		f_lseek(&objFile, objFile.fsize);
 	}
@@ -283,8 +283,8 @@ void FATFS_FileSeekSaveInfoStructAlign(void)
 	{
 		/* 覆盖当前结构体 */
 		f_lseek(&objFile,
-				(objFile.fsize / sizeof(FILE_SaveInfoTypedef))
-				* sizeof(FILE_SaveInfoTypedef));
+				(objFile.fsize / sizeof(FILE_SaveStructTypedef))
+				* sizeof(FILE_SaveStructTypedef));
 	}
 }
 
@@ -293,7 +293,7 @@ void FATFS_FileSeekSaveInfoStructAlign(void)
  */
 ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 {
-	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_SaveInfoTypedef)))
+	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_SaveStructTypedef)))
 		return SUCCESS;
 	else
 		return ERROR;
@@ -340,7 +340,7 @@ ErrorStatus FATFS_CreateFile(char* fileName)
  */
 uint16_t FATFS_GetFileStructCount(void)
 {
-	return objFile.fsize / sizeof(FILE_SaveInfoTypedef);
+	return objFile.fsize / sizeof(FILE_SaveStructTypedef);
 }
 
 /* USER CODE END Application */

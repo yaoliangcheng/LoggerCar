@@ -73,7 +73,7 @@ typedef struct
 	char str3;
 	char sec[2];
 	char str4;
-	char batQuality[3];							/* 电池电量，（4） */
+	char batQuality[4];							/* 电池电量，（5） */
 	char str5;
 	char exPwrStatus;							/* 电池状态，（2） */
 	char str6;
@@ -83,7 +83,7 @@ typedef struct
 	char str8;
 	SaveInfoAnalogTypedef analogValue[8];		/* 模拟量，（6 x 8） */
 	char end[2];								/* 换行（2） */
-} FILE_SaveInfoTypedef;							/* 总共（94字节） */
+} FILE_SaveStructTypedef;							/* 总共（95字节） */
 
 typedef struct
 {
@@ -101,19 +101,11 @@ extern uint64_t FILE_DataSaveStructCnt;			/* 当前文件结构体总数 */
 
 /******************************************************************************/
 void FILE_Init(void);
-void FILE_SaveInfoSymbolInit(FILE_SaveInfoTypedef* info);
 ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
 ErrorStatus FILE_WriteFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
-
-
-ErrorStatus FILE_SaveInfo(FILE_SaveInfoTypedef* saveInfo);
-uint16_t FILE_ReadInfo(FILE_SaveInfoTypedef* readInfo, FILE_PatchPackTypedef* patch);
-void FILE_SendInfoFormatConvert(uint8_t* saveInfo, uint8_t* sendInfo, uint8_t sendPackNumb);
-
-ErrorStatus FILE_ParamFileInit(void);
-//ErrorStatus FILE_PrintDependOnTime(FILE_RealTime* startTime, FILE_RealTime* stopTime,
-//		PRINT_ChannelSelectTypedef* select);
-
-float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
+ErrorStatus FILE_SaveInfo(RT_TimeTypedef* time, GPS_LocateTypedef* location);
+void FILE_ReadInfo(GPRS_SendBufferTypedef* sendBuffer,
+				   FILE_PatchPackTypedef*  patch);
+//float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
 
 #endif

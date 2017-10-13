@@ -445,7 +445,7 @@ void TFTLCD_TextValueUpdate(uint16_t screenID, uint16_t ctlID, char* str, uint8_
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
 void TFTLCD_StatusBarIconRefresh(uint16_t screenID);
-void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
+void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
 void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time);
 
@@ -454,6 +454,6 @@ ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);
 //void TFTLCD_printChannelSelectICON(CtrlID_PrintEnum ctrl, uint8_t status);
 
-void TFTLCD_HistoryDataCurveFormat(FILE_SaveInfoTypedef* saveInfo);
+void TFTLCD_HistoryDataCurveFormat(FILE_SaveStructTypedef* saveInfo);
 void TFTLCD_SetPasswordUpdate(uint8_t numb);
 #endif

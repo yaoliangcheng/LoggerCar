@@ -5,8 +5,9 @@
 #include "osConfig.h"
 
 /******************************************************************************/
-RT_TimeTypedef RT_RealTime;
-BOOL RT_recodeFlag = FALSE;						/* 数据记录标志位 */
+RT_TimeTypedef RT_RealTime;						/* 实时时间 */
+RT_TimeTypedef RT_RecordTime;					/* 记录时间 */
+BOOL RT_recordFlag = FALSE;						/* 数据记录标志位 */
 
 /******************************************************************************/
 static void RT_SetRealTime(RT_TimeTypedef* time);
@@ -109,7 +110,7 @@ void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
 	RT_SetAlarmTimeInterval(60);
 
 	/* 数据记录标志位 */
-	RT_recodeFlag = TRUE;
+	RT_recordFlag = TRUE;
 	/* 使能转换 */
 	osSignalSet(realtimeTaskHandle, REALTIME_SENSOR_CONVERT_START);
 }

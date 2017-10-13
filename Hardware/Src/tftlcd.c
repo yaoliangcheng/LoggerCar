@@ -281,7 +281,7 @@ void TFTLCD_StatusBarIconRefresh(uint16_t screenID)
  * @saveInfo：读出的数据
  * @typeID：更新的控件
  */
-void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID)
+void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID)
 {
 	/* 进入临界区 */
 	taskENTER_CRITICAL();
@@ -338,7 +338,7 @@ void TFTLCD_HistoryDataFormat(FILE_SaveInfoTypedef* saveInfo, TFTLCD_HisDataCtlI
 /*******************************************************************************
  *
  */
-void TFTLCD_HistoryDataCurveFormat(FILE_SaveInfoTypedef* saveInfo)
+void TFTLCD_HistoryDataCurveFormat(FILE_SaveStructTypedef* saveInfo)
 {
 	char  str[6];
 	float value;

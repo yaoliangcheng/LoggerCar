@@ -38,7 +38,8 @@ typedef struct
 
 /******************************************************************************/
 extern RT_TimeTypedef RT_RealTime;
-extern BOOL RT_recodeFlag;
+extern RT_TimeTypedef RT_RecordTime;					/* ¼ÇÂ¼Ê±¼ä */
+extern BOOL RT_recordFlag;
 
 /******************************************************************************/
 void RT_Init(void);

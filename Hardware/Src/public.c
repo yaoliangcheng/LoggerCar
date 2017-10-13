@@ -1,9 +1,9 @@
 #include "../Inc/public.h"
 
 /*******************************************************************************
- *
+ * @brief 字符串转换成数字
  */
-void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size)
+void str2numb(uint8_t* pNumb, uint8_t* pStr, uint8_t size)
 {
 	while(size--)
 	{
@@ -12,7 +12,7 @@ void str2numb(uint8_t* pStr, uint8_t* pNumb,  uint8_t size)
 }
 
 /*******************************************************************************
- * function:把BCD码转换成ASCII码,一个BCD码可以转成2个ASCII码
+ * @brief 把BCD码转换成ASCII码,一个BCD码可以转成2个ASCII码
  * @pASCII:转换成ascii接收指针
  * @pBCD：BCD码指针
  * @size：要转换的BCD字节数
@@ -29,9 +29,12 @@ void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size)
 }
 
 /*******************************************************************************
- * function：把ASCII码转换成BCD码，两个ASCII码转换成一个BCD码
+ * @brief 把ASCII码转换成BCD码，两个ASCII码转换成一个BCD码
+ * @param pBCD:储存BCD码的指针
+ * @param pASCII：ASCII码指针
+ * @param size：ASCII码个数，2个ASCII码转换成一个BCD码
  */
-void ASCII2BCD(char* pASCII, uint8_t* pBCD, uint8_t size)
+void ASCII2BCD(uint8_t* pBCD, char* pASCII, uint8_t size)
 {
 	uint8_t i;
 
@@ -59,12 +62,12 @@ void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
 }
 
 /*******************************************************************************
- * function:把16进制的数值转换成ASCII，一个16进制数转换成2个ASCII码
- * @pHEX:数值指针
- * @pBCD：BCD存放指针
- * @size：要转换的数值长度
+ * @brief 把16进制的数值转换成ASCII，一个16进制数转换成2个ASCII码
+ * @param pASCII：ASCII指针
+ * @param pHEX：16进制数值指针
+ * @param size：hex字节数
  */
-void HEX2ASCII(uint8_t* pHEX, uint8_t* pASCII, uint8_t size)
+void HEX2ASCII(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
 {
 	uint8_t i;
 
