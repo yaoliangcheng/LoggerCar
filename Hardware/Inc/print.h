@@ -12,7 +12,7 @@
 #include "public.h"
 
 /******************************************************************************/
-#define PRINT_UART							(huart3)
+#define PRINT_UART							(huart5)
 #define PRINT_SEND_BYTES_MAX				(100)
 
 #define PRINT_PWR_ENABLE() \

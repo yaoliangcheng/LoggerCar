@@ -9,7 +9,9 @@
 #include "exFlash.h"
 
 /******************************************************************************/
-#define GPRS_UART 						(huart2)
+#define GPRS_UART 						(huart1)
+#define GPRS_UART_DMA_RX_FLAG			(DMA_FLAG_GL5)
+
 #define GPRS_PWR_CTRL_ENABLE() \
 		HAL_GPIO_WritePin(O_GSM_PWR_GPIO_Port, O_GSM_PWR_Pin, GPIO_PIN_SET);
 #define GPRS_PWR_CTRL_DISABLE() \
@@ -26,8 +28,7 @@
 #define GPRS_PACK_TAIL					  (uint8_t)(0x32)
 
 #define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
-
-#define GPRS_SIGNAL_QUALITY_OFFSET			(8)
+#define GPRS_SIGNAL_QUALITY_OFFSET		  (8)
 
 /******************************************************************************/
 #pragma pack(push)
@@ -83,7 +84,7 @@ extern uint8_t GPRS_signalQuality;			/* GPRS–≈∫≈÷ ¡ø */
 extern GPRS_SendBufferTypedef GPRS_SendBuffer;
 
 /******************************************************************************/
-void GPRS_Init(GPRS_SendBufferTypedef* sendBuf);
+void GPRS_Init(void);
 void GPRS_SendCmd(char* str);
 void GPRS_RstModule(void);
 void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf, uint8_t patchPack);

@@ -10,14 +10,14 @@
 #include "file.h"
 #include "public.h"
 
-#define TFTLCD_UART					(huart4)
+#define TFTLCD_UART					(huart2)
 
 #define TFTLCD_PWR_ENABLE() \
 		HAL_GPIO_WritePin(SCREEN_PWR_CTRL_GPIO_Port, SCREEN_PWR_CTRL_Pin, GPIO_PIN_RESET);
 #define TFTLCD_PWR_DISABLE() \
 		HAL_GPIO_WritePin(SCREEN_PWR_CTRL_GPIO_Port, SCREEN_PWR_CTRL_Pin, GPIO_PIN_SET);
 
-#define TFTLCD_UART_DMA_FLAG_GL		(DMA_FLAG_GL3)
+#define TFTLCD_UART_DMA_FLAG_GL		(DMA_FLAG_GL6)
 
 /*******************************************************************************
  * 指令的帧头和帧尾

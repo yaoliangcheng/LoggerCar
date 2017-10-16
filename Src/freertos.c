@@ -129,15 +129,15 @@ void MX_FREERTOS_Init(void) {
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-//  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
-//  tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
+  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 512);
+  tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
 //
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 2000);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 1000);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
-//
-//  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 128);
-//  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
+
+  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 1000);
+  gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
 //  osThreadSuspend(gprsprocessTaskHandle);
 
 
@@ -145,21 +145,21 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
-  realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
-
-  osMessageQDef(ADJUSTTIME_MESSAGE, 2, sizeof(uint32_t*));
-  adjustTimeMessageQId = osMessageCreate(osMessageQ(ADJUSTTIME_MESSAGE), NULL);
-
-  osMessageQDef(ANALOG_MESSAGE, 2, sizeof(uint32_t*));
-  analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
-
-  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
-  infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
-
-  /* 数据条数传递的是值本身 */
-  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
-  infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
+//  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
+//  realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
+//
+//  osMessageQDef(ADJUSTTIME_MESSAGE, 2, sizeof(uint32_t*));
+//  adjustTimeMessageQId = osMessageCreate(osMessageQ(ADJUSTTIME_MESSAGE), NULL);
+//
+//  osMessageQDef(ANALOG_MESSAGE, 2, sizeof(uint32_t*));
+//  analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
+//
+//  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
+//  infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
+//
+//  /* 数据条数传递的是值本身 */
+//  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
+//  infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
 
   osMessageQDef(GPRS_TASK_MESSAGE, 5, sizeof(uint8_t));
   gprsTaskMessageQid = osMessageCreate(osMessageQ(GPRS_TASK_MESSAGE), NULL);

@@ -6,6 +6,9 @@
 #include "osConfig.h"
 #include "MainProcess.h"
 
+/******************************************************************************/
+extern GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
+
 /*******************************************************************************
  *
  */
@@ -15,15 +18,11 @@ void GPRSPROCESS_Task(void)
 	GPRS_ModuleStatusEnum moduleStatus = MODULE_INVALID;		/* GPRS模块状态 */
 	char* expectString;											/* 预期收到的字符串 */
 
-	GPS_LocateTypedef  location;
-
 	GPRS_TaskStatusEnum taskStatus;
 	uint8_t moduleTimeoutCnt;									/* 模块超时计数 */
 	uint8_t moduleErrorCnt;										/* 模块接收错误指令计数 */
 	uint16_t curPatchPack;										/* 本次上传条数 */
 	BOOL gprsInited;											/* gprs功能初始化标志位 */
-
-	GPRS_Init(&GPRS_SendBuffer);
 
 	while(1)
 	{
@@ -363,10 +362,9 @@ void GPRSPROCESS_Task(void)
 				case GET_GPS_GNRMC_FINISH:
 					DebugPrintf("获取GNRMC定位值完成\r\n");
 					/* 转换定位数据 */
-					GPS_GetLocation(GPRS_RecvBuffer.recvBuffer, &location);
+					GPS_GetLocation(GPRS_RecvBuffer.recvBuffer, &GPS_Locate);
 					printf("定位数据是%50s\r\n",GPRS_RecvBuffer.recvBuffer);
-					/* 传递定位信息 */
-					osMessagePut(infoMessageQId, (uint32_t)&location, 100);
+
 					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPS_CONVERT_FINISH);
 					/* GPS定位成功，回到init状态 */
 					moduleStatus = INIT;
@@ -517,7 +515,7 @@ void GPRSPROCESS_Task(void)
 
 					/* 链接服务器地址出现“FAIL”或者“ERROR”，不能链接上服务器 */
 					case SET_SERVER_IP_ADDR_FINISH:
-						if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, "FAIL ERROR"))
+						if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, "FAIL"))
 						{
 							/* 放弃本次发送 */
 							moduleStatus = INIT;

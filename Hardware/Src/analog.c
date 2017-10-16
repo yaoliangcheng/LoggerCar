@@ -75,6 +75,37 @@ void ANALOG_GetSensorValue(void)
 }
 
 /*******************************************************************************
+ * @brief 把模拟量值转换为ASCII
+ * @param buffer：储存地址指针
+ * @param value:模拟量
+ */
+void ANALOG_Float2ASCII(char* buffer, float value)
+{
+	uint16_t data = 0;
+
+	data = (uint16_t)(value * 10);
+
+	*(buffer + 4) = data % 10        + '0';
+	*(buffer + 3) = '.';
+	*(buffer + 2) = data / 10  % 10  + '0';
+	*(buffer + 1) = data / 100  % 10 + '0';
+	*(buffer + 0) = data / 1000 % 10 + '0';
+
+	if (value < 0)
+	{
+		if ((*(buffer + 0) == '0') && (*(buffer + 1) == '0'))
+		{
+			*(buffer + 0) = ' ';
+			*(buffer + 1) = '-';
+		}
+		else
+		{
+			*(buffer + 0) = '-';
+		}
+	}
+}
+
+/*******************************************************************************
  * function：将AD值从大到小排序，取中间的数值
  */
 static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue)
@@ -135,6 +166,7 @@ static uint8_t ANALOG_GetBatVoltage(uint16_t value)
 
 	return percent;
 }
+
 
 
 

@@ -89,5 +89,6 @@ void ANALOG_Init(void);
 void ANALOG_ConvertEnable(void);
 void ANALOG_ConvertDisable(void);
 void ANALOG_GetSensorValue(void);
+void ANALOG_Float2ASCII(char* buffer, float value);
 
 #endif

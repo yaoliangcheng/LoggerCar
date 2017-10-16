@@ -63,6 +63,7 @@
 #include "file.h"
 #include "gprs.h"
 #include "lowPwr.h"
+#include "ble.h"
 
 /* USER CODE END Includes */
 
@@ -125,6 +126,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   ANALOG_Init();
   RT_Init();
+  GPRS_Init();
+  BLE_Init();
 
   /* USER CODE END 2 */
 

@@ -4,6 +4,7 @@
 #include "print.h"
 #include "gprs.h"
 #include "display.h"
+#include "ble.h"
 
 /******************************************************************************/
 void ScreenDefaultDisplay(uint16_t screen);
@@ -22,8 +23,11 @@ void TFTLCD_Task(void)
 
 	while(1)
 	{
+//		BLE_LinkPrint();
+
 		/* 获取任务信号 */
-		signal = osSignalWait(0xFFFFFFFF, 1);
+		signal = osSignalWait(TFTLCD_TASK_STATUS_BAR_UPDATE
+				| TFTLCD_TASK_ANALOG_UPDATE | TFTLCD_TASK_RECV_ENABLE, 1000);
 
 		/* 状态栏刷新 */
 		if ((signal.value.signals & TFTLCD_TASK_STATUS_BAR_UPDATE) ==

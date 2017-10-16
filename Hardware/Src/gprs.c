@@ -18,9 +18,9 @@ static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
 /*******************************************************************************
  * function：GPRS初始化，包括发送结构体初始化、串口idle接收初始化
  */
-void GPRS_Init(GPRS_SendBufferTypedef* sendBuf)
+void GPRS_Init(void)
 {
-	GPRS_StructInit(sendBuf);
+	GPRS_StructInit(&GPRS_SendBuffer);
 	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvData, GPRS_UART_RX_DATA_SIZE_MAX);
 }
 

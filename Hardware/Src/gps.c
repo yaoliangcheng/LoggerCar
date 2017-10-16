@@ -1,7 +1,8 @@
 #include "gps.h"
 #include "exFlash.h"
 
-
+/******************************************************************************/
+GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
 
 /*******************************************************************************
  *
@@ -45,11 +46,11 @@ void GPS_GetLocation(uint8_t* buf, GPS_LocateTypedef* info)
 	/* 判断数据有效 */
 	if (GPS_FLAG_VALID == *(buf + GPS_OFFSET_FLAG))
 	{
-		str2numb((buf + GPS_OFFSET_LATITUDE),     &latitude[0], 4);
-		str2numb((buf + GPS_OFFSET_LATITUDE + 5), &latitude[4], 4);
+		str2numb(&latitude[0], buf + GPS_OFFSET_LATITUDE,     4);
+		str2numb(&latitude[4], buf + GPS_OFFSET_LATITUDE + 5, 4);
 
-		str2numb(buf + GPS_OFFSET_LONGITUDE,     &longitude[0], 5);
-		str2numb(buf + GPS_OFFSET_LONGITUDE + 6, &longitude[5], 4);
+		str2numb(&longitude[0], buf + GPS_OFFSET_LONGITUDE,     5);
+		str2numb(&longitude[5], buf + GPS_OFFSET_LONGITUDE + 6, 4);
 
 		/* 经纬度获取 */
 		info->longitude = GPS_ValueConvert(longitude, GPS_LONGITUDE);

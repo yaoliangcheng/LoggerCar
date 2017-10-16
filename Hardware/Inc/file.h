@@ -101,11 +101,12 @@ extern uint64_t FILE_DataSaveStructCnt;			/* 当前文件结构体总数 */
 
 /******************************************************************************/
 void FILE_Init(void);
-ErrorStatus FILE_ReadFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
-ErrorStatus FILE_WriteFile(char* fileName, uint64_t offset, BYTE* pBuffer, uint32_t size);
-ErrorStatus FILE_SaveInfo(RT_TimeTypedef* time, GPS_LocateTypedef* location);
-void FILE_ReadInfo(GPRS_SendBufferTypedef* sendBuffer,
-				   FILE_PatchPackTypedef*  patch);
-//float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
+void FILE_ReadFile(char* fileName, DWORD offset, BYTE* pBuffer, UINT size);
+void FILE_WriteFile(char* fileName, DWORD offset, BYTE* pBuffer, UINT size);
+void FILE_SaveInfo(void);
+uint8_t FILE_ReadInfo(FILE_PatchPackTypedef*  patch);
+void FILE_SendInfoFormatConvert(uint8_t* sendInfo, uint8_t* readInfo,
+							    uint8_t  sendPackNumb);
+float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
 
 #endif
