@@ -45,7 +45,10 @@ void TFTLCD_Task(void)
 		if ((signal.value.signals & TFTLCD_TASK_ANALOG_UPDATE) ==
 				TFTLCD_TASK_ANALOG_UPDATE)
 		{
+			/* 显示模拟量的值 */
 			TFTLCD_AnalogDataRefresh(&ANALOG_value);
+			/* 判断模拟量的值是否超标 */
+			TFTLCD_AnalogDataAlarmDisplay(&ANALOG_value);
 		}
 
 		/* 串口接收处理 */
@@ -98,7 +101,8 @@ void ScreenDefaultDisplay(uint16_t screen)
 			DISPLAY_Status.hisDataDispStructOffset =
 					FILE_DataSaveStructCnt - DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
 
-			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,
+					DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
 		break;
 

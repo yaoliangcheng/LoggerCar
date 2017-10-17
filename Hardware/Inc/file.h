@@ -10,7 +10,6 @@
 
 
 #include "rt.h"
-#include "analog.h"
 #include "gprs.h"
 #include "gps.h"
 #include "fatfs.h"
@@ -59,7 +58,7 @@ typedef struct
 {
 	char value[5];
 	char str;
-} SaveInfoAnalogTypedef;
+} FILE_SaveInfoAnalogTypedef;
 
 typedef struct
 {
@@ -81,7 +80,7 @@ typedef struct
 	char str7;
 	char latitude[10];							/* 纬度，（11） */
 	char str8;
-	SaveInfoAnalogTypedef analogValue[8];		/* 模拟量，（6 x 8） */
+	FILE_SaveInfoAnalogTypedef analogValue[8];		/* 模拟量，（6 x 8） */
 	char end[2];								/* 换行（2） */
 } FILE_SaveStructTypedef;							/* 总共（95字节） */
 
@@ -107,6 +106,6 @@ void FILE_SaveInfo(void);
 uint8_t FILE_ReadInfo(FILE_PatchPackTypedef*  patch);
 void FILE_SendInfoFormatConvert(uint8_t* sendInfo, uint8_t* readInfo,
 							    uint8_t  sendPackNumb);
-float FILE_Analog2Float(SaveInfoAnalogTypedef* value);
+float FILE_Analog2Float(FILE_SaveInfoAnalogTypedef* value);
 
 #endif

@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "public.h"
+#include "file.h"
 
 /******************************************************************************/
 #define ANALOG_ADC								(hadc1)
@@ -23,6 +24,18 @@
 	HAL_GPIO_WritePin(O_VBAT_GPIO_Port, O_VBAT_Pin, GPIO_PIN_SET);
 
 #define ANALOG_SAMPLE_NUMB						(20)	/* 模拟量采样数 */
+#define ANALOG_CHANNEL_AD_VALUE_MIN				(20)	/* 通道AD最低值 */
+#define ANALOG_CHANNLE_INVALID_VALUE			(float)(-127)	/* 通道无效值标志值 */
+
+#define ANALOG_INVALID_VALUE					(" NULL") /* 无效值 */
+
+/******************************************************************************/
+typedef enum
+{
+	ANALOG_MODE_NORMAL,				/* 正常模式 */
+	ANALOG_MODE_PERWARM,			/* 预警模式 */
+	ANALOG_MODE_ALARM				/* 报警模式 */
+} ANALOG_ModeEnum;					/* 模拟量模式 */
 
 /******************************************************************************/
 #pragma pack(push)
@@ -30,16 +43,14 @@
 
 typedef struct
 {
-	uint16_t temp1;				/* temp1转换值 */
-	uint16_t temp2;				/* temp2转换值 */
-	uint16_t temp3;				/* temp3转换值 */
-	uint16_t temp4;				/* temp4转换值 */
-
-	uint16_t humi1;				/* humi1转换值 */
-	uint16_t humi2;				/* humi2转换值 */
-	uint16_t humi3;				/* humi3转换值 */
-	uint16_t humi4;				/* humi4转换值 */
-
+	uint16_t temp1;					/* temp1转换值 */
+	uint16_t humi1;					/* humi1转换值 */
+	uint16_t temp2;					/* temp2转换值 */
+	uint16_t humi2;					/* humi2转换值 */
+	uint16_t temp3;					/* temp3转换值 */
+	uint16_t humi3;					/* humi3转换值 */
+	uint16_t temp4;					/* temp4转换值 */
+	uint16_t humi4;					/* humi4转换值 */
 	uint16_t batVoltage;			/* 电池电压 */
 } ANALOG_ConvertValueTypedef;
 
@@ -89,6 +100,6 @@ void ANALOG_Init(void);
 void ANALOG_ConvertEnable(void);
 void ANALOG_ConvertDisable(void);
 void ANALOG_GetSensorValue(void);
-void ANALOG_Float2ASCII(char* buffer, float value);
+void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value);
 
 #endif

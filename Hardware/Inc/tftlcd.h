@@ -34,13 +34,14 @@
  * 指令格式
  */
 #define TFTLCD_CMD_SCREEN_ID_CHANGE			(uint16_t)(0x00B1)		/* 切换画面 */
-#define TFTLCD_CMD_SCREEN_ID_GET			(uint16_t)(0x01B1)		/* 获取画面 */
-#define TFTLCD_CMD_BATCH_UPDATE				(uint16_t)(0x12B1)
-#define TFTLCD_CMD_TEXT_UPDATE				(uint16_t)(0x10B1)		/* 更新文本 */
 #define TFTLCD_CMD_SET_SCREEN				(uint16_t)(0X00B1)
+#define TFTLCD_CMD_SCREEN_ID_GET			(uint16_t)(0x01B1)		/* 获取画面 */
+#define TFTLCD_CMD_TEXT_UPDATE				(uint16_t)(0x10B1)		/* 更新文本 */
 #define TFTLCD_CMD_BUTTON					(uint16_t)(0x11B1)
 #define TFTLCD_CMD_BUTTON_SELECT			(uint16_t)(0x11B1)		/* 广州大彩，选择控件和按钮控件是同一个cmd */
+#define TFTLCD_CMD_BATCH_UPDATE				(uint16_t)(0x12B1)
 #define TFTLCD_CMD_SELECT					(uint16_t)(0x14B1)		/* 选择控件值上传 */
+#define TFTLCD_CMD_SET_FORE_COLOR			(uint16_t)(0x19B1)		/* 设置文本控件前景色 */
 #define TFTLCD_CMD_ICON_DISP				(uint16_t)(0x23B1)		/* 图标控件显示 */
 
 #define TFTLCD_CMD_CURVE_ADD_CHANNEL		(uint16_t)(0x30B1)		/* 曲线添加数据通道 */
@@ -50,6 +51,8 @@
 #define TFTLCD_CMD_CURVE_ADD_DATA_FRONT		(uint16_t)(0x35B1)		/* 指定通道前端添加新数据 */
 #define TFTLCD_CMD_CURVE_CLEAR_DATA			(uint16_t)(0x33B1)		/* 清空指定通道的数据 */
 
+#define TFTLCD_ALARM_COLOR					(0xF800)				/* 报警颜色 */
+#define TFTLCD_PERWARM_COLOR				(0xFF10)				/* 预警颜色 */
 /****************************控件ID枚举******************************************/
 /* 状态栏公共控件ID */
 typedef enum
@@ -383,24 +386,21 @@ typedef struct
 
 typedef struct
 {
-	uint8_t head;												/* 帧头 */
-	uint16_t cmd;												/* 指令 */
-	uint8_t screenIdH;											/* 画面ID */
+	uint8_t head;									/* 帧头 */
+	uint16_t cmd;									/* 指令 */
+	uint8_t screenIdH;								/* 画面ID */
 	uint8_t screenIdL;
 	union
 	{
 		uint8_t data[TFTLCD_UART_RX_DATA_SIZE_MAX];
-		union
-		{
-			StatusBarTextTypedef statusBarText;			/* 状态栏文本更新 */
-			StatusBarIconTypedef statusBarIcon;			/* 状态栏图标更新 */
-			AnalogTypedef        analogValue[8];		/* 模拟量批量更新 */
-			HistoryDateTypedef   HistoryDate;			/* 历史数据批量更新 */
-		} batch;
-		UpdateTypedef update;							/* buffer */
-		CurveTypedef  curve;							/* 曲线 */
+		StatusBarTextTypedef statusBarText;			/* 状态栏文本更新 */
+		StatusBarIconTypedef statusBarIcon;			/* 状态栏图标更新 */
+		AnalogTypedef        analogValue[8];		/* 模拟量批量更新 */
+		HistoryDateTypedef   HistoryDate;			/* 历史数据批量更新 */
+		UpdateTypedef 		 update;				/* 数据更新 */
+		CurveTypedef  		 curve;					/* 曲线 */
 	}buffer;
-	uint8_t tail[4];											/* 帧尾 */
+	uint8_t tail[4];								/* 帧尾 */
 } TFTLCD_SendBufferTypedef;
 
 /******************************************************************************/
@@ -443,6 +443,7 @@ void TFTLCD_Init(void);
 void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen);
 void TFTLCD_TextValueUpdate(uint16_t screenID, uint16_t ctlID, char* str, uint8_t size);
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog);
+void TFTLCD_AnalogDataAlarmDisplay(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
 void TFTLCD_StatusBarIconRefresh(uint16_t screenID);
 void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);

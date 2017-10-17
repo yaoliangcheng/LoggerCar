@@ -9,13 +9,14 @@ static uint16_t convertValueBuffer[ANALOG_SAMPLE_NUMB][ANALOG_CHANNEL_NUMB_TOTLE
 ANALOG_ValueTypedef ANALOG_value;
 ANALOG_AlarmStatusTypedef ANALOG_alarmStatus;
 BOOL ANALOG_alarmOccur = FALSE;				/* 模拟量报警发生 */
+ANALOG_ModeEnum ANALOG_Mode;				/* 模拟量报警模式 */
 
 /******************************************************************************/
 static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue);
 static uint8_t ANALOG_GetBatVoltage(uint16_t value);
 
 /*******************************************************************************
- * function:模拟量初始化
+ * @brief 模拟量初始化
  * 注意：没有经过电压校准的ADC采样会有较大偏差
  */
 void ANALOG_Init(void)
@@ -25,7 +26,7 @@ void ANALOG_Init(void)
 }
 
 /*******************************************************************************
- * function：使能ADC转换，转换之前需控制模拟量电源开关，并有适当的延时
+ * @brief 使能ADC转换，转换之前需控制模拟量电源开关，并有适当的延时
  */
 void ANALOG_ConvertEnable(void)
 {
@@ -33,7 +34,6 @@ void ANALOG_ConvertEnable(void)
 	ANALOG_PWR_ENABLE();
 	VBAT_PWR_CHECK_ENABLE();
 	osDelay(10);
-//	HAL_ADCEx_Calibration_Start(&ANALOG_ADC);
 	HAL_ADC_Start_DMA(&ANALOG_ADC, (uint32_t*)convertValueBuffer,
 								sizeof(convertValueBuffer));
 }
@@ -49,7 +49,8 @@ void ANALOG_ConvertDisable(void)
 }
 
 /*******************************************************************************
- * function：获取模拟量的值
+ * @brief 获取模拟量的值,如果AD值<通道AD最低值ANALOG_CHANNEL_AD_VALUE_MIN，
+ * 		  则证明该通道传感器未连接或者已损坏,则该通道数值标志位ANALOG_CHANNLE_INVALID_VALUE
  */
 void ANALOG_GetSensorValue(void)
 {
@@ -71,7 +72,7 @@ void ANALOG_GetSensorValue(void)
 	ANALOG_value.humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, ANALOG_value.temp4);
 
 	/* 获取电池电压 */
-	ANALOG_value.batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage + 70);
+	ANALOG_value.batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage);
 }
 
 /*******************************************************************************
@@ -79,29 +80,15 @@ void ANALOG_GetSensorValue(void)
  * @param buffer：储存地址指针
  * @param value:模拟量
  */
-void ANALOG_Float2ASCII(char* buffer, float value)
+void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value)
 {
-	uint16_t data = 0;
-
-	data = (uint16_t)(value * 10);
-
-	*(buffer + 4) = data % 10        + '0';
-	*(buffer + 3) = '.';
-	*(buffer + 2) = data / 10  % 10  + '0';
-	*(buffer + 1) = data / 100  % 10 + '0';
-	*(buffer + 0) = data / 1000 % 10 + '0';
-
-	if (value < 0)
+	if (value == ANALOG_CHANNLE_INVALID_VALUE)
+		memcpy(buffer->value, ANALOG_INVALID_VALUE, 5);
+	else
 	{
-		if ((*(buffer + 0) == '0') && (*(buffer + 1) == '0'))
-		{
-			*(buffer + 0) = ' ';
-			*(buffer + 1) = '-';
-		}
-		else
-		{
-			*(buffer + 0) = '-';
-		}
+		/* %5.1表示有效数据长度为5，小数1位 */
+		sprintf(buffer->value, "%5.1f", value);
+		buffer->str = ',';
 	}
 }
 
@@ -144,20 +131,19 @@ static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue)
 }
 
 /*******************************************************************************
- * function:获取锂电池电压
+ * @brief 获取锂电池电压，采用3颗等值电阻分压
  * value：锂电池分压后的AD值
- * 注意：两节锂电池的电压范围为6~8.4V
+ * 注意：两节锂电池的电压范围为6.4~8.4V
  */
 static uint8_t ANALOG_GetBatVoltage(uint16_t value)
 {
-	uint32_t voltage;
+	uint16_t voltage;
 	uint8_t  percent;
 
-	voltage = (uint32_t)((value * 3300) / 4096);
+	/* 获取电压值 */
+	voltage = (uint16_t)((((uint32_t)value * 3300) / 4096) * 3 - 6400);
 
-	voltage = ((voltage * 85) / 10) - 6000;
-
-	percent = (voltage * 100) / 2400;
+	percent = (voltage * 100) / 2000;
 
 	if (percent > 100)
 	{

@@ -212,7 +212,7 @@ void FILE_SendInfoFormatConvert(uint8_t* sendInfo, uint8_t* readInfo,
  * @brief 将储存的ASCII码转换成float
  * @retval 模拟量ASCII码
  */
-float FILE_Analog2Float(SaveInfoAnalogTypedef* value)
+float FILE_Analog2Float(FILE_SaveInfoAnalogTypedef* value)
 {
 	char str[6];
 
@@ -230,6 +230,14 @@ static void AnalogDataFormatConvert(char* analog, DataFormatEnum format, uint8_t
 	float value;
 	BOOL negative = FALSE;
 	uint16_t temp = 0;
+
+	/* 如果该通道值是NULL，则根据协议填写FFFE */
+	if (strcmp(analog, "_NULL") == 0)
+	{
+		*pBuffer       = 0xFF;
+		*(pBuffer + 1) = 0xFE;
+		return;
+	}
 
 	/* 将字符串转为float */
 	memcpy(str, analog, 5);

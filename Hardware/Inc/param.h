@@ -101,10 +101,10 @@ typedef struct
 	uint8_t overLimitRecordInterval;						/* 超标记录间隔 */
 	uint8_t exAnalogChannelNumb;							/* 外部模拟量通道数 */
 	uint8_t deviceType;										/* 设备型号 */
-	uint8_t osVersion;										/* OS型号 */
+	uint8_t osVersion;										/* OS版本号 */
 	uint8_t deviceCapacity;									/* 设备容量（剩余） */
-	ParamTypeTypedef      param[ANALOG_CHANNEL_NUMB];		/* 模拟量参数 */
-	ParamAlarmTypedef     channel[ANALOG_CHANNEL_NUMB];		/* 报警值 */
+	ParamTypeTypedef      chParam[ANALOG_CHANNEL_NUMB];		/* 模拟量参数 */
+	ParamAlarmTypedef     chAlarmValue[ANALOG_CHANNEL_NUMB];/* 报警值 */
 	ParamAlarmCodeTypedef alarmCode[3];						/* 报警号码 */
 	char password[4];
 } PARAM_DeviceParamTypedef;

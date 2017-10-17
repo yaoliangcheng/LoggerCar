@@ -8,6 +8,8 @@
 /******************************************************************************/
 DISPLAY_StatusTypedef DISPLAY_Status;
 
+extern FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
+
 /******************************************************************************/
 static void TimeSelectReturn(void);
 static void PasswordSelect(char numb);
@@ -23,15 +25,35 @@ static void GetAlarmCode(char* code);
 void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt)
 {
 	uint8_t i;
-	FILE_SaveStructTypedef saveInfo[4];
+
+	/* 进入临界区 */
+	taskENTER_CRITICAL();
+
+	if (structCnt > DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
+		return;
 
 	FILE_ReadFile(FILE_NAME_SAVE_DATA, startStructOffset * sizeof(FILE_SaveStructTypedef),
-					(uint8_t*)saveInfo, structCnt * sizeof(FILE_SaveStructTypedef));
+					(uint8_t*)FILE_ReadStruct, structCnt * sizeof(FILE_SaveStructTypedef));
 
-	for (i = 0; i < structCnt; i++)
+	/* 如果长度不够，则该组数据清空 */
+	if (structCnt < DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
 	{
-		TFTLCD_HistoryDataFormat(&saveInfo[i], (TFTLCD_HisDataCtlIdEnum)(CTL_ID_DIS_DATA_1 + i));
+		/* 剩余通道数值清空 */
+		for (i = structCnt; i < DISPLAY_HIS_DATA_ONE_SCREEN_CNT; i++)
+		{
+			memset(&FILE_ReadStruct[i], 0, sizeof(FILE_SaveStructTypedef));
+		}
 	}
+
+	/* 4组数据全部显示 */
+	for (i = 0; i < DISPLAY_HIS_DATA_ONE_SCREEN_CNT; i++)
+	{
+		TFTLCD_HistoryDataFormat(&FILE_ReadStruct[i],
+				(TFTLCD_HisDataCtlIdEnum)(CTL_ID_DIS_DATA_1 + i));
+	}
+
+	/* 退出临界区 */
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -67,11 +89,22 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 	{
 	case CTL_ID_PAGE_UP:
 		/* 避免翻过头 */
-		if (FILE_DataSaveStructCnt - DISPLAY_Status.hisDataDispStructOffset >
+		if (FILE_DataSaveStructCnt - DISPLAY_Status.hisDataDispStructOffset >=
 				DISPLAY_HIS_DATA_ONE_SCREEN_CNT * 2)
 		{
 			DISPLAY_Status.hisDataDispStructOffset += DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
-			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,
+					DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
+		}
+		else
+		{
+			if (FILE_DataSaveStructCnt - DISPLAY_Status.hisDataDispStructOffset
+					>= DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
+			{
+				DISPLAY_Status.hisDataDispStructOffset += DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
+				DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,
+						FILE_DataSaveStructCnt - DISPLAY_Status.hisDataDispStructOffset);
+			}
 		}
 		break;
 
@@ -82,6 +115,12 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 			DISPLAY_Status.hisDataDispStructOffset -= DISPLAY_HIS_DATA_ONE_SCREEN_CNT;
 			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,DISPLAY_HIS_DATA_ONE_SCREEN_CNT);
 		}
+		else
+		{
+			DISPLAY_Status.hisDataDispStructOffset = 0;
+			DISPLAY_HistoryData(DISPLAY_Status.hisDataDispStructOffset,
+					DISPLAY_Status.hisDataDispStructOffset);
+		}
 		break;
 
 	default:
@@ -91,7 +130,8 @@ void DISPLAY_HistoryTouch(uint16_t typeID)
 
 /*******************************************************************************
  * 数据打印界面
- ******************************************************************************/
+ *
+ */
 void DISPLAY_PrintTouch(uint16_t typeID)
 {
 	switch(typeID)
@@ -314,67 +354,67 @@ void DISPLAY_SetAlarmLimitTouch(uint16_t typeID)
 	switch (typeID)
 	{
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH1:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[0].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH1:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[0].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH1:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[0].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH1:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[0].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[0].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH2:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[1].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH2:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[1].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH2:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[1].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH2:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[1].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[1].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH3:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[2].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH3:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[2].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH3:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[2].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH3:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[2].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[2].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH4:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[3].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH4:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[3].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH4:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[3].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH4:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[3].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[3].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_SAVE:
@@ -394,67 +434,67 @@ void DISPLAY_SetAlarmLimit2Touch(uint16_t typeID)
 	switch (typeID)
 	{
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH5:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[4].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH5:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[4].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH5:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[4].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH5:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[4].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[4].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH6:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[5].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH6:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[5].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH6:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[5].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH6:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[5].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[5].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH7:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[6].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH7:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[6].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH7:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[6].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH7:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[6].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[6].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH8:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].alarmValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[7].alarmValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH8:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].alarmValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[7].alarmValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH8:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].perwarningValueUp);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[7].perwarningValueUp);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH8:
-		GetAlarmLimitValue(&PARAM_DeviceParam.channel[7].perwarningValueLow);
+		GetAlarmLimitValue(&PARAM_DeviceParam.chAlarmValue[7].perwarningValueLow);
 		break;
 
 	case CTL_ID_SET_ALARM_LIMIT_2_SAVE:

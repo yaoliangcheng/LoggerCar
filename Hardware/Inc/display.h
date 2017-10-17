@@ -49,6 +49,7 @@ typedef struct
 typedef struct
 {
 	uint32_t hisDataDispStructOffset;			/* 历史数据显示结构体偏移 */
+	FunctionalState      displayModeBusy;		/* 显示状态忙，重复操作无效 */
 	ChannelSelectTypedef printChannelStatus;	/* 打印界面通道状态 */
 	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
 	FILE_RealTimeTypedef* selectTime;			/* 已被选择的时间 */

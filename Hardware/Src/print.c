@@ -198,7 +198,7 @@ static uint32_t PRINT_SearchStartTime(PRINT_TimeCompareTypedef destTime)
 /*******************************************************************************
  * function£∫≈–∂œ ˝÷µ «∑Ò≥¨±Í
  */
-static PRINT_DataStatusEnum PRINT_AdjustOverLimited(SaveInfoAnalogTypedef* analog,
+static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
 													ParamAlarmTypedef* param)
 {
 	float value;
@@ -251,56 +251,56 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset, PRINT_TimeCompareTy
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[0], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[0], &PARAM_DeviceParam.channel[0]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[0], &PARAM_DeviceParam.chAlarmValue[0]);
 		index += 6;
 	}
 	if (select->status.bit.ch2)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[1], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[1], &PARAM_DeviceParam.channel[1]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[1], &PARAM_DeviceParam.chAlarmValue[1]);
 		index += 6;
 	}
 	if (select->status.bit.ch3)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[2], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[2], &PARAM_DeviceParam.channel[2]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[2], &PARAM_DeviceParam.chAlarmValue[2]);
 		index += 6;
 	}
 	if (select->status.bit.ch4)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[3], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[3], &PARAM_DeviceParam.channel[3]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[3], &PARAM_DeviceParam.chAlarmValue[3]);
 		index += 6;
 	}
 	if (select->status.bit.ch5)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[4], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[4], &PARAM_DeviceParam.channel[4]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[4], &PARAM_DeviceParam.chAlarmValue[4]);
 		index += 6;
 	}
 	if (select->status.bit.ch6)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[5], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[5], &PARAM_DeviceParam.channel[5]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[5], &PARAM_DeviceParam.chAlarmValue[5]);
 		index += 6;
 	}
 	if (select->status.bit.ch7)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[6], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[6], &PARAM_DeviceParam.channel[6]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[6], &PARAM_DeviceParam.chAlarmValue[6]);
 		index += 6;
 	}
 	if (select->status.bit.ch8)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &saveInfo.analogValue[7], 6);
 		/* ≈–∂œ «∑Ò≥¨±Í */
-		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[7], &PARAM_DeviceParam.channel[7]);
+		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[7], &PARAM_DeviceParam.chAlarmValue[7]);
 		index += 6;
 	}
 

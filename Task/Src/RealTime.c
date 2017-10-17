@@ -94,9 +94,9 @@ void REALTIME_Task(void)
 					/* 获取传感器的值 */
 					ANALOG_GetSensorValue();
 					/* 更新液晶屏显示 */
-					if (TFTLCD_status.curScreenID == SCREEN_ID_CUR_DATA_8CH)
+//					if (TFTLCD_status.curScreenID == SCREEN_ID_CUR_DATA_8CH)
 					{
-//						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_ANALOG_UPDATE);
+						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_ANALOG_UPDATE);
 					}
 
 					/* 如果记录间隔时间到，则触发记录 */
@@ -108,7 +108,7 @@ void REALTIME_Task(void)
 						/* 激活MainProcess任务 */
 						osThreadResume(mainprocessTaskHandle);
 						/* 更新状态栏 */
-//						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
 					}
 				}
 			}

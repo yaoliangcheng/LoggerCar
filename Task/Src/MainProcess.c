@@ -8,6 +8,7 @@
 #include "gps.h"
 #include "file.h"
 #include "input.h"
+#include "analog.h"
 
 /******************************************************************************/
 extern FILE_SaveStructTypedef FILE_SaveStruct;
@@ -57,17 +58,18 @@ void MAINPROCESS_Task(void)
 		HEX2ASCII((uint8_t*)&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
 		/* 获取外部电源状态 */
 		FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
+
 		/* 模拟量转换为ASCII */
-		sprintf((char*)&FILE_SaveStruct.analogValue[0].value, "%5.1f", ANALOG_value.temp1);
-		sprintf((char*)&FILE_SaveStruct.analogValue[1].value, "%5.1f", ANALOG_value.humi1);
-		sprintf((char*)&FILE_SaveStruct.analogValue[2].value, "%5.1f", ANALOG_value.temp2);
-		sprintf((char*)&FILE_SaveStruct.analogValue[3].value, "%5.1f", ANALOG_value.humi2);
-		sprintf((char*)&FILE_SaveStruct.analogValue[4].value, "%5.1f", ANALOG_value.temp3);
-		sprintf((char*)&FILE_SaveStruct.analogValue[5].value, "%5.1f", ANALOG_value.humi3);
-		sprintf((char*)&FILE_SaveStruct.analogValue[6].value, "%5.1f", ANALOG_value.temp4);
-		sprintf((char*)&FILE_SaveStruct.analogValue[7].value, "%5.1f", ANALOG_value.humi4);
-//		ANALOG_Float2ASCII((char*)&FILE_SaveStruct.analogValue[0].value, ANALOG_value.temp1);
-		sprintf((char*)&FILE_SaveStruct.batQuality[0],        "%3d",   ANALOG_value.batVoltage);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[0], ANALOG_value.temp1);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[1], ANALOG_value.humi1);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[2], ANALOG_value.temp2);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[3], ANALOG_value.humi2);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[4], ANALOG_value.temp3);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[5], ANALOG_value.humi3);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[6], ANALOG_value.temp4);
+		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[7], ANALOG_value.humi4);
+
+		sprintf((char*)&FILE_SaveStruct.batQuality[0], "%3d", ANALOG_value.batVoltage);
 		/* 定位值转换成ASCII */
 		sprintf((char*)&FILE_SaveStruct.longitude[0], "%10.5f", location->longitude);
 		sprintf((char*)&FILE_SaveStruct.latitude[0],  "%10.5f",  location->latitude);
@@ -75,14 +77,6 @@ void MAINPROCESS_Task(void)
 		FILE_SaveStruct.batQuality[3]	   = '%';		/* 电池电量百分号 */
 		FILE_SaveStruct.str7   			   = ',';
 		FILE_SaveStruct.str8   			   = ',';
-		FILE_SaveStruct.analogValue[0].str = ',';
-		FILE_SaveStruct.analogValue[1].str = ',';
-		FILE_SaveStruct.analogValue[2].str = ',';
-		FILE_SaveStruct.analogValue[3].str = ',';
-		FILE_SaveStruct.analogValue[4].str = ',';
-		FILE_SaveStruct.analogValue[5].str = ',';
-		FILE_SaveStruct.analogValue[6].str = ',';
-		FILE_SaveStruct.analogValue[7].str = ',';
 
 		/* 储存数据 */
 		FILE_SaveInfo();

@@ -145,7 +145,7 @@ static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf)
 
 	/* 设置通道类型 */
 	sendBuf->exitAnalogChannelNumb = PARAM_DeviceParam.exAnalogChannelNumb;
-	memcpy(&sendBuf->param[0], &PARAM_DeviceParam.param[0], sizeof(sendBuf->param));
+//	memcpy(&sendBuf->param[0], &PARAM_DeviceParam.param[0], sizeof(sendBuf->param));
 
 	/* 数据包长度最大不可能超过255，包个数H只能为0 */
 	sendBuf->dataPackNumbH = 0x00;

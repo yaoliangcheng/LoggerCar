@@ -1,4 +1,5 @@
 #include "ntc.h"
+#include "analog.h"
 
 /*******************************************************************************
  * 根据电阻值查表得出温度值
@@ -61,6 +62,9 @@ static float NTC_CheckTable(volatile uint32_t resValue)
 float NTC_GetTemp(uint16_t analogValue)
 {
 	uint32_t resValue;
+
+	if (analogValue < ANALOG_CHANNEL_AD_VALUE_MIN)
+		return ANALOG_CHANNLE_INVALID_VALUE;
 
 	/* 将AD值转换成电阻值 */
 	resValue = (uint32_t)(((uint32_t)(STM32_AD_FULL_VALUE * NTC_REF_RES)

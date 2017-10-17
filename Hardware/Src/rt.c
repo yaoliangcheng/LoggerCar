@@ -19,21 +19,21 @@ static void RT_SetAlarmTimeInterval(uint8_t interval);
  */
 void RT_Init(void)
 {
-//	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
-//	{
-//		RT_RealTime.date.Year = 17;
-//		RT_RealTime.date.Month = RTC_MONTH_AUGUST;
-//		RT_RealTime.date.Date = 17;
-//		RT_RealTime.date.WeekDay = RTC_WEEKDAY_THURSDAY;
-//		RT_RealTime.time.Hours = 10;
-//		RT_RealTime.time.Minutes = 55;
-//		RT_RealTime.time.Seconds = 0x00;
-//		RT_SetRealTime(&RT_RealTime);
-//
-//		HAL_RTCEx_BKUPWrite(&RT_RTC, RTC_BKUP_REG_DATA, RTC_BKUP_DATA);
-//	}
-//	else
-//	{
+	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
+	{
+		RT_RealTime.date.Year = 17;
+		RT_RealTime.date.Month = 10;
+		RT_RealTime.date.Date = 17;
+		RT_RealTime.date.WeekDay = RTC_WEEKDAY_MONDAY;
+		RT_RealTime.time.Hours = 16;
+		RT_RealTime.time.Minutes = 12;
+		RT_RealTime.time.Seconds = 0x00;
+		RT_SetRealTime(&RT_RealTime);
+
+		HAL_RTCEx_BKUPWrite(&RT_RTC, RTC_BKUP_REG_DATA, RTC_BKUP_DATA);
+	}
+	else
+	{
 		RT_BKUP_ReadDate();
 		HAL_RTC_GetDate(&RT_RTC, &RT_RealTime.date, RTC_FORMAT_BIN);
 //
@@ -48,7 +48,7 @@ void RT_Init(void)
 //		__HAL_RTC_ALARM_EXTI_ENABLE_IT();
 //		/* EXTI上升沿产生中断 */
 //		__HAL_RTC_ALARM_EXTI_ENABLE_RISING_EDGE();
-//	}
+	}
 }
 
 /*******************************************************************************

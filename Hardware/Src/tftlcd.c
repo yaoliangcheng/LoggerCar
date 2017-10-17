@@ -13,12 +13,16 @@ uint8_t TFTLCD_RecvBuf[TFTLCD_UART_RX_DATA_SIZE_MAX];
 TFTLCD_StatusTypedef TFTLCD_status;
 
 /******************************************************************************/
+extern ANALOG_ModeEnum ANALOG_Mode;
+
+/******************************************************************************/
 static void TFTLCD_StructInit(void);
 static void TFTLCD_UartInit(void);
 static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, AnalogTypedef* batch);
 static void TFTLCD_SendBuf(uint8_t size);
 static void TFTLCD_ScreenStart(void);
 static void TFTLCD_HistoryDataCurveDisplay(uint8_t channel, uint8_t data);
+static void AnalogAlarmDisplay(uint16_t ctlID, float analog, ParamAlarmTypedef* param);
 
 /*******************************************************************************
  * function:触摸屏初始化
@@ -86,9 +90,6 @@ void TFTLCD_TextValueUpdate(uint16_t screenID, uint16_t ctlID, char* str, uint8_
  */
 void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 {
-	/* 进入临界区 */
-	taskENTER_CRITICAL();
-
 	/* 批量更新命令 */
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
@@ -98,22 +99,22 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 
 	/* 模拟量更新 */
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH1, analog->temp1,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[0]);
+			&TFTLCD_SendBuffer.buffer.analogValue[0]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH2, analog->temp2,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[1]);
+			&TFTLCD_SendBuffer.buffer.analogValue[1]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH3, analog->temp3,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[2]);
+			&TFTLCD_SendBuffer.buffer.analogValue[2]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH4, analog->temp4,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[3]);
+			&TFTLCD_SendBuffer.buffer.analogValue[3]);
 
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH5, analog->humi1,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[4]);
+			&TFTLCD_SendBuffer.buffer.analogValue[4]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH6, analog->humi2,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[5]);
+			&TFTLCD_SendBuffer.buffer.analogValue[5]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH7, analog->humi3,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[6]);
+			&TFTLCD_SendBuffer.buffer.analogValue[6]);
 	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH8, analog->humi4,
-			&TFTLCD_SendBuffer.buffer.batch.analogValue[7]);
+			&TFTLCD_SendBuffer.buffer.analogValue[7]);
 
 	/* 不知道为什么，这个字节总是被清零 */
 	/* 强制转为FF */
@@ -124,9 +125,21 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 				TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(sizeof(AnalogTypedef) * 8 + 9);
+}
 
-	/* 退出临界区 */
-	taskEXIT_CRITICAL();
+/*******************************************************************************
+ * @brief 判断各个通道的值是否超标
+ */
+void TFTLCD_AnalogDataAlarmDisplay(ANALOG_ValueTypedef* analog)
+{
+	AnalogAlarmDisplay(CTL_ID_DATA_CH1, analog->temp1, &PARAM_DeviceParam.chAlarmValue[0]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH5, analog->humi1, &PARAM_DeviceParam.chAlarmValue[1]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH2, analog->temp2, &PARAM_DeviceParam.chAlarmValue[2]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH6, analog->humi2, &PARAM_DeviceParam.chAlarmValue[3]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH3, analog->temp3, &PARAM_DeviceParam.chAlarmValue[4]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH7, analog->humi3, &PARAM_DeviceParam.chAlarmValue[5]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH4, analog->temp4, &PARAM_DeviceParam.chAlarmValue[6]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH8, analog->humi4, &PARAM_DeviceParam.chAlarmValue[7]);
 }
 
 /*******************************************************************************
@@ -137,55 +150,49 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
  */
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity)
 {
-	/* 进入临界区 */
-	taskENTER_CRITICAL();
-
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
 	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screenID);
 	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screenID);
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeCtlIdH =
+	TFTLCD_SendBuffer.buffer.statusBarText.timeCtlIdH =
 			HALFWORD_BYTE_H(CTL_ID_REALTIME);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeCtlIdL =
+	TFTLCD_SendBuffer.buffer.statusBarText.timeCtlIdL =
 			HALFWORD_BYTE_L(CTL_ID_REALTIME);
 
 	/* 时间长度是16个字符 */
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeSizeH = 0;
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.timeSizeL = 16;
+	TFTLCD_SendBuffer.buffer.statusBarText.timeSizeH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarText.timeSizeL = 16;
 
 	/* 在年的前面添加上“20” */
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.year[0] = '2';
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.year[1] = '0';
-	HEX2ASCII(&rt->date.Year, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.year[2], 1);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.str1 = '.';
-	HEX2ASCII(&rt->date.Month, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.month[0], 1);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.str2 = '.';
-	HEX2ASCII(&rt->date.Date, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.day[0], 1);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.str3 = ' ';
-	HEX2ASCII(&rt->time.Hours, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.hour[0], 1);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.str4 = ':';
-	HEX2ASCII(&rt->time.Minutes, (uint8_t*)&TFTLCD_SendBuffer.buffer.batch.statusBarText.min[0], 1);
+	TFTLCD_SendBuffer.buffer.statusBarText.year[0] = '2';
+	TFTLCD_SendBuffer.buffer.statusBarText.year[1] = '0';
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.year[2],  &rt->date.Year,  1);
+	TFTLCD_SendBuffer.buffer.statusBarText.str1 = '.';
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.month[0], &rt->date.Month, 1);
+	TFTLCD_SendBuffer.buffer.statusBarText.str2 = '.';
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.day[0],   &rt->date.Date,  1);
+	TFTLCD_SendBuffer.buffer.statusBarText.str3 = ' ';
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.hour[0],  &rt->time.Hours,  1);
+	TFTLCD_SendBuffer.buffer.statusBarText.str4 = ':';
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.min[0],   &rt->time.Minutes, 1);
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.batCtlIdH =
+	TFTLCD_SendBuffer.buffer.statusBarText.batCtlIdH =
 			HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY_PERCENT);
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.batCtlIdL =
+	TFTLCD_SendBuffer.buffer.statusBarText.batCtlIdL =
 			HALFWORD_BYTE_L(CTL_ID_BAT_QUANTITY_PERCENT);
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.batSizeH = 0;
-	TFTLCD_SendBuffer.buffer.batch.statusBarText.batSizeL = 3;
+	TFTLCD_SendBuffer.buffer.statusBarText.batSizeH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarText.batSizeL = 3;
 
-	sprintf(TFTLCD_SendBuffer.buffer.batch.statusBarText.batCapacity,
+	sprintf(TFTLCD_SendBuffer.buffer.statusBarText.batCapacity,
 			"%3d", batQuantity);
 
 	memcpy(&TFTLCD_SendBuffer.buffer.data[sizeof(StatusBarTextTypedef)],
 			TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(sizeof(StatusBarTextTypedef) + 11);
-
-	/* 退出临界区 */
-	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -196,84 +203,78 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
  */
 void TFTLCD_StatusBarIconRefresh(uint16_t screenID)
 {
-	/* 进入临界区 */
-	taskENTER_CRITICAL();
-
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_BATCH_UPDATE;
 
 	/* 界面ID */
 	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screenID);
 	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screenID);
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdH = HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCtlIdL = HALFWORD_BYTE_L(CTL_ID_BAT_QUANTITY);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batSizeH = 0;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batSizeL = 2;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.batCtlIdH = HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.batCtlIdL = HALFWORD_BYTE_L(CTL_ID_BAT_QUANTITY);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.batSizeH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.batSizeL = 2;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityH = 0;
 	if (INPUT_CheckPwrOnStatus())
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CHARGE;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CHARGE;
 	}
 	else if (ANALOG_value.batVoltage >= 80)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_80;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_80;
 	}
 	else if (ANALOG_value.batVoltage >= 60)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_60;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_60;
 	}
 	else if (ANALOG_value.batVoltage >= 40)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_40;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_40;
 	}
 	else if (ANALOG_value.batVoltage >= 20)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_20;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_20;
 	}
 	else
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_0;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.batCapacityL = ICON_BAT_CAPACITY_0;
 	}
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCtlIdH = HALFWORD_BYTE_H(CTL_ID_SIGNAL_QUALITY);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCtlIdL = HALFWORD_BYTE_L(CTL_ID_SIGNAL_QUALITY);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalSizeH = 0;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalSizeL = 2;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCapacityH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.signalCtlIdH = HALFWORD_BYTE_H(CTL_ID_SIGNAL_QUALITY);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.signalCtlIdL = HALFWORD_BYTE_L(CTL_ID_SIGNAL_QUALITY);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.signalSizeH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.signalSizeL = 2;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.signalCapacityH = 0;
 	if (GPRS_signalQuality >= 21)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_31_21;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_31_21;
 	}
 	else if (GPRS_signalQuality >= 11)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_21_11;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_21_11;
 	}
 	else
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_11_0;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.signalCapacityL = ICON_SIGNAL_QUALITY_11_0;
 	}
 
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmCtlIdH = HALFWORD_BYTE_H(CTL_ID_ALARM_ICON);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmCtlIdL = HALFWORD_BYTE_L(CTL_ID_ALARM_ICON);
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmSizeH = 0;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmSizeL = 2;
-	TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmCapacityH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.alarmCtlIdH = HALFWORD_BYTE_H(CTL_ID_ALARM_ICON);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.alarmCtlIdL = HALFWORD_BYTE_L(CTL_ID_ALARM_ICON);
+	TFTLCD_SendBuffer.buffer.statusBarIcon.alarmSizeH = 0;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.alarmSizeL = 2;
+	TFTLCD_SendBuffer.buffer.statusBarIcon.alarmCapacityH = 0;
 	if (ANALOG_alarmStatus.status.all != 0)
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmCapacityL = ICON_ALARM_ON;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.alarmCapacityL = ICON_ALARM_ON;
 	}
 	else
 	{
-		TFTLCD_SendBuffer.buffer.batch.statusBarIcon.alarmCapacityL = ICON_ALARM_OFF;
+		TFTLCD_SendBuffer.buffer.statusBarIcon.alarmCapacityL = ICON_ALARM_OFF;
 	}
 
 	memcpy(&TFTLCD_SendBuffer.buffer.data[sizeof(StatusBarIconTypedef)],
 			TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(sizeof(StatusBarIconTypedef) + 11);
-
-	/* 退出临界区 */
-	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -283,9 +284,6 @@ void TFTLCD_StatusBarIconRefresh(uint16_t screenID)
  */
 void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID)
 {
-	/* 进入临界区 */
-	taskENTER_CRITICAL();
-
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
 	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_HIS_DATA);
@@ -330,9 +328,6 @@ void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCt
 				TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(70);
-
-	/* 退出临界区 */
-	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -393,9 +388,6 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
  */
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time)
 {
-	/* 进入临界区 */
-	taskENTER_CRITICAL();
-
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_TEXT_UPDATE;
 
 	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
@@ -404,19 +396,16 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
 	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
 
-	HEX2ASCII(&time->year, (uint8_t*)TFTLCD_SendBuffer.buffer.update.value.date, 3);
+	HEX2ASCII((uint8_t*)TFTLCD_SendBuffer.buffer.update.value.date, &time->year,  3);
 	TFTLCD_SendBuffer.buffer.update.value.date[6] = ' ';
-	HEX2ASCII(&time->hour, (uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[7], 1);
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[7], &time->hour, 1);
 	TFTLCD_SendBuffer.buffer.update.value.date[9] = ':';
-	HEX2ASCII(&time->min, (uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[10], 1);
+	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[10], &time->min, 1);
 
 	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[12],
 				TFTLCD_SendBuffer.tail, 4);
 
 	TFTLCD_SendBuf(23);
-
-	/* 退出临界区 */
-	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -568,14 +557,20 @@ static void TFTLCD_UartInit(void)
  */
 static void TFTLCD_Analog2ASCII(uint16_t typeID, float analog, AnalogTypedef* batch)
 {
-	uint16_t size;
-
 	batch->ctrlIdH = HALFWORD_BYTE_H(typeID);
 	batch->ctrlIdL = HALFWORD_BYTE_L(typeID);
-	/* %5.1表示有效数据长度为5，小数1位 */
-	size = sprintf((char*)&batch->value[0], "%5.1f", analog);
-	batch->sizeH = HALFWORD_BYTE_H(size);
-	batch->sizeL = HALFWORD_BYTE_L(size);
+
+	if (analog == ANALOG_CHANNLE_INVALID_VALUE)
+		memcpy(batch->value, ANALOG_INVALID_VALUE, 5);
+	else
+	{
+		/* %5.1表示有效数据长度为5，小数1位 */
+		sprintf(batch->value, "%5.1f", analog);
+	}
+
+	/* 长度固定为5 */
+	batch->sizeH = 0x00;
+	batch->sizeL = 0x05;
 }
 
 /*******************************************************************************
@@ -615,11 +610,46 @@ static void TFTLCD_HistoryDataCurveDisplay(uint8_t channel, uint8_t data)
 }
 
 /*******************************************************************************
- *
+ * @brief 设置文本控件前景色
  */
-static void TFTLCD_CurveAddChannel(uint8_t channel)
+static void SetTextForeColor(uint16_t ctlID, uint16_t foreColor)
 {
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_FORE_COLOR;
 
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(SCREEN_ID_CUR_DATA_8CH);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_CUR_DATA_8CH);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
+
+	TFTLCD_SendBuffer.buffer.update.value.date[0] = HALFWORD_BYTE_H(foreColor);
+	TFTLCD_SendBuffer.buffer.update.value.date[1] = HALFWORD_BYTE_L(foreColor);
+
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[2], TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(13);
+}
+
+/*******************************************************************************
+ * @brief 判断模拟量的值是否超标，超标则改变指定控件的颜色
+ */
+static void AnalogAlarmDisplay(uint16_t ctlID, float analog, ParamAlarmTypedef* param)
+{
+	/* 上下限比较 */
+	if ((analog > param->alarmValueUp) || (analog < param->alarmValueLow))
+	{
+		SetTextForeColor(ctlID, TFTLCD_ALARM_COLOR);
+		ANALOG_Mode = ANALOG_MODE_ALARM;
+	}
+	else if ((analog > param->perwarningValueUp) || (analog < param->perwarningValueLow))
+	{
+		SetTextForeColor(ctlID, TFTLCD_PERWARM_COLOR);
+		ANALOG_Mode = ANALOG_MODE_PERWARM;
+	}
+	else
+	{
+		ANALOG_Mode = ANALOG_MODE_NORMAL;
+	}
 }
 
 
