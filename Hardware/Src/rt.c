@@ -73,18 +73,19 @@ void RT_BKUP_UpdateDate(RT_TimeTypedef* time)
  */
 void RT_TimeAdjustWithCloud(uint8_t* pBuffer)
 {
-	uint8_t str[10] = {0};
+	uint8_t str[12] = {0};
 
 	RT_TimeTypedef   eTime;
 
 	/* 将字符转换成数字 */
 	str2numb(str, (pBuffer + RT_OFFSET_CLOUD_TIME), sizeof(str));
 
-	eTime.date.Year    = (str[0]  * 10)  + str[1];
-	eTime.date.Month   = (str[2]  * 10)  + str[3];
-	eTime.date.Date    = (str[4]  * 10)  + str[5];
-	eTime.time.Hours   = (str[6]  * 10)  + str[7];
-	eTime.time.Minutes = (str[8]  * 10)  + str[9];
+	eTime.date.Year    = (str[0]  * 10)   + str[1];
+	eTime.date.Month   = (str[2]  * 10)   + str[3];
+	eTime.date.Date    = (str[4]  * 10)   + str[5];
+	eTime.time.Hours   = (str[6]  * 10)   + str[7];
+	eTime.time.Minutes = (str[8]  * 10)   + str[9];
+	eTime.time.Seconds = (str[10]  * 10)  + str[11];
 
 	/* 接收到平台回文，与发送时间比较，若相差年月日时分有偏差，则校准，秒钟不计，校准字节长度为5 */
 	if ((0 != memcmp(&eTime.date, &RT_RealTime.date, 3)

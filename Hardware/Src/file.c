@@ -97,7 +97,7 @@ void FILE_WriteFile(char* fileName, DWORD offset, BYTE* pBuffer, UINT size)
 	if (FR_OK == f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE))
 	{
 		f_lseek(&objFile, offset);
-		f_read(&objFile, pBuffer, size, &byteWrite);
+		f_write(&objFile, pBuffer, size, &byteWrite);
 		f_close(&objFile);
 	}
 
@@ -232,7 +232,7 @@ static void AnalogDataFormatConvert(char* analog, DataFormatEnum format, uint8_t
 	uint16_t temp = 0;
 
 	/* 如果该通道值是NULL，则根据协议填写FFFE */
-	if (strcmp(analog, "_NULL") == 0)
+	if (memcmp(analog, " NULL", 5) == 0)
 	{
 		*pBuffer       = 0xFF;
 		*(pBuffer + 1) = 0xFE;

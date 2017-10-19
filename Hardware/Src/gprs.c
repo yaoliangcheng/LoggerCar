@@ -90,7 +90,7 @@ uint8_t GPRS_GetSignalQuality(uint8_t* buf)
 {
 	uint8_t temp[2];
 
-	str2numb(&buf[GPRS_SIGNAL_QUALITY_OFFSET], temp, 2);
+	str2numb(temp, &buf[GPRS_SIGNAL_QUALITY_OFFSET], 2);
 	return (uint8_t)(temp[0] * 10 + temp[1]);
 }
 
