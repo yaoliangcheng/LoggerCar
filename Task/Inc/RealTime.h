@@ -12,7 +12,8 @@
 
 /******************************************************************************/
 #define REALTIME_TASK_SIGNAL_UPDATE				(1 << 0)
-#define REALTIME_SENSOR_CONVERT_FINISH			(1 << 1)	/* 传感器转换完成 */
+#define REALTIME_SENSOR_CONVERT_START			(1 << 1)	/* 传感器开始转换 */
+#define REALTIME_SENSOR_CONVERT_FINISH			(1 << 2)	/* 传感器转换完成 */
 
 /******************************************************************************/
 void REALTIME_Task(void);

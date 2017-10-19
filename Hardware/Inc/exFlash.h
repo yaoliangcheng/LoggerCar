@@ -4,22 +4,21 @@
 /******************************************************************************/
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
-#include "common.h"
-
 #include "spi.h"
 #include "input.h"
 #include "gps.h"
+#include "public.h"
 
 #include "RealTime.h"
 
 
 /******************************************************************************/
 #define SPI_FLASH_CS_LOW()  \
-		HAL_GPIO_WritePin(SPI_CS_FLASH_GPIO_Port, SPI_CS_FLASH_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
 #define SPI_FLASH_CS_HIGH() \
-		HAL_GPIO_WritePin(SPI_CS_FLASH_GPIO_Port, SPI_CS_FLASH_Pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
 
-#define exFLASH_SPI		(hspi1)
+#define exFLASH_SPI		(hspi2)
 
 /*******************************************************************************
 *W25Q常用指令
@@ -53,7 +52,8 @@
 #define Dummy_Byte                		(0xFF)
 
 #define exFLASH_SECTOR_SIZE_BYTES		(4096)
-#define exFLASH_SECTOR_COUNT			(1024)
+#define exFLASH_SECTOR_COUNT			(2048)
+#define exFLASH_SECTOR_OFFSET			(4096)
 #define exFLASH_BLOCK_SIZE				(1)		/* 扇区数 */
 
 #define WIP_Flag                  		(0x01)	/* WIP(busy)标志，FLASH内部正在写入 */

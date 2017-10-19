@@ -53,7 +53,6 @@
 
 /* USER CODE BEGIN Includes */     
 #include "led.h"
-#include "debug.h"
 #include "RealTime.h"
 #include "MainProcess.h"
 #include "GPRSProcess.h"
@@ -68,7 +67,6 @@ osThreadId defaultTaskHandle;
 
 /* 任务句柄 */
 osThreadId ledTaskHandle;
-osThreadId debugTaskHandle;
 osThreadId realtimeTaskHandle;
 osThreadId tftlcdTaskHandle;
 osThreadId mainprocessTaskHandle;
@@ -80,6 +78,7 @@ osMessageQId adjustTimeMessageQId;
 osMessageQId analogMessageQId;
 osMessageQId infoMessageQId;
 osMessageQId infoCntMessageQId;
+osMessageQId gprsTaskMessageQid;
 
 /* USER CODE END Variables */
 
@@ -87,6 +86,7 @@ osMessageQId infoCntMessageQId;
 void StartDefaultTask(void const * argument);
 
 extern void MX_FATFS_Init(void);
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE BEGIN FunctionPrototypes */
@@ -123,47 +123,46 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   osThreadDef(LED, LED_Task, osPriorityNormal, 0, 128);
   ledTaskHandle = osThreadCreate(osThread(LED), NULL);
-  
-  osThreadDef(DEBUG, DEBUG_Task, osPriorityNormal, 0, 128);
-  debugTaskHandle = osThreadCreate(osThread(DEBUG), NULL);
 
   osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 512);
   realtimeTaskHandle = osThreadCreate(osThread(REALTIME), NULL);
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
+  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 512);
   tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
-
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityAboveNormal, 0, 2048);
+//
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 1000);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 
-  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 512);
+  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 2000);
   gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
-  osThreadSuspend(gprsprocessTaskHandle);
+//  osThreadSuspend(gprsprocessTaskHandle);
 
 
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
-  realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
+//  osMessageQDef(REALTIME_MESSAGE, 2, sizeof(uint32_t*));
+//  realtimeMessageQId = osMessageCreate(osMessageQ(REALTIME_MESSAGE), NULL);
+//
+//  osMessageQDef(ADJUSTTIME_MESSAGE, 2, sizeof(uint32_t*));
+//  adjustTimeMessageQId = osMessageCreate(osMessageQ(ADJUSTTIME_MESSAGE), NULL);
+//
+//  osMessageQDef(ANALOG_MESSAGE, 2, sizeof(uint32_t*));
+//  analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
+//
+//  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
+//  infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
+//
+//  /* 数据条数传递的是值本身 */
+//  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
+//  infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
 
-  osMessageQDef(ADJUSTTIME_MESSAGE, 2, sizeof(uint32_t*));
-  adjustTimeMessageQId = osMessageCreate(osMessageQ(ADJUSTTIME_MESSAGE), NULL);
-
-  osMessageQDef(ANALOG_MESSAGE, 2, sizeof(uint32_t*));
-  analogMessageQId = osMessageCreate(osMessageQ(ANALOG_MESSAGE), NULL);
-
-  osMessageQDef(INFO_MESSAGE, 2, sizeof(uint32_t*));
-  infoMessageQId = osMessageCreate(osMessageQ(INFO_MESSAGE), NULL);
-
-  /* 数据条数传递的是值本身 */
-  osMessageQDef(INFO_CNT_MESSAGE, 2, sizeof(uint16_t));
-  infoCntMessageQId = osMessageCreate(osMessageQ(INFO_CNT_MESSAGE), NULL);
-
+  osMessageQDef(GPRS_TASK_MESSAGE, 5, sizeof(uint8_t));
+  gprsTaskMessageQid = osMessageCreate(osMessageQ(GPRS_TASK_MESSAGE), NULL);
 
   /* USER CODE END RTOS_QUEUES */
 }
@@ -173,6 +172,9 @@ void StartDefaultTask(void const * argument)
 {
   /* init code for FATFS */
   MX_FATFS_Init();
+
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */

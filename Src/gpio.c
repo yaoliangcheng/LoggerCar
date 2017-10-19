@@ -80,46 +80,71 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPRS_PWRKEY_CTRL_Pin|VGPRS_CTRL_Pin|VBAT_CTRL_Pin|EE_WP_Pin 
-                          |SCREEN_PWR_CTRL_Pin|PRINT_PWR_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, O_VSENSOR_Pin|O_VSCREEN_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin 
+                          |O_GSM_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPRS_RST_CTRL_GPIO_Port, GPRS_RST_CTRL_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(O_VBAT_GPIO_Port, O_VBAT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SENSOR_PWR_CTRL_GPIO_Port, SENSOR_PWR_CTRL_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(FLASH_WP_GPIO_Port, FLASH_WP_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, FLASH_WP_Pin|SPI_CS_FLASH_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, LED_Pin|O_VLIGHT_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(O_VUSB_GPIO_Port, O_VUSB_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PEPin PEPin PEPin PEPin 
-                           PEPin PEPin PEPin */
-  GPIO_InitStruct.Pin = GPRS_PWRKEY_CTRL_Pin|GPRS_RST_CTRL_Pin|VGPRS_CTRL_Pin|VBAT_CTRL_Pin 
-                          |EE_WP_Pin|SCREEN_PWR_CTRL_Pin|PRINT_PWR_CTRL_Pin;
+                           PEPin */
+  GPIO_InitStruct.Pin = O_VSENSOR_Pin|O_VSCREEN_Pin|O_VPRINT_Pin|O_GSM_PWR_Pin 
+                          |O_GSM_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = PWR_ON_CHECK_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pin = WKUP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(PWR_ON_CHECK_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(WKUP_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PBPin PBPin */
-  GPIO_InitStruct.Pin = SENSOR_PWR_CTRL_Pin|LED_Pin;
+  GPIO_InitStruct.Pin = O_VBAT_Pin|SPI2_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PDPin PDPin */
-  GPIO_InitStruct.Pin = FLASH_WP_Pin|SPI_CS_FLASH_Pin;
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = FLASH_WP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  HAL_GPIO_Init(FLASH_WP_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = I_PWR_ON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(I_PWR_ON_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PCPin PCPin */
+  GPIO_InitStruct.Pin = LED_Pin|O_VLIGHT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = O_VUSB_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(O_VUSB_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 

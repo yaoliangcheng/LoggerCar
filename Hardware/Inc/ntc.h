@@ -1,7 +1,7 @@
 #ifndef _NTC_H
 #define _NTC_H
 
-#include "common.h"
+#include "public.h"
 
 #define NTC_CALCULATE_FLOAT				(0)
 

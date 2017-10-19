@@ -6,7 +6,6 @@
 
 /******************************************************************************/
 extern osThreadId ledTaskHandle;
-extern osThreadId debugTaskHandle;
 extern osThreadId realtimeTaskHandle;
 extern osThreadId tftlcdTaskHandle;
 extern osThreadId mainprocessTaskHandle;
@@ -17,5 +16,6 @@ extern osMessageQId adjustTimeMessageQId;
 extern osMessageQId analogMessageQId;
 extern osMessageQId infoMessageQId;
 extern osMessageQId infoCntMessageQId;
+extern osMessageQId gprsTaskMessageQid;
 
 #endif

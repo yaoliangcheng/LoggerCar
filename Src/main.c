@@ -52,14 +52,19 @@
 #include "adc.h"
 #include "dma.h"
 #include "fatfs.h"
-#include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
 #include "usart.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include "analog.h"
+#include "file.h"
 #include "gprs.h"
+#include "lowPwr.h"
+#include "ble.h"
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -103,24 +108,28 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  /* 在外设配置前，检测是否开机 */
+//  LOWPWR_Init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_USART1_UART_Init();
   MX_RTC_Init();
   MX_ADC1_Init();
-  MX_I2C2_Init();
-  MX_SPI1_Init();
-  MX_USART2_UART_Init();
-  MX_UART4_Init();
   MX_USART3_UART_Init();
+  MX_UART4_Init();
+  MX_UART5_Init();
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  MX_SPI2_Init();
 
   /* USER CODE BEGIN 2 */
-  /* 文件名格式初始化 */
-	FILE_Init();
+  ANALOG_Init();
+  RT_Init();
+  GPRS_Init();
+  BLE_Init();
+  DISPLAY_Init();
 
   /* USER CODE END 2 */
 
@@ -166,8 +175,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   RCC_OscInitStruct.PLL2.PLL2State = RCC_PLL2_ON;
-  RCC_OscInitStruct.PLL2.PLL2MUL = RCC_PLL2_MUL10;
-  RCC_OscInitStruct.PLL2.HSEPrediv2Value = RCC_HSE_PREDIV2_DIV2;
+  RCC_OscInitStruct.PLL2.PLL2MUL = RCC_PLL2_MUL8;
+  RCC_OscInitStruct.PLL2.HSEPrediv2Value = RCC_HSE_PREDIV2_DIV5;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -187,9 +196,11 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC
+                              |RCC_PERIPHCLK_USB;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV3;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);

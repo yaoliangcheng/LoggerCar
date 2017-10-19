@@ -118,7 +118,7 @@ void MX_ADC1_Init(void)
 
     /**Configure Regular Channel 
     */
-  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -127,7 +127,7 @@ void MX_ADC1_Init(void)
 
     /**Configure Regular Channel 
     */
-  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 6;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -136,7 +136,7 @@ void MX_ADC1_Init(void)
 
     /**Configure Regular Channel 
     */
-  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 7;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -145,7 +145,7 @@ void MX_ADC1_Init(void)
 
     /**Configure Regular Channel 
     */
-  sConfig.Channel = ADC_CHANNEL_7;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 8;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -184,27 +184,19 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     PA2     ------> ADC1_IN2
     PA3     ------> ADC1_IN3
     PA4     ------> ADC1_IN4
-    PA5     ------> ADC1_IN5
-    PA6     ------> ADC1_IN6
-    PA7     ------> ADC1_IN7
-    PC4     ------> ADC1_IN14
-    PC5     ------> ADC1_IN15
-    PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9 
     */
-    GPIO_InitStruct.Pin = TEMP1_Pin|TEMP2_Pin|TEMP3_Pin|TEMP4_Pin 
-                          |HUMI5_Pin|HUMI6_Pin;
+    GPIO_InitStruct.Pin = TEMP1_Pin|HUMI1_Pin|TEMP2_Pin|HUMI2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = TEMP5_Pin|TEMP6_Pin|TEMP7_Pin|HUMI1_Pin 
-                          |HUMI2_Pin|HUMI3_Pin|HUMI4_Pin;
+    GPIO_InitStruct.Pin = TEMP3_Pin|HUMI3_Pin|TEMP4_Pin|HUMI4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = HUMI7_Pin|AN_VBAT_Pin;
+    GPIO_InitStruct.Pin = A_VBAT_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(A_VBAT_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC1 DMA Init */
     /* ADC1 Init */
@@ -249,21 +241,13 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     PA2     ------> ADC1_IN2
     PA3     ------> ADC1_IN3
     PA4     ------> ADC1_IN4
-    PA5     ------> ADC1_IN5
-    PA6     ------> ADC1_IN6
-    PA7     ------> ADC1_IN7
-    PC4     ------> ADC1_IN14
-    PC5     ------> ADC1_IN15
-    PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9 
     */
-    HAL_GPIO_DeInit(GPIOC, TEMP1_Pin|TEMP2_Pin|TEMP3_Pin|TEMP4_Pin 
-                          |HUMI5_Pin|HUMI6_Pin);
+    HAL_GPIO_DeInit(GPIOC, TEMP1_Pin|HUMI1_Pin|TEMP2_Pin|HUMI2_Pin);
 
-    HAL_GPIO_DeInit(GPIOA, TEMP5_Pin|TEMP6_Pin|TEMP7_Pin|HUMI1_Pin 
-                          |HUMI2_Pin|HUMI3_Pin|HUMI4_Pin);
+    HAL_GPIO_DeInit(GPIOA, TEMP3_Pin|HUMI3_Pin|TEMP4_Pin|HUMI4_Pin);
 
-    HAL_GPIO_DeInit(GPIOB, HUMI7_Pin|AN_VBAT_Pin);
+    HAL_GPIO_DeInit(A_VBAT_GPIO_Port, A_VBAT_Pin);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);

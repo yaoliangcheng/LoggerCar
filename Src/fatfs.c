@@ -49,10 +49,15 @@
 #include "fatfs.h"
 
 uint8_t retUSER;    /* Return value for USER */
-char USER_Path[4];  /* USER logical drive path */
+char USERPath[4];   /* USER logical drive path */
+FATFS USERFatFS;    /* File system object for USER logical drive */
+FIL USERFile;       /* File object for USER */
 
 /* USER CODE BEGIN Variables */
 #include "file.h"
+#include "param.h"
+#include "osConfig.h"
+
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */
 DWORD freeClust, freeSect, totSect;	/* 空闲簇、空闲扇区、总扇区 */
@@ -65,11 +70,15 @@ ErrorStatus FATFS_FileMake(void);
 void MX_FATFS_Init(void) 
 {
   /*## FatFS: Link the USER driver ###########################*/
-  retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
+  retUSER = FATFS_LinkDriver(&USER_Driver, USERPath);
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */
-  FILE_ParamFileInit();
+  	/* 文件格式化，获取数据储存文件的结构体总数 */
+  	FILE_Init();
+  PARAM_ParamFileInit();
+//  /* 在文件系统初始化完成后，在启动GPRS任务 */
+//  osThreadResume(gprsprocessTaskHandle);
   /* USER CODE END Init */
 }
 
@@ -82,7 +91,7 @@ ErrorStatus FATFS_FileLink(void)
 	FRESULT status;
 
 	/* 挂载spi flash */
-	status = f_mount(&objFileSystem, USER_Path, 1);
+	status = f_mount(&objFileSystem, USERPath, 1);
 
 	if (status == FR_OK)
 	{
@@ -112,7 +121,7 @@ ErrorStatus FATFS_FileLink(void)
 ErrorStatus FATFS_FileUnlink(void)
 {
 	/* 不再使用文件系统，取消挂载文件系统 */
-	 if (FR_OK == f_mount(NULL, USER_Path, 1))
+	 if (FR_OK == f_mount(NULL, USERPath, 1))
 	 {
 		 /* 退出临界区 */
 		 taskEXIT_CRITICAL();
@@ -127,13 +136,13 @@ ErrorStatus FATFS_FileUnlink(void)
  */
 ErrorStatus FATFS_FileMake(void)
 {
-	if (FR_OK == f_mkfs(USER_Path, 0, 4096))
+	if (FR_OK == f_mkfs(USERPath, 0, 4096))
 	{
 		/* 格式化后，先取消挂载 */
-		f_mount(NULL, USER_Path, 1);
+		f_mount(NULL, USERPath, 1);
 
 		/* 重新挂载	*/
-		if (FR_OK == f_mount(&objFileSystem, USER_Path, 1))
+		if (FR_OK == f_mount(&objFileSystem, USERPath, 1))
 			return SUCCESS;
 		else
 			return ERROR;
@@ -151,10 +160,17 @@ ErrorStatus FATFS_FileOpen(char* fileName, FATFS_ModeEnum mode)
 
 	switch (mode)
 	{
+	/* 打开文件，如果文件不存在，则创建文件 */
+	case FATFS_MODE_OPNE_ALWAYS:
+		status = f_open(&objFile, fileName, FA_OPEN_ALWAYS);
+		break;
+
+	/* 以写模式打开文件，如果文件不存在，则创建文件  */
 	case FATFS_MODE_OPEN_ALWAYS_WRITE:
 		status = f_open(&objFile, fileName, FA_OPEN_ALWAYS | FA_WRITE);
 		break;
 
+	/* 以读模式打开已存在的文件 */
 	case FATFS_MODE_OPEN_EXISTING_READ:
 		status = f_open(&objFile, fileName, FA_OPEN_EXISTING | FA_READ);
 		break;
@@ -180,7 +196,6 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size)
 
 	if (FR_OK == f_write(&objFile, pBuffer, size, &byteWrite))
 	{
-		printf("写入%d字节\r\n", byteWrite);
 		/* 要写入的和实际写入的必须相同 */
 		if (byteWrite == size)
 			return SUCCESS;
@@ -202,7 +217,6 @@ ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size)
 
 	if (FR_OK == f_read(&objFile, pBuffer, size, &byteRead))
 	{
-		printf("读出%d字节\r\n", byteRead);
 		/* 要读出的和实际读出的必须相同 */
 		if (byteRead == size)
 			return SUCCESS;
@@ -225,33 +239,23 @@ ErrorStatus FATFS_FileClose(void)
 }
 
 /*******************************************************************************
- *
+ * function:获取设备剩余容量
  */
-ErrorStatus FATFS_GetSpaceInfo(void)
+BYTE FATFS_GetSpaceInfo(void)
 {
 	FATFS* pfs;
 
 	/* 获取设备信息和空簇大小 */
-	if (FR_OK == f_getfree(USER_Path, &freeClust, &pfs))
+	if (FR_OK == f_getfree(USERPath, &freeClust, &pfs))
 	{
 		/* 单位为KB */
 		totSect  = (pfs->n_fatent - 2) * pfs->csize * 4;
 		freeSect = freeClust           * pfs->csize * 4;
 
-		printf("设备总空间：%uKB 可用空间：%uKB\r\n", totSect, freeSect);
-		printf("设备剩余储存空间：%d%%\r\n", freeSect * 100 / totSect);
-
-		/* 没有空间可写 */
-		if (freeSect == 0)
-		{
-			printf("无可用空间！！请备份好数据，格式化磁盘\r\n");
-			return ERROR;
-		}
-		else
-			return SUCCESS;
+		return (freeSect * 100 / totSect);
 	}
 	else
-		return ERROR;
+		return 0;
 }
 
 /*******************************************************************************
@@ -266,11 +270,30 @@ ErrorStatus FATFS_FileSeekEnd(void)
 }
 
 /*******************************************************************************
+ * function:判断当前写入的地址是否结构体对齐，防止储存的数据错位，当结构体不对齐时，覆盖缺省的数据空间，
+ * 			。（这个函数用于数据储存过程）
+ */
+void FATFS_FileSeekSaveInfoStructAlign(void)
+{
+	if (objFile.fsize % sizeof(FILE_SaveStructTypedef) == 0)
+	{
+		f_lseek(&objFile, objFile.fsize);
+	}
+	else
+	{
+		/* 覆盖当前结构体 */
+		f_lseek(&objFile,
+				(objFile.fsize / sizeof(FILE_SaveStructTypedef))
+				* sizeof(FILE_SaveStructTypedef));
+	}
+}
+
+/*******************************************************************************
  * function:将读、写指针移动到文件的末尾向前一个结构体
  */
 ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 {
-	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_InfoTypedef)))
+	if (FR_OK == f_lseek(&objFile, objFile.fsize - sizeof(FILE_SaveStructTypedef)))
 		return SUCCESS;
 	else
 		return ERROR;
@@ -279,7 +302,7 @@ ErrorStatus FATFS_FileSeekBackwardOnePack(void)
 /*******************************************************************************
  *
  */
-ErrorStatus FATFS_FileSeek(WORD byte)
+ErrorStatus FATFS_FileSeek(DWORD byte)
 {
 	if (byte <= objFile.fsize)
 	{
@@ -317,7 +340,7 @@ ErrorStatus FATFS_CreateFile(char* fileName)
  */
 uint16_t FATFS_GetFileStructCount(void)
 {
-	return objFile.fsize / sizeof(FILE_InfoTypedef);
+	return objFile.fsize / sizeof(FILE_SaveStructTypedef);
 }
 
 /* USER CODE END Application */

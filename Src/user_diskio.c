@@ -146,7 +146,7 @@ DSTATUS USER_status (
     Stat = STA_NOINIT;
 
 	/* SPI Flash状态检测：读取SPI Flash 设备ID */
-	if(sFLASH_ID == SPI_FLASH_ReadID())
+//	if(sFLASH_ID == SPI_FLASH_ReadID())
 	{
 		/* 设备ID读取结果正确 */
 		Stat &= ~STA_NOINIT;
@@ -172,6 +172,7 @@ DRESULT USER_read (
 )
 {
   /* USER CODE BEGIN READ */
+	sector += exFLASH_SECTOR_OFFSET;
 	SPI_FLASH_BufferRead(buff, sector <<12, count<<12);
     return RES_OK;
   /* USER CODE END READ */
@@ -197,6 +198,7 @@ DRESULT USER_write (
   /* USER CODE HERE */
 	uint32_t write_addr;
 
+	sector += exFLASH_SECTOR_OFFSET;
 	write_addr = sector<<12;
 	SPI_FLASH_SectorErase(write_addr);
 	SPI_FLASH_BufferWrite((uint8_t *)buff,write_addr,count<<12);

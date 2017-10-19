@@ -60,6 +60,7 @@
 /* USER CODE BEGIN Includes */
  typedef enum
  {
+	 FATFS_MODE_OPNE_ALWAYS,
 	 FATFS_MODE_OPEN_ALWAYS_WRITE,
 	 FATFS_MODE_OPEN_EXISTING_READ
  } FATFS_ModeEnum;
@@ -67,7 +68,9 @@
 /* USER CODE END Includes */
 
 extern uint8_t retUSER; /* Return value for USER */
-extern char USER_Path[4]; /* USER logical drive path */
+extern char USERPath[4]; /* USER logical drive path */
+extern FATFS USERFatFS; /* File system object for USER logical drive */
+extern FIL USERFile; /* File object for USER */
 
 void MX_FATFS_Init(void);
 
@@ -79,9 +82,10 @@ ErrorStatus FATFS_FileWrite(BYTE* pBuffer, WORD size);
 ErrorStatus FATFS_FileRead(BYTE* pBuffer, WORD size);
 ErrorStatus FATFS_FileClose(void);
 ErrorStatus FATFS_FileSeekEnd(void);
+void FATFS_FileSeekSaveInfoStructAlign(void);
 ErrorStatus FATFS_FileSeekBackwardOnePack(void);
-ErrorStatus FATFS_FileSeek(WORD byte);
-ErrorStatus FATFS_GetSpaceInfo(void);
+ErrorStatus FATFS_FileSeek(DWORD byte);
+BYTE FATFS_GetSpaceInfo(void);
 ErrorStatus FATFS_CreateFile(char* fileName);
 uint16_t FATFS_GetFileStructCount(void);
 

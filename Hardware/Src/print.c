@@ -1,23 +1,21 @@
 #include "print.h"
 
+
+
 /******************************************************************************/
 uint8_t PRINT_SendBuffer[PRINT_SEND_BYTES_MAX];
+FILE_SaveStructTypedef PRINT_DataFileReadStruct;
 
 /******************************************************************************/
-static void PRINT_SendData(uint8_t size);
-static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf);
+static void PRINT_SendData(uint16_t size);
+//static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
+static uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime);
+static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
+		DISPLAY_CompareTimeTypedef* endTimePoint,
+		DISPLAY_CompareTimeTypedef* printDate,
+		ChannelSelectTypedef* select);
 
-/*******************************************************************************
- * function:打印日期
- */
-void PRINT_Date(char* fileName)
-{
-	memcpy(&PRINT_SendBuffer[0], "*************", 13);
-	memcpy(&PRINT_SendBuffer[13], fileName, 6);
-	memcpy(&PRINT_SendBuffer[19], "*************", 13);
-	PRINT_SendBuffer[33] = '\n';
-	PRINT_SendData(33);
-}
+
 
 /*******************************************************************************
  *
@@ -31,67 +29,41 @@ void PRINT_SetMode(void)
 }
 
 /*******************************************************************************
- * function:打印输出
+ * @brief 打印数据
+ * @param startTime：开始打印时间
+ * @param endTime：结束打印时间
+ * @select：打印通道选择
  */
-void PRINT_DataOut(FILE_InfoTypedef* info, PRINT_ChannelSelectTypedef* select)
+void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
+						DISPLAY_CompareTimeTypedef* endTime,
+						ChannelSelectTypedef* select)
 {
-	uint8_t index = 0;
+	uint32_t offsetStruct;
+	PRINT_DataStatusEnum status;
+	DISPLAY_CompareTimeTypedef printDate;	/* 当前打印日期 */
 
-	/* 时间转换 */
-	BCD2ASCII((char*)&PRINT_SendBuffer[0], &info->realTime.hour, 1);
-	PRINT_SendBuffer[2] = ':';
-	BCD2ASCII((char*)&PRINT_SendBuffer[3], &info->realTime.min, 1);
-	PRINT_SendBuffer[5] = ':';
-	BCD2ASCII((char*)&PRINT_SendBuffer[6], &info->realTime.sec, 1);
-	index += 8;
+	taskENTER_CRITICAL();
 
-	/* 根据打印选择，输出数据 */
-	if (select->status.bit.ch1)
+	/* 清空当前打印日期 */
+	memset((uint8_t*)&printDate, 0, sizeof(DISPLAY_CompareTimeTypedef));
+
+	/* 根据开始打印时间寻找起始数据偏移量 */
+	offsetStruct = PRINT_SearchStartTime(startTime);
+
+	/* 打印输出 */
+	while (1)
 	{
-		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch2)
-	{
-		PRINT_GetAnalog(info->analogValue.humi1, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch3)
-	{
-		PRINT_GetAnalog(info->analogValue.temp2, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch4)
-	{
-		PRINT_GetAnalog(info->analogValue.humi2, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch5)
-	{
-		PRINT_GetAnalog(info->analogValue.temp3, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch6)
-	{
-		PRINT_GetAnalog(info->analogValue.humi3, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch7)
-	{
-		PRINT_GetAnalog(info->analogValue.humi4, &PRINT_SendBuffer[index]);
-		index += 6;
-	}
-	if (select->status.bit.ch8)
-	{
-		PRINT_GetAnalog(info->analogValue.temp1, &PRINT_SendBuffer[index]);
-		index += 6;
+		status = PRINT_DataPrint(offsetStruct, endTime, &printDate, select);
+
+		if (PRINT_DATA_END == status)
+			break;
+		else if (PRINT_DATA_NORMAL == status)
+			offsetStruct += 5;
+		else if (PRINT_DATA_OVERlIMITED == status)
+			offsetStruct += 2;
 	}
 
-	/* 打印换行 */
-	PRINT_SendBuffer[index] = '\n';
-	index++;
-
-	PRINT_SendData(index);
+	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -147,32 +119,189 @@ void PRINT_TailOut(void)
 /*******************************************************************************
  *
  */
-static void PRINT_SendData(uint8_t size)
+static void PRINT_SendData(uint16_t size)
 {
 //	HAL_UART_Transmit_DMA(&PRINT_UART, PRINT_SendBuffer, size);
 	HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
 }
 
 /*******************************************************************************
- *
+ * @brief 根据开始时间查找结构体偏移，返回结构体偏移
+ * @param destTime：目标时间点
  */
-static void PRINT_GetAnalog(uint16_t analog, uint8_t* buf)
+static uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime)
 {
-	float temp;
-	uint16_t data;
+	uint32_t fileStructStart, fileStructEnd, searchPoint;
+	int compareStatus;
 
-	data = (HalfWord_GetLowByte(analog) << 8) | HalfWord_GetHighByte(analog);
+	fileStructStart = 0;
+	fileStructEnd   = FILE_DataSaveStructCnt;
 
-	/* 判断正负 */
-	if ((data & 0x8000) != 0)
-		temp = -((float)(data & 0x7FFF) / 10);
-	else
-		temp = (float)(data & 0x7FFF) / 10;
+	while(1)
+	{
+		/* 取中间值 */
+		searchPoint = (fileStructStart + fileStructEnd) / 2;
 
-	sprintf((char*)buf, "%6.1f", temp);
+		/* 如果介于两个结构体之间的，以本次读到的数据为准 */
+		if (searchPoint == fileStructStart)
+			break;
+
+		FILE_ReadFile(FILE_NAME_SAVE_DATA, searchPoint * sizeof(FILE_SaveStructTypedef),
+				(BYTE*)&PRINT_DataFileReadStruct, sizeof(FILE_SaveStructTypedef));
+		/* 比较数据的年月日时分 */
+		/* buf1<buf2 return -1
+		 * buf1>buf2 return 1
+		 * buf1=buf2 return 0 */
+		compareStatus = memcmp(destTime, &PRINT_DataFileReadStruct,
+				sizeof(DISPLAY_CompareTimeTypedef));
+
+		/* 找到目标时间 */
+		if (compareStatus == 0)
+		{
+			break;
+		}
+		else if (compareStatus < 0) /* 目标时间 < 读取时间 */
+		{
+			fileStructEnd = searchPoint;
+		}
+		else /* 目标时间 > 读取时间 */
+		{
+			fileStructStart = searchPoint;
+		}
+	}
+
+	return searchPoint;
 }
 
+/*******************************************************************************
+ * function：判断数值是否超标
+ */
+static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
+													ParamAlarmTypedef* param)
+{
+	float value;
 
+	/* 转换成float */
+	value = FILE_Analog2Float(analog);
+
+	/* 比较上下限 */
+	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
+		return PRINT_DATA_OVERlIMITED;
+	else
+		return PRINT_DATA_NORMAL;
+}
+
+/*******************************************************************************
+ * @brief 打印日期
+ */
+static void PRINT_Date(char* date)
+{
+	memcpy(&PRINT_SendBuffer[0], "*************", 13);
+	memcpy(&PRINT_SendBuffer[13], date, 6);
+	memcpy(&PRINT_SendBuffer[19], "*************", 13);
+	PRINT_SendBuffer[33] = '\n';
+	PRINT_SendData(33);
+}
+
+/*******************************************************************************
+ * function:根据结构体偏移，读出数据，并根据打印通道选择，打印数据，并返回该数据是否超标
+ */
+static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
+		DISPLAY_CompareTimeTypedef* endTimePoint,
+		DISPLAY_CompareTimeTypedef* printDate,
+		ChannelSelectTypedef* select)
+{
+	uint8_t index = 0;
+	PRINT_DataStatusEnum status = PRINT_DATA_OVERlIMITED;
+
+	/* 读取数据 */
+	FILE_ReadFile(FILE_NAME_SAVE_DATA, offset * sizeof(FILE_SaveStructTypedef),
+			(uint8_t*)&PRINT_DataFileReadStruct, sizeof(FILE_SaveStructTypedef));
+
+	/* 读出数据的时间 > 结束时间点 */
+	if (memcmp(PRINT_DataFileReadStruct.year, endTimePoint,
+			sizeof(DISPLAY_CompareTimeTypedef)) > 0)
+	{
+		return PRINT_DATA_END;
+	}
+
+	/* 打印某天数据，在开始打印日期，后面打印只需打印时间即可 */
+	if (memcmp(printDate, PRINT_DataFileReadStruct.year, 6) != 0)
+	{
+		/* 记录当前打印时间 */
+		memcpy(printDate, PRINT_DataFileReadStruct.year, 6);
+		PRINT_Date(PRINT_DataFileReadStruct.year);
+	}
+
+	/* 时分秒 */
+	memcpy((char*)&PRINT_SendBuffer[0],  &PRINT_DataFileReadStruct.hour, 9);
+	index += 9;
+
+	/* 根据打印选择，输出数据 */
+	if (select->status.bit.ch1)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[0], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[0], &PARAM_DeviceParam.chAlarmValue[0]);
+		index += 6;
+	}
+	if (select->status.bit.ch2)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[1], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[1], &PARAM_DeviceParam.chAlarmValue[1]);
+		index += 6;
+	}
+	if (select->status.bit.ch3)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[2], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[2], &PARAM_DeviceParam.chAlarmValue[2]);
+		index += 6;
+	}
+	if (select->status.bit.ch4)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[3], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[3], &PARAM_DeviceParam.chAlarmValue[3]);
+		index += 6;
+	}
+	if (select->status.bit.ch5)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[4], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[4], &PARAM_DeviceParam.chAlarmValue[4]);
+		index += 6;
+	}
+	if (select->status.bit.ch6)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[5], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[5], &PARAM_DeviceParam.chAlarmValue[5]);
+		index += 6;
+	}
+	if (select->status.bit.ch7)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[6], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[6], &PARAM_DeviceParam.chAlarmValue[6]);
+		index += 6;
+	}
+	if (select->status.bit.ch8)
+	{
+		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[7], 6);
+		/* 判断是否超标 */
+//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[7], &PARAM_DeviceParam.chAlarmValue[7]);
+		index += 6;
+	}
+
+	/* 打印换行，最后一个数值不需要“，”，用换行覆盖 */
+	PRINT_SendBuffer[index - 1] = '\n';
+
+	PRINT_SendData(index);
+
+	return status;
+}
 
 
 
