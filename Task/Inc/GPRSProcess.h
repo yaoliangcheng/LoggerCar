@@ -47,7 +47,7 @@
 #define AT_CMD_GPS_GET_GNRMC_RESPOND	  		("$GNRMC,")
 #define AT_CMD_GPS_DISABLE				  		("AT+EGPSC=0\r\n")				/* 失能GPS功能 */
 #define AT_CMD_GPS_DISABLE_RESPOND		  		(AT_CMD_RESPOND_OK)
-#define AT_CMD_SET_SERVER_IP_ADDR		  		("AT+CIPSTART=\"TCP\",\"112.124.106.188\",\"8010\"\r\n")/* 连接服务器 */
+#define AT_CMD_SET_SERVER_IP_ADDR		  		("AT+CIPSTART=\"TCP\",\"112.124.106.188\",\"8090\"\r\n")/* 连接服务器 */
 #define AT_CMD_SET_SERVER_IP_ADDR_RESPOND 		("CONNECT OK")
 #define AT_CMD_DATA_SEND_SUCCESS_RESPOND  		("Save Data")
 #define AT_CMD_DATA_SEND_ERROR_RESPOND    		("Error Data")

@@ -15,18 +15,9 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 		DISPLAY_CompareTimeTypedef* printDate,
 		ChannelSelectTypedef* select);
 
-
-
-/*******************************************************************************
- *
- */
-void PRINT_SetMode(void)
-{
-	PRINT_SendBuffer[0] = 0x1B;
-	PRINT_SendBuffer[1] = 0x7B;
-	PRINT_SendBuffer[2] = 0;
-	PRINT_SendData(3);
-}
+static void PRINT_PrintTitle(void);
+static void PRINT_PrintTail(void);
+static void PRINT_SetMode(void);
 
 /*******************************************************************************
  * @brief 打印数据
@@ -50,6 +41,11 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 	/* 根据开始打印时间寻找起始数据偏移量 */
 	offsetStruct = PRINT_SearchStartTime(startTime);
 
+	/* 设置打印模式 */
+	PRINT_SetMode();
+	/* 先打印标题 */
+	PRINT_PrintTitle();
+
 	/* 打印输出 */
 	while (1)
 	{
@@ -63,66 +59,10 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 			offsetStruct += 2;
 	}
 
+	/* 打印签名 */
+	PRINT_PrintTail();
+
 	taskEXIT_CRITICAL();
-}
-
-/*******************************************************************************
- * function：打印标题数据
- */
-void PRINT_TitleOut(void)
-{
-	uint8_t index = 0;
-
-	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
-	index += 33;
-
-	memcpy(&PRINT_SendBuffer[index], "收货方：\n", 9);
-	index += 9;
-
-	memcpy(&PRINT_SendBuffer[index], "发货方：\n", 9);
-	index += 9;
-
-	memcpy(&PRINT_SendBuffer[index], "派送车牌：\n", 11);
-	index += 11;
-
-	memcpy(&PRINT_SendBuffer[index], "订单编号：\n", 11);
-	index += 11;
-
-	PRINT_SendData(index);
-}
-
-/*******************************************************************************
- *
- */
-void PRINT_TailOut(void)
-{
-	uint8_t index = 0;
-
-	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
-	index += 33;
-
-	memcpy(&PRINT_SendBuffer[index], "签收人：\n", 9);
-	index += 9;
-
-	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
-	index += 3;
-
-	memcpy(&PRINT_SendBuffer[index], "签收日期：\n", 11);
-	index += 11;
-
-	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
-	index += 3;
-
-	PRINT_SendData(index);
-}
-
-/*******************************************************************************
- *
- */
-static void PRINT_SendData(uint16_t size)
-{
-//	HAL_UART_Transmit_DMA(&PRINT_UART, PRINT_SendBuffer, size);
-	HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
 }
 
 /*******************************************************************************
@@ -171,36 +111,6 @@ static uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime)
 	}
 
 	return searchPoint;
-}
-
-/*******************************************************************************
- * function：判断数值是否超标
- */
-static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
-													ParamAlarmTypedef* param)
-{
-	float value;
-
-	/* 转换成float */
-	value = FILE_Analog2Float(analog);
-
-	/* 比较上下限 */
-	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
-		return PRINT_DATA_OVERlIMITED;
-	else
-		return PRINT_DATA_NORMAL;
-}
-
-/*******************************************************************************
- * @brief 打印日期
- */
-static void PRINT_Date(char* date)
-{
-	memcpy(&PRINT_SendBuffer[0], "*************", 13);
-	memcpy(&PRINT_SendBuffer[13], date, 6);
-	memcpy(&PRINT_SendBuffer[19], "*************", 13);
-	PRINT_SendBuffer[33] = '\n';
-	PRINT_SendData(33);
 }
 
 /*******************************************************************************
@@ -303,15 +213,105 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 	return status;
 }
 
+/*******************************************************************************
+ *
+ */
+static void PRINT_SetMode(void)
+{
+	PRINT_SendBuffer[0] = 0x1B;
+	PRINT_SendBuffer[1] = 0x7B;
+	PRINT_SendBuffer[2] = 0;
+	PRINT_SendData(3);
+}
 
+/*******************************************************************************
+ *
+ */
+static void PRINT_SendData(uint16_t size)
+{
+//	HAL_UART_Transmit_DMA(&PRINT_UART, PRINT_SendBuffer, size);
+	HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
+}
 
+/*******************************************************************************
+ * function：打印标题数据
+ */
+static void PRINT_PrintTitle(void)
+{
+	uint8_t index = 0;
 
+	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
+	index += 33;
 
+	memcpy(&PRINT_SendBuffer[index], "收货方：\n", 9);
+	index += 9;
 
+	memcpy(&PRINT_SendBuffer[index], "发货方：\n", 9);
+	index += 9;
 
+	memcpy(&PRINT_SendBuffer[index], "派送车牌：\n", 11);
+	index += 11;
 
+	memcpy(&PRINT_SendBuffer[index], "订单编号：\n", 11);
+	index += 11;
 
+	PRINT_SendData(index);
+}
 
+/*******************************************************************************
+ *
+ */
+static void PRINT_PrintTail(void)
+{
+	uint8_t index = 0;
+
+	memcpy(&PRINT_SendBuffer[0], "********************************\n", 33);
+	index += 33;
+
+	memcpy(&PRINT_SendBuffer[index], "签收人：\n", 9);
+	index += 9;
+
+	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
+	index += 3;
+
+	memcpy(&PRINT_SendBuffer[index], "签收日期：\n", 11);
+	index += 11;
+
+	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
+	index += 3;
+
+	PRINT_SendData(index);
+}
+
+/*******************************************************************************
+ * function：判断数值是否超标
+ */
+static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
+													ParamAlarmTypedef* param)
+{
+	float value;
+
+	/* 转换成float */
+	value = FILE_Analog2Float(analog);
+
+	/* 比较上下限 */
+	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
+		return PRINT_DATA_OVERlIMITED;
+	else
+		return PRINT_DATA_NORMAL;
+}
+
+/*******************************************************************************
+ * @brief 打印日期
+ */
+static void PRINT_Date(char* date)
+{
+	memcpy(&PRINT_SendBuffer[0], "*************", 13);
+	memcpy(&PRINT_SendBuffer[13], date, 6);
+	memcpy(&PRINT_SendBuffer[19], "*************", 13);
+	PRINT_SendBuffer[33] = '\n';
+	PRINT_SendData(33);
+}
 
 
 

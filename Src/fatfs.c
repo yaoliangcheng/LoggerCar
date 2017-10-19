@@ -77,6 +77,7 @@ void MX_FATFS_Init(void)
   	/* 文件格式化，获取数据储存文件的结构体总数 */
   	FILE_Init();
   PARAM_ParamFileInit();
+  GPRS_Init();
 //  /* 在文件系统初始化完成后，在启动GPRS任务 */
 //  osThreadResume(gprsprocessTaskHandle);
   /* USER CODE END Init */

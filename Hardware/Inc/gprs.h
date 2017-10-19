@@ -87,7 +87,7 @@ extern GPRS_SendBufferTypedef GPRS_SendBuffer;
 void GPRS_Init(void);
 void GPRS_SendCmd(char* str);
 void GPRS_RstModule(void);
-void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf, uint8_t patchPack);
+void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf);
 uint8_t GPRS_GetSignalQuality(uint8_t* buf);
 void GPRS_UartIdleDeal(void);
 

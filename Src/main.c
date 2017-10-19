@@ -127,7 +127,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   ANALOG_Init();
   RT_Init();
-  GPRS_Init();
   BLE_Init();
   DISPLAY_Init();
 

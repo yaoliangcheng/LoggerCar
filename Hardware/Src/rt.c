@@ -23,10 +23,10 @@ void RT_Init(void)
 	{
 		RT_RealTime.date.Year = 17;
 		RT_RealTime.date.Month = 10;
-		RT_RealTime.date.Date = 18;
+		RT_RealTime.date.Date = 19;
 		RT_RealTime.date.WeekDay = RTC_WEEKDAY_MONDAY;
-		RT_RealTime.time.Hours = 11;
-		RT_RealTime.time.Minutes = 10;
+		RT_RealTime.time.Hours = 14;
+		RT_RealTime.time.Minutes = 26;
 		RT_RealTime.time.Seconds = 0x00;
 		RT_SetRealTime(&RT_RealTime);
 
@@ -78,7 +78,7 @@ void RT_TimeAdjustWithCloud(uint8_t* pBuffer)
 	RT_TimeTypedef   eTime;
 
 	/* 将字符转换成数字 */
-	str2numb((pBuffer + RT_OFFSET_CLOUD_TIME), str, sizeof(str));
+	str2numb(str, (pBuffer + RT_OFFSET_CLOUD_TIME), sizeof(str));
 
 	eTime.date.Year    = (str[0]  * 10)  + str[1];
 	eTime.date.Month   = (str[2]  * 10)  + str[3];

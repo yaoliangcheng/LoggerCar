@@ -8,7 +8,6 @@
 
 /******************************************************************************/
 extern GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
-
 /*******************************************************************************
  *
  */
@@ -21,8 +20,8 @@ void GPRSPROCESS_Task(void)
 	GPRS_TaskStatusEnum taskStatus;
 	uint8_t moduleTimeoutCnt;									/* 模块超时计数 */
 	uint8_t moduleErrorCnt;										/* 模块接收错误指令计数 */
-	uint16_t curPatchPack;										/* 本次上传条数 */
-	BOOL gprsInited;											/* gprs功能初始化标志位 */
+//	uint16_t curPatchPack;										/* 本次上传条数 */
+	BOOL gprsInited = FALSE;									/* gprs功能初始化标志位 */
 
 	while(1)
 	{
@@ -76,8 +75,8 @@ void GPRSPROCESS_Task(void)
 			/* 开启GPRS发送数据 */
 			case START_TASK_GPRS:
 				/* 获取本次发送的条数 */
-				signal = osMessageGet(infoCntMessageQId, 2000);
-				curPatchPack = signal.value.v;
+//				signal = osMessageGet(infoCntMessageQId, 2000);
+//				curPatchPack = signal.value.v;
 
 				/* 如果模块已经初始化完成 */
 				if (gprsInited == TRUE)
@@ -216,7 +215,7 @@ void GPRSPROCESS_Task(void)
 		case READY:
 			DebugPrintf("模块准备好了，发送数据\r\n");
 			/* 发送数据到平台 */
-			GPRS_SendProtocol(&GPRS_SendBuffer, curPatchPack);
+			GPRS_SendProtocol(&GPRS_SendBuffer);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
