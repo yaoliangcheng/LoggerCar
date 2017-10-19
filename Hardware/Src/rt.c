@@ -23,10 +23,10 @@ void RT_Init(void)
 	{
 		RT_RealTime.date.Year = 17;
 		RT_RealTime.date.Month = 10;
-		RT_RealTime.date.Date = 17;
+		RT_RealTime.date.Date = 18;
 		RT_RealTime.date.WeekDay = RTC_WEEKDAY_MONDAY;
-		RT_RealTime.time.Hours = 16;
-		RT_RealTime.time.Minutes = 12;
+		RT_RealTime.time.Hours = 11;
+		RT_RealTime.time.Minutes = 10;
 		RT_RealTime.time.Seconds = 0x00;
 		RT_SetRealTime(&RT_RealTime);
 

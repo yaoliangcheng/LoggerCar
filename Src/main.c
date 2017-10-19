@@ -64,6 +64,7 @@
 #include "gprs.h"
 #include "lowPwr.h"
 #include "ble.h"
+#include "display.h"
 
 /* USER CODE END Includes */
 
@@ -128,6 +129,7 @@ int main(void)
   RT_Init();
   GPRS_Init();
   BLE_Init();
+  DISPLAY_Init();
 
   /* USER CODE END 2 */
 

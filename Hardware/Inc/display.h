@@ -48,13 +48,24 @@ typedef struct
 
 typedef struct
 {
+	char year[2];								/* 日期：年月日 时分秒，（16） */
+	char month[2];
+	char day[2];
+	char str1;
+	char hour[2];
+	char str2;
+	char min[2];
+} DISPLAY_CompareTimeTypedef;
+
+typedef struct
+{
 	uint32_t hisDataDispStructOffset;			/* 历史数据显示结构体偏移 */
 	FunctionalState      displayModeBusy;		/* 显示状态忙，重复操作无效 */
 	ChannelSelectTypedef printChannelStatus;	/* 打印界面通道状态 */
 	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
-	FILE_RealTimeTypedef* selectTime;			/* 已被选择的时间 */
-	FILE_RealTimeTypedef printTimeStart;		/* 开始打印时间 */
-	FILE_RealTimeTypedef printTimeEnd;			/* 结束打印时间 */
+	DISPLAY_CompareTimeTypedef* selectTime;				/* 已被选择的时间 */
+	DISPLAY_CompareTimeTypedef  printTimeStart;			/* 开始打印时间 */
+	DISPLAY_CompareTimeTypedef  printTimeEnd;			/* 结束打印时间 */
 
 	char    passwordBuffer[4];					/* 密码缓存 */
 	char    passwordBufferNew[4];
@@ -69,6 +80,7 @@ typedef struct
 extern DISPLAY_StatusTypedef DISPLAY_Status;
 
 /******************************************************************************/
+void DISPLAY_Init(void);
 void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt);
 void DISPLAY_HistoryTouch(uint16_t typeID);
 void DISPLAY_HistoryDataCurve(uint32_t startStructOffset);

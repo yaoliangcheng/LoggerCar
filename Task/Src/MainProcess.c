@@ -50,12 +50,12 @@ void MAINPROCESS_Task(void)
 		}
 
 		/* 时间转换成ASCII */
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.year[0],  &RT_RecordTime.date.Year,    1);
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.month[0], &RT_RecordTime.date.Month,   1);
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.day[0],   &RT_RecordTime.date.Date,    1);
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.hour[0],  &RT_RecordTime.time.Hours,   1);
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.min[0],   &RT_RecordTime.time.Minutes, 1);
-		HEX2ASCII((uint8_t*)&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
+		HEX2ASCII(&FILE_SaveStruct.year[0],  &RT_RecordTime.date.Year,    1);
+		HEX2ASCII(&FILE_SaveStruct.month[0], &RT_RecordTime.date.Month,   1);
+		HEX2ASCII(&FILE_SaveStruct.day[0],   &RT_RecordTime.date.Date,    1);
+		HEX2ASCII(&FILE_SaveStruct.hour[0],  &RT_RecordTime.time.Hours,   1);
+		HEX2ASCII(&FILE_SaveStruct.min[0],   &RT_RecordTime.time.Minutes, 1);
+		HEX2ASCII(&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
 		/* 获取外部电源状态 */
 		FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
 

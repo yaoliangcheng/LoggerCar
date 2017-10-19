@@ -168,15 +168,15 @@ void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t 
 	/* 在年的前面添加上“20” */
 	TFTLCD_SendBuffer.buffer.statusBarText.year[0] = '2';
 	TFTLCD_SendBuffer.buffer.statusBarText.year[1] = '0';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.year[2],  &rt->date.Year,  1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.statusBarText.year[2],  &rt->date.Year,  1);
 	TFTLCD_SendBuffer.buffer.statusBarText.str1 = '.';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.month[0], &rt->date.Month, 1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.statusBarText.month[0], &rt->date.Month, 1);
 	TFTLCD_SendBuffer.buffer.statusBarText.str2 = '.';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.day[0],   &rt->date.Date,  1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.statusBarText.day[0],   &rt->date.Date,  1);
 	TFTLCD_SendBuffer.buffer.statusBarText.str3 = ' ';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.hour[0],  &rt->time.Hours,  1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.statusBarText.hour[0],  &rt->time.Hours,  1);
 	TFTLCD_SendBuffer.buffer.statusBarText.str4 = ':';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.statusBarText.min[0],   &rt->time.Minutes, 1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.statusBarText.min[0],   &rt->time.Minutes, 1);
 
 	TFTLCD_SendBuffer.buffer.statusBarText.batCtlIdH =
 			HALFWORD_BYTE_H(CTL_ID_BAT_QUANTITY_PERCENT);
@@ -396,11 +396,11 @@ void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_Re
 	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
 	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
 
-	HEX2ASCII((uint8_t*)TFTLCD_SendBuffer.buffer.update.value.date, &time->year,  3);
+	HEX2ASCII(TFTLCD_SendBuffer.buffer.update.value.date, &time->year,  3);
 	TFTLCD_SendBuffer.buffer.update.value.date[6] = ' ';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[7], &time->hour, 1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.update.value.date[7], &time->hour, 1);
 	TFTLCD_SendBuffer.buffer.update.value.date[9] = ':';
-	HEX2ASCII((uint8_t*)&TFTLCD_SendBuffer.buffer.update.value.date[10], &time->min, 1);
+	HEX2ASCII(&TFTLCD_SendBuffer.buffer.update.value.date[10], &time->min, 1);
 
 	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[12],
 				TFTLCD_SendBuffer.tail, 4);

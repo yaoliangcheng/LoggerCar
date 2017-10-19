@@ -67,7 +67,7 @@ void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
  * @param pHEX：16进制数值指针
  * @param size：hex字节数
  */
-void HEX2ASCII(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
+void HEX2ASCII(char* pASCII, uint8_t* pHEX, uint8_t size)
 {
 	uint8_t i;
 
@@ -79,10 +79,10 @@ void HEX2ASCII(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
 }
 
 /*******************************************************************************
- * function：ASCII码转换成HEX， 两个ASCII码转换成一个HEX,
+ * @brief ASCII码转换成HEX
  * 			注意：只支持转换1、2、3个字符
  */
-void ASCII2HEX(uint8_t* pASCII, uint8_t* pHEX, uint8_t size)
+void ASCII2HEX(uint8_t* pHEX, uint8_t* pASCII, uint8_t size)
 {
 	switch (size)
 	{

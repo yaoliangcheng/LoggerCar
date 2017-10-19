@@ -11,10 +11,21 @@ DISPLAY_StatusTypedef DISPLAY_Status;
 extern FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
 
 /******************************************************************************/
-static void TimeSelectReturn(void);
+//static void TimeSelectReturn(void);
 static void PasswordSelect(char numb);
 static void GetAlarmLimitValue(float* value);
 static void GetAlarmCode(char* code);
+
+/*******************************************************************************
+ *
+ */
+void DISPLAY_Init(void)
+{
+	DISPLAY_Status.printTimeStart.str1 = ' ';
+	DISPLAY_Status.printTimeStart.str2 = ':';
+	DISPLAY_Status.printTimeEnd.str1   = ' ';
+	DISPLAY_Status.printTimeEnd.str2   = ':';
+}
 
 /*******************************************************************************
  * 历史数据界面
@@ -219,7 +230,7 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 		break;
 
 	case CTL_ID_PRINT_DEFAULT:
-		PRINT_DataOut(&DISPLAY_Status.printTimeStart, &DISPLAY_Status.printTimeEnd,
+		PRINT_PrintProcess(&DISPLAY_Status.printTimeStart, &DISPLAY_Status.printTimeEnd,
 				&DISPLAY_Status.printChannelStatus);
 		break;
 
@@ -239,23 +250,26 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 	switch (typeID)
 	{
 	case CTL_ID_TIME_SELECT_YEAR:
-		DISPLAY_Status.selectTime->year = 17 + value;
+		value += 17;
+		HEX2ASCII(DISPLAY_Status.selectTime->year, &value, 1);
 		break;
 
 	case CTL_ID_TIME_SELECT_MONTH:
-		DISPLAY_Status.selectTime->month = 1 + value;
+		value += 1;
+		HEX2ASCII(DISPLAY_Status.selectTime->month, &value, 1);
 		break;
 
 	case CTL_ID_TIME_SELECT_DAY:
-		DISPLAY_Status.selectTime->day = 1 + value;
+		value += 1;
+		HEX2ASCII(DISPLAY_Status.selectTime->day, &value, 1);
 		break;
 
 	case CTL_ID_TIME_SELECT_HOUR:
-		DISPLAY_Status.selectTime->hour = value;
+		HEX2ASCII(DISPLAY_Status.selectTime->hour, &value, 1);
 		break;
 
 	case CTL_ID_TIME_SELECT_MIN:
-		DISPLAY_Status.selectTime->min = value;
+		HEX2ASCII(DISPLAY_Status.selectTime->min, &value, 1);
 		break;
 
 	case CTL_ID_TIME_SELECT_CANCEL:
@@ -265,7 +279,12 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 
 	case CTL_ID_TIME_SELECT_OK:
 		/* 根据选择进入时间选择界面，返回时间 */
-		TimeSelectReturn();
+//		TimeSelectReturn();
+		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
+		TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
+				(char*)&DISPLAY_Status.printTimeStart, sizeof(DISPLAY_CompareTimeTypedef));
+		TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_END_TEXT,
+				(char*)&DISPLAY_Status.printTimeEnd, sizeof(DISPLAY_CompareTimeTypedef));
 		break;
 
 	default:
@@ -614,26 +633,26 @@ void DISPLAY_About(void)
 /*******************************************************************************
  * function:时间选择界面点击确定，更新文本
  */
-static void TimeSelectReturn(void)
-{
-	switch(DISPLAY_Status.timeSelectStatus)
-	{
-	case TIME_SELECT_START_PRINT_TIME:
-		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
-				DISPLAY_Status.selectTime);
-		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
-		break;
+//static void TimeSelectReturn(void)
+//{
+//	switch(DISPLAY_Status.timeSelectStatus)
+//	{ 
+//	case TIME_SELECT_START_PRINT_TIME:
+//		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
+//				DISPLAY_Status.selectTime);
+//		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
+//		break;
 
-	case TIME_SELECT_END_PRINT_TIME:
-		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_END_TEXT,
-				DISPLAY_Status.selectTime);
-		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
-		break;
+//	case TIME_SELECT_END_PRINT_TIME:
+//		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_END_TEXT,
+//				DISPLAY_Status.selectTime);
+//		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
+//		break;
 
-	default:
-		break;
-	}
-}
+//	default:
+//		break;
+//	}
+//}
 
 /*******************************************************************************
  * function：密码界面接收用户数值选择并做界面处理

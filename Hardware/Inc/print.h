@@ -35,11 +35,13 @@ typedef enum
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct
-{
-	uint8_t  year;
-	uint32_t date;
-} PRINT_TimeCompareTypedef;
+
+
+//typedef struct
+//{
+//	uint32_t date;
+//	uint16_t time;
+//} PRINT_TimeCompareTypedef;
 
 #pragma pack(pop)
 
@@ -48,8 +50,9 @@ void PRINT_Date(char* fileName);
 void PRINT_TitleOut(void);
 void PRINT_TailOut(void);
 void PRINT_SetMode(void);
-void PRINT_DataOut(FILE_RealTimeTypedef* startTime,
-		FILE_RealTimeTypedef* endTime, ChannelSelectTypedef* select);
+void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
+						DISPLAY_CompareTimeTypedef* endTime,
+						ChannelSelectTypedef* select);
 
 
 
