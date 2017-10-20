@@ -278,8 +278,6 @@ void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value)
 		break;
 
 	case CTL_ID_TIME_SELECT_OK:
-		/* 根据选择进入时间选择界面，返回时间 */
-//		TimeSelectReturn();
 		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
 		TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
 				(char*)&DISPLAY_Status.printTimeStart, sizeof(DISPLAY_CompareTimeTypedef));
@@ -629,30 +627,6 @@ void DISPLAY_About(void)
 	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_CAPACITY,
 				(char*)&PARAM_DeviceParam.deviceCapacity, 10);
 }
-
-/*******************************************************************************
- * function:时间选择界面点击确定，更新文本
- */
-//static void TimeSelectReturn(void)
-//{
-//	switch(DISPLAY_Status.timeSelectStatus)
-//	{ 
-//	case TIME_SELECT_START_PRINT_TIME:
-//		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_START_TEXT,
-//				DISPLAY_Status.selectTime);
-//		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
-//		break;
-
-//	case TIME_SELECT_END_PRINT_TIME:
-//		TFTLCD_SelectTimeUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TIME_END_TEXT,
-//				DISPLAY_Status.selectTime);
-//		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
-//		break;
-
-//	default:
-//		break;
-//	}
-//}
 
 /*******************************************************************************
  * function：密码界面接收用户数值选择并做界面处理

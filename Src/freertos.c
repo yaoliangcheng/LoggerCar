@@ -129,14 +129,14 @@ void MX_FREERTOS_Init(void) {
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 512);
+  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
   tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
 //
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 1000);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 128);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 
-  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 2000);
+  osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 128);
   gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
 //  osThreadSuspend(gprsprocessTaskHandle);
 
