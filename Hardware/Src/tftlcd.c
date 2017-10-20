@@ -44,23 +44,20 @@ void TFTLCD_Init(void)
  */
 void TFTLCD_SetScreenId(TFTLCD_ScreenIDEnum screen)
 {
-	/* 进入临界区 */
+	/* 界面跳转,并且更新状态栏 */
+	TFTLCD_status.curScreenID = screen;
+
 	taskENTER_CRITICAL();
 
 	/* 切换界面 */
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SET_SCREEN;
 	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
 	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screen);
-
 	memcpy(&TFTLCD_SendBuffer.buffer.data, &TFTLCD_SendBuffer.tail, 4);
-
 	TFTLCD_SendBuf(9);
 
-	/* 退出临界区 */
 	taskEXIT_CRITICAL();
 
-	/* 界面跳转,并且更新状态栏 */
-	TFTLCD_status.curScreenID = screen;
 	osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
 }
 

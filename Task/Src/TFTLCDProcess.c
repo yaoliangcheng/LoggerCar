@@ -19,6 +19,7 @@ void TFTLCD_Task(void)
 	uint16_t screenID;
 	uint16_t ctrlID;
 
+	/* 需等待os开始运行再开始延时启动，其余任务也可同步进行 */
 	TFTLCD_Init();
 
 	while(1)
@@ -64,14 +65,16 @@ void TFTLCD_Task(void)
 				/* 界面更新的指令 */
 				if (TFTLCD_RecvBuffer.date.recvBuf.cmd == TFTLCD_CMD_SCREEN_ID_GET)
 				{
-					TFTLCD_status.curScreenID = (TFTLCD_ScreenIDEnum)((TFTLCD_RecvBuffer.date.recvBuf.screenIdH << 8)
-							| (TFTLCD_RecvBuffer.date.recvBuf.screenIdL));
-
-					/* 界面跳转后，需要刷新一次状态栏 */
-					osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
-
-					/* 界面跳转后，默认出现的画面 */
-					ScreenDefaultDisplay(screenID);
+					/* 不知道为什么，界面跳转后屏幕会发一次0界面，导致错误 */
+					if (TFTLCD_RecvBuffer.date.recvBuf.screenIdL != 0)
+					{
+						TFTLCD_status.curScreenID =
+								(TFTLCD_ScreenIDEnum)(TFTLCD_RecvBuffer.date.recvBuf.screenIdL);
+						/* 界面跳转后，需要刷新一次状态栏 */
+						osSignalSet(tftlcdTaskHandle, TFTLCD_TASK_STATUS_BAR_UPDATE);
+						/* 界面跳转后，默认出现的画面 */
+						ScreenDefaultDisplay(screenID);
+					}
 				}
 				else
 				{
