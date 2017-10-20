@@ -22,8 +22,8 @@ void PARAM_ParamFileInit(void)
 //	memcpy(PARAM_DeviceParam.deviceSN, "1708151515", sizeof(PARAM_DeviceParam.deviceSN));
 //	PARAM_DeviceParam.locationType    = LOCATION_GPS;
 //	PARAM_DeviceParam.firmwareVersion = 10;
-//	PARAM_DeviceParam.recordInterval  = 2;
-//	PARAM_DeviceParam.overLimitRecordInterval = 2;
+//	PARAM_DeviceParam.recordInterval  = 1;
+//	PARAM_DeviceParam.overLimitRecordInterval = 1;
 //	PARAM_DeviceParam.exAnalogChannelNumb  = ANALOG_CHANNEL_NUMB;
 //	PARAM_DeviceParam.chParam[0].channelType = TYPE_TEMP;
 //	PARAM_DeviceParam.chParam[0].channelUnit = UNIT_TEMP;

@@ -54,6 +54,7 @@
 #include "fatfs.h"
 #include "rtc.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -123,10 +124,10 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_SPI2_Init();
+  MX_TIM7_Init();
 
   /* USER CODE BEGIN 2 */
   ANALOG_Init();
-  RT_Init();
   BLE_Init();
   DISPLAY_Init();
 
@@ -236,13 +237,23 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 /* USER CODE BEGIN Callback 0 */
+	static uint8_t timeAnalogUpdateCnt = 0;
 
 /* USER CODE END Callback 0 */
   if (htim->Instance == TIM6) {
     HAL_IncTick();
   }
 /* USER CODE BEGIN Callback 1 */
-
+  	if (htim->Instance == TIM7)
+  	{
+  		/* 定时器触发采样,1s触发中断一次，*/
+  		timeAnalogUpdateCnt++;
+  	  	if (timeAnalogUpdateCnt >= 10)
+  	  	{
+			timeAnalogUpdateCnt = 0;
+  	  		osSignalSet(realtimeTaskHandle, REALTIME_TASK_TIME_ANALOG_UPDATE);
+  	  	}
+  	}
 /* USER CODE END Callback 1 */
 }
 

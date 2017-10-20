@@ -3,11 +3,14 @@
 #include "../Inc/public.h"
 #include "RealTime.h"
 #include "osConfig.h"
+#include "param.h"
 
 /******************************************************************************/
 RT_TimeTypedef RT_RealTime;						/* 实时时间 */
 RT_TimeTypedef RT_RecordTime;					/* 记录时间 */
-BOOL RT_recordFlag = FALSE;						/* 数据记录标志位 */
+
+/******************************************************************************/
+extern PARAM_DeviceParamTypedef PARAM_DeviceParam;
 
 /******************************************************************************/
 static void RT_SetRealTime(RT_TimeTypedef* time);
@@ -19,36 +22,24 @@ static void RT_SetAlarmTimeInterval(uint8_t interval);
  */
 void RT_Init(void)
 {
-	if (HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_DATA) != RTC_BKUP_DATA)
-	{
-		RT_RealTime.date.Year = 17;
-		RT_RealTime.date.Month = 10;
-		RT_RealTime.date.Date = 19;
-		RT_RealTime.date.WeekDay = RTC_WEEKDAY_MONDAY;
-		RT_RealTime.time.Hours = 14;
-		RT_RealTime.time.Minutes = 26;
-		RT_RealTime.time.Seconds = 0x00;
-		RT_SetRealTime(&RT_RealTime);
+	RT_BKUP_ReadDate();
+	HAL_RTC_GetDate(&RT_RTC, &RT_RealTime.date, RTC_FORMAT_BIN);
 
-		HAL_RTCEx_BKUPWrite(&RT_RTC, RTC_BKUP_REG_DATA, RTC_BKUP_DATA);
-	}
-	else
-	{
-		RT_BKUP_ReadDate();
-		HAL_RTC_GetDate(&RT_RTC, &RT_RealTime.date, RTC_FORMAT_BIN);
-//
-//		RT_SetAlarmTimeInterval(60);
-//		/* 清除闹钟中断标志位 */
-//		__HAL_RTC_ALARM_CLEAR_FLAG(&hrtc, RTC_FLAG_ALRAF);
-//
-//		/* 配置闹钟中断 */
-//		__HAL_RTC_ALARM_ENABLE_IT(&hrtc,RTC_IT_ALRA);
-//
-//		/* 配置EXTI中断 */
-//		__HAL_RTC_ALARM_EXTI_ENABLE_IT();
-//		/* EXTI上升沿产生中断 */
-//		__HAL_RTC_ALARM_EXTI_ENABLE_RISING_EDGE();
-	}
+	RT_SetAlarmTimeInterval(PARAM_DeviceParam.recordInterval);
+	/* 清除闹钟中断标志位 */
+	__HAL_RTC_ALARM_CLEAR_FLAG(&hrtc, RTC_FLAG_ALRAF);
+	/* 配置闹钟中断 */
+	__HAL_RTC_ALARM_ENABLE_IT(&hrtc,RTC_IT_ALRA);
+	/* 配置EXTI中断 */
+	__HAL_RTC_ALARM_EXTI_ENABLE_IT();
+	/* EXTI上升沿产生中断 */
+	__HAL_RTC_ALARM_EXTI_ENABLE_RISING_EDGE();
+
+	/* 使能定时器和中断，触发采样 */
+	__HAL_TIM_ENABLE(&RT_TIM);
+	__HAL_TIM_ENABLE_IT(&RT_TIM, TIM_IT_UPDATE);
+	/* 开机触发一次采样 */
+	osSignalSet(realtimeTaskHandle, REALTIME_TASK_TIME_ANALOG_UPDATE);
 }
 
 /*******************************************************************************
@@ -96,29 +87,18 @@ void RT_TimeAdjustWithCloud(uint8_t* pBuffer)
 }
 
 /*******************************************************************************
- * function：秒中断回调函数
- */
-void HAL_RTCEx_RTCEventCallback(RTC_HandleTypeDef *hrtc)
-{
-	osSignalSet(realtimeTaskHandle, REALTIME_TASK_SIGNAL_UPDATE);
-}
-
-/*******************************************************************************
- * function:闹钟中断回调函数
+ * @brief 闹钟中断回调函数，更新下次闹钟时间吗，触发记录
  */
 void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
 {
-	RT_SetAlarmTimeInterval(60);
-
-	/* 数据记录标志位 */
-	RT_recordFlag = TRUE;
-	/* 使能转换 */
-	osSignalSet(realtimeTaskHandle, REALTIME_SENSOR_CONVERT_START);
+	/* 更新下次记录时间点 */
+	RT_SetAlarmTimeInterval(PARAM_DeviceParam.recordInterval);
+	osSignalSet(realtimeTaskHandle, REALTIME_TASK_ALRAM_RECORD);
 }
 
 /*******************************************************************************
- * function:设置闹钟时间间隔
- * @interval：下一次闹钟间隔
+ * @brief 设置闹钟时间间隔
+ * @param interval：下一次闹钟间隔 单位：分钟
  */
 static void RT_SetAlarmTimeInterval(uint8_t interval)
 {
@@ -130,7 +110,8 @@ static void RT_SetAlarmTimeInterval(uint8_t interval)
 
 	alarmCounter = (((uint32_t) high << 16U) | low);
 
-	alarmCounter += interval;
+	/* 分钟转换为秒 */
+	alarmCounter += (interval * 60);
 
 	/* 等待上次对RTC写操作完成 */
 	while((hrtc.Instance->CRL & RTC_CRL_RTOFF) == (uint32_t)RESET);
@@ -143,8 +124,6 @@ static void RT_SetAlarmTimeInterval(uint8_t interval)
 	/* 退出配置模式 */
 	__HAL_RTC_WRITEPROTECTION_ENABLE(&hrtc);
 	while((hrtc.Instance->CRL & RTC_CRL_RTOFF) == (uint32_t)RESET);
-
-
 }
 
 /*******************************************************************************
