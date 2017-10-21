@@ -77,7 +77,7 @@ void MX_FATFS_Init(void)
   /* additional user code for init */
   	/* 文件格式化，获取数据储存文件的结构体总数 */
 	FILE_Init();
-	PARAM_ParamFileInit();
+	PARAM_Init();
 	/* 读取完参数才能确定多久一次闹钟中断 */
 	RT_Init();
 	GPRS_Init();

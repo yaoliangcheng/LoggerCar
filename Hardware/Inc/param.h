@@ -115,7 +115,7 @@ typedef struct
 extern PARAM_DeviceParamTypedef PARAM_DeviceParam;
 
 /******************************************************************************/
-void PARAM_ParamFileInit(void);
+void PARAM_Init(void);
 void PARAM_SaveStruct(PARAM_DeviceParamTypedef* param);
 void PARAM_ReadStruct(PARAM_DeviceParamTypedef* param);
 

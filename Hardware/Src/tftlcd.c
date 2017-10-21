@@ -1,7 +1,7 @@
 #include "tftlcd.h"
 
 #include "file.h"
-
+#include "param.h"
 #include "osConfig.h"
 #include "TFTLCDProcess.h"
 
@@ -23,6 +23,8 @@ static void TFTLCD_SendBuf(uint8_t size);
 static void TFTLCD_ScreenStart(void);
 static void TFTLCD_HistoryDataCurveDisplay(uint8_t channel, uint8_t data);
 static void AnalogAlarmDisplay(uint16_t ctlID, float analog, ParamAlarmTypedef* param);
+static void FloatValueUpdate(uint16_t screenID, uint16_t ctlID, float data);
+static void TFTLCD_DisplayInit(void);
 
 /*******************************************************************************
  * function:触摸屏初始化
@@ -37,6 +39,9 @@ void TFTLCD_Init(void)
 
 	/* 开机界面跳转 */
 	TFTLCD_ScreenStart();
+
+	/* 更新界面一些默认参数 */
+	TFTLCD_DisplayInit();
 }
 
 /*******************************************************************************
@@ -542,6 +547,102 @@ static void TFTLCD_StructInit(void)
 }
 
 /*******************************************************************************
+ * @brief 界面默认显示的一些参数
+ */
+static void TFTLCD_DisplayInit(void)
+{
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH1,
+			PARAM_DeviceParam.chAlarmValue[0].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH1,
+			PARAM_DeviceParam.chAlarmValue[0].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH1,
+			PARAM_DeviceParam.chAlarmValue[0].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH1,
+			PARAM_DeviceParam.chAlarmValue[0].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH2,
+			PARAM_DeviceParam.chAlarmValue[1].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH2,
+			PARAM_DeviceParam.chAlarmValue[1].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH2,
+			PARAM_DeviceParam.chAlarmValue[1].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH2,
+			PARAM_DeviceParam.chAlarmValue[1].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH3,
+			PARAM_DeviceParam.chAlarmValue[2].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH3,
+			PARAM_DeviceParam.chAlarmValue[2].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH3,
+			PARAM_DeviceParam.chAlarmValue[2].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH3,
+			PARAM_DeviceParam.chAlarmValue[2].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH4,
+			PARAM_DeviceParam.chAlarmValue[3].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH4,
+			PARAM_DeviceParam.chAlarmValue[3].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH4,
+			PARAM_DeviceParam.chAlarmValue[3].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH4,
+			PARAM_DeviceParam.chAlarmValue[3].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH5,
+			PARAM_DeviceParam.chAlarmValue[4].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH5,
+			PARAM_DeviceParam.chAlarmValue[4].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH5,
+			PARAM_DeviceParam.chAlarmValue[4].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH5,
+			PARAM_DeviceParam.chAlarmValue[4].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH6,
+			PARAM_DeviceParam.chAlarmValue[5].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH6,
+			PARAM_DeviceParam.chAlarmValue[5].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH6,
+			PARAM_DeviceParam.chAlarmValue[5].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH6,
+			PARAM_DeviceParam.chAlarmValue[5].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH7,
+			PARAM_DeviceParam.chAlarmValue[6].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH7,
+			PARAM_DeviceParam.chAlarmValue[6].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH7,
+			PARAM_DeviceParam.chAlarmValue[6].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH7,
+			PARAM_DeviceParam.chAlarmValue[6].perwarningValueLow);
+
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_UP_CH8,
+			PARAM_DeviceParam.chAlarmValue[7].alarmValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_ALARM_DOWN_CH8,
+			PARAM_DeviceParam.chAlarmValue[7].alarmValueLow);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_UP_CH8,
+			PARAM_DeviceParam.chAlarmValue[7].perwarningValueUp);
+	FloatValueUpdate(SCREEN_ID_SET_ALARM_LIMIT_2, CTL_ID_SET_ALARM_LIMIT_PERWARN_DOWN_CH8,
+			PARAM_DeviceParam.chAlarmValue[7].perwarningValueLow);
+
+	TFTLCD_TextValueUpdate(SCREEN_ID_SET_ALARM_CODE, CTL_ID_SET_ALARM_CODE_1,
+			(char*)&PARAM_DeviceParam.alarmCode[0], 11);
+	TFTLCD_TextValueUpdate(SCREEN_ID_SET_ALARM_CODE, CTL_ID_SET_ALARM_CODE_2,
+			(char*)&PARAM_DeviceParam.alarmCode[1], 11);
+	TFTLCD_TextValueUpdate(SCREEN_ID_SET_ALARM_CODE, CTL_ID_SET_ALARM_CODE_3,
+			(char*)&PARAM_DeviceParam.alarmCode[2], 11);
+
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_SN,
+			"1708151515", 10);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_DEVICE_TYPE,
+				"G95-****", 8);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_CHANNEL_NUMB,
+				"8", 1);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_FIRM_VERSION,
+				"V1.0.10", 7);
+	TFTLCD_TextValueUpdate(SCREEN_ID_ABOUT_DEVICE, CTL_ID_ABOUT_OS_VERSION,
+				"FreeRTOS 9.0.0", 14);
+}
+
+/*******************************************************************************
  *
  */
 static void TFTLCD_UartInit(void)
@@ -649,8 +750,13 @@ static void AnalogAlarmDisplay(uint16_t ctlID, float analog, ParamAlarmTypedef* 
 	}
 }
 
-
-
-
-
+/*******************************************************************************
+ * 更新界面的浮点型值
+ */
+static void FloatValueUpdate(uint16_t screenID, uint16_t ctlID, float data)
+{
+	char str[6];
+	sprintf(str, "%5.1f", data);
+	TFTLCD_TextValueUpdate(screenID, ctlID, str, 5);
+}
 
