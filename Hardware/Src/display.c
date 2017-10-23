@@ -16,6 +16,8 @@ extern FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
 static void PasswordSelect(char numb);
 static void GetAlarmLimitValue(float* value);
 static void GetAlarmCode(char* code);
+static void SetCompareTime(DISPLAY_CompareTimeTypedef* compareTime, RT_TimeTypedef* time);
+static void SetTimeSelect(RT_TimeTypedef* time);
 
 /*******************************************************************************
  *
@@ -93,6 +95,19 @@ void DISPLAY_HistoryDataCurve(uint32_t startStructOffset)
 }
 
 /*******************************************************************************
+ * @brief 把控件的时间定在当前时间
+ */
+void DISPLAY_TimeSelect(RT_TimeTypedef* time)
+{
+	/* 基数是17，要减去17 */
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_YEAR,  time->date.Year - 17);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_MONTH, time->date.Month - 1);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_DAY,   time->date.Date - 1);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_HOUR,  time->time.Hours);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_MIN,   time->time.Minutes);
+}
+
+/*******************************************************************************
  * function：历史数据界面，接收用户操作
  */
 void DISPLAY_HistoryTouch(uint16_t typeID)
@@ -150,23 +165,22 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 	{
 	case CTL_ID_PRINT_TIME_START_TOUCH:
 		/* 时间选择界面是由开始打印时间选择进入 */
-		DISPLAY_Status.timeSelectStatus = TIME_SELECT_START_PRINT_TIME;
+//		DISPLAY_Status.timeSelectStatus = TIME_SELECT_START_PRINT_TIME;
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeStart;
+		SetCompareTime(DISPLAY_Status.selectTime, &RT_RealTime);
+		SetTimeSelect(&RT_RealTime);
 		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
-
-		/* 复位时间选择控件到当前时间 */
-		/* todo */
 		break;
 
 	case CTL_ID_PRINT_TIME_END_TOUCH:
 		/* 时间选择界面是由结束打印时间选择进入 */
-		DISPLAY_Status.timeSelectStatus = TIME_SELECT_END_PRINT_TIME;
+//		DISPLAY_Status.timeSelectStatus = TIME_SELECT_END_PRINT_TIME;
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeEnd;
+		SetCompareTime(DISPLAY_Status.selectTime, &RT_RealTime);
+		SetTimeSelect(&RT_RealTime);
 		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
-		/* 复位时间选择控件到当前时间 */
-		/* todo */
 		break;
 
 	case CTL_ID_CHANNAL_SELECT_CH1_TOUCH:
@@ -682,8 +696,29 @@ static void GetAlarmCode(char* code)
 	memcpy(code, (char*)(&TFTLCD_RecvBuffer.date.recvBuf.buf[1]), 11);
 }
 
+/*******************************************************************************
+ * @brief 设置比较时间的值为当前时间
+ */
+static void SetCompareTime(DISPLAY_CompareTimeTypedef* compareTime, RT_TimeTypedef* time)
+{
+	HEX2ASCII(compareTime->year,  &time->date.Year,    1);
+	HEX2ASCII(compareTime->month, &time->date.Month,   1);
+	HEX2ASCII(compareTime->day,   &time->date.Date,    1);
+	HEX2ASCII(compareTime->hour,  &time->time.Hours,   1);
+	HEX2ASCII(compareTime->min,   &time->time.Minutes, 1);
+}
 
-
-
+/*******************************************************************************
+ * @brief 把控件的时间定在当前时间
+ */
+static void SetTimeSelect(RT_TimeTypedef* time)
+{
+	/* 基数是17，要减去17 */
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_YEAR,  time->date.Year - 17);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_MONTH, time->date.Month - 1);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_DAY,   time->date.Date - 1);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_HOUR,  time->time.Hours);
+	TFTLCD_SetTimeSelect(SCREEN_ID_TIME_SELECT, CTL_ID_TIME_SELECT_MIN,   time->time.Minutes);
+}
 
 

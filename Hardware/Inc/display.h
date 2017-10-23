@@ -70,7 +70,7 @@ typedef struct
 	uint32_t hisDataDispStructOffset;			/* 历史数据显示结构体偏移 */
 	FunctionalState      displayModeBusy;		/* 显示状态忙，重复操作无效 */
 	ChannelSelectTypedef printChannelStatus;	/* 打印界面通道状态 */
-	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
+//	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
 	DISPLAY_CompareTimeTypedef* selectTime;				/* 已被选择的时间 */
 	DISPLAY_CompareTimeTypedef  printTimeStart;			/* 开始打印时间 */
 	DISPLAY_CompareTimeTypedef  printTimeEnd;			/* 结束打印时间 */
@@ -94,6 +94,7 @@ void DISPLAY_Init(void);
 void DISPLAY_HistoryData(uint32_t startStructOffset, uint8_t structCnt);
 void DISPLAY_HistoryTouch(uint16_t typeID);
 void DISPLAY_HistoryDataCurve(uint32_t startStructOffset);
+void DISPLAY_TimeSelect(RT_TimeTypedef* time);
 void DISPLAY_PrintTouch(uint16_t typeID);
 void DISPLAY_TimeSelectTouch(uint16_t typeID, uint8_t value);
 void DISPLAY_SetPasswordTouch(uint16_t typeID);

@@ -385,6 +385,28 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
 }
 
 /*******************************************************************************
+ * @brief 设置时间选择控件的值
+ * @param
+ */
+void TFTLCD_SetTimeSelect(TFTLCD_ScreenIDEnum screen, TFTLCD_TimeSelectCtlIdEnum ctlID, uint8_t value)
+{
+	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_SELECT;
+
+	TFTLCD_SendBuffer.screenIdH = HALFWORD_BYTE_H(screen);
+	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(screen);
+
+	TFTLCD_SendBuffer.buffer.update.ctrlIdH = HALFWORD_BYTE_H(ctlID);
+	TFTLCD_SendBuffer.buffer.update.ctrlIdL = HALFWORD_BYTE_L(ctlID);
+
+//	TFTLCD_SendBuffer.buffer.update.value.date[0] = 0x1B;
+	TFTLCD_SendBuffer.buffer.update.value.date[0] = value;
+	memcpy(&TFTLCD_SendBuffer.buffer.update.value.date[1],
+				TFTLCD_SendBuffer.tail, 4);
+
+	TFTLCD_SendBuf(12);
+}
+
+/*******************************************************************************
  * function:将时间选择界面选好的数值更新到指定的时间控件
  * @time：选好的时间
  */

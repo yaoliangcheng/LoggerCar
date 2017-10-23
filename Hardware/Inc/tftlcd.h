@@ -40,7 +40,7 @@
 #define TFTLCD_CMD_BUTTON					(uint16_t)(0x11B1)
 #define TFTLCD_CMD_BUTTON_SELECT			(uint16_t)(0x11B1)		/* 广州大彩，选择控件和按钮控件是同一个cmd */
 #define TFTLCD_CMD_BATCH_UPDATE				(uint16_t)(0x12B1)
-#define TFTLCD_CMD_SELECT					(uint16_t)(0x14B1)		/* 选择控件值上传 */
+#define TFTLCD_CMD_SELECT					(uint16_t)(0x10B1)		/* 选择控件值上传 */
 #define TFTLCD_CMD_SET_FORE_COLOR			(uint16_t)(0x19B1)		/* 设置文本控件前景色 */
 #define TFTLCD_CMD_ICON_DISP				(uint16_t)(0x23B1)		/* 图标控件显示 */
 
@@ -135,13 +135,13 @@ typedef enum
 /* 时间选择界面控件ID */
 typedef enum
 {
-	CTL_ID_TIME_SELECT_YEAR,
+	CTL_ID_TIME_SELECT_YEAR = 6,
 	CTL_ID_TIME_SELECT_MONTH,
 	CTL_ID_TIME_SELECT_DAY,
 	CTL_ID_TIME_SELECT_HOUR,
 	CTL_ID_TIME_SELECT_MIN,
-	CTL_ID_TIME_SELECT_CANCEL,
 	CTL_ID_TIME_SELECT_OK,
+	CTL_ID_TIME_SELECT_CANCEL,
 } TFTLCD_TimeSelectCtlIdEnum;
 
 /* 密码设置界面控件ID */
@@ -453,7 +453,7 @@ void TFTLCD_StatusBarIconRefresh(uint16_t screenID);
 void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
 void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time);
-
+void TFTLCD_SetTimeSelect(TFTLCD_ScreenIDEnum screen, TFTLCD_TimeSelectCtlIdEnum ctlID, uint8_t value);
 void TFTLCD_UartIdleDeal(void);
 ErrorStatus TFTLCD_CheckHeadTail(void);
 //void TFTLCD_printTimeUpdate(FILE_RealTime* rt, CtrlID_PrintEnum ctrl);

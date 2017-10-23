@@ -19,12 +19,19 @@ void LOWPWR_Init(void)
 	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	/* 按键无效，重新进入待机模式 */
-	if (DISABLE == LOWPWR_KeyStatusCheck())
+	/* 如果是低功耗模式的启动才需要长按开机键 */
+	if (__HAL_PWR_GET_FLAG(PWR_FLAG_WU) == TRUE)
 	{
-		/* 进入待机模式 */
-		LOWPWR_EnterStandbyMode();
+		/* 按键无效，重新进入待机模式 */
+		if (DISABLE == LOWPWR_KeyStatusCheck())
+		{
+			/* 进入待机模式 */
+			LOWPWR_EnterStandbyMode();
+		}
 	}
+
+	/* 清除所有复位标志位 */
+	__HAL_RCC_CLEAR_RESET_FLAGS();
 }
 
 /*******************************************************************************
@@ -61,7 +68,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 			releaseCnt = 0;
 
 			GPRS_PWR_CTRL_ENABLE();
-			if (pressCnt >= 50)
+			if (pressCnt >= 70)
 			{
 				return ENABLE;
 			}
