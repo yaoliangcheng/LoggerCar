@@ -4,6 +4,7 @@
 #include "tftlcd.h"
 #include "print.h"
 #include "param.h"
+#include "ble.h"
 
 /******************************************************************************/
 DISPLAY_StatusTypedef DISPLAY_Status;
@@ -150,10 +151,8 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 	case CTL_ID_PRINT_TIME_START_TOUCH:
 		/* 时间选择界面是由开始打印时间选择进入 */
 		DISPLAY_Status.timeSelectStatus = TIME_SELECT_START_PRINT_TIME;
-
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeStart;
-
 		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
 
 		/* 复位时间选择控件到当前时间 */
@@ -163,12 +162,9 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 	case CTL_ID_PRINT_TIME_END_TOUCH:
 		/* 时间选择界面是由结束打印时间选择进入 */
 		DISPLAY_Status.timeSelectStatus = TIME_SELECT_END_PRINT_TIME;
-
 		/* 传递时间指针 */
 		DISPLAY_Status.selectTime = &DISPLAY_Status.printTimeEnd;
-
 		TFTLCD_SetScreenId(SCREEN_ID_TIME_SELECT);
-
 		/* 复位时间选择控件到当前时间 */
 		/* todo */
 		break;
@@ -235,6 +231,24 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 		break;
 
 	case CTL_ID_PRINT_CUSTOM:
+		break;
+
+	/* 选择一体式打印机模式 */
+	case CTL_ID_PRINT_MODE_SELECT_INTEGRATED:
+		DISPLAY_Status.printMode = PRINT_MODE_INTEGRATED;
+		break;
+
+	/* 选择蓝牙打印模式 */
+	case CTL_ID_PRINT_MODE_SELECT_BLE:
+		DISPLAY_Status.printMode = BLE_LinkPrint();
+		break;
+
+	/* 连接蓝牙打印机 */
+	case CTL_ID_PRINT_LINK_BLE:
+		if (PRINT_MODE_BLE_UNLINK == DISPLAY_Status.printMode)
+		{
+			DISPLAY_Status.printMode = BLE_LinkPrint();
+		}
 		break;
 
 	default:

@@ -23,6 +23,14 @@ typedef enum
 } TimeSelectEnum;
 
 /******************************************************************************/
+typedef enum
+{
+	PRINT_MODE_INTEGRATED,						/* 一体式 */
+	PRINT_MODE_BLE_UNLINK,						/* 蓝牙打印机未连接 */
+	PRINT_MODE_BLE_LINK,						/* 蓝牙打印机已连接 */
+} PrintModeEnum;
+
+/******************************************************************************/
 #pragma pack(push)
 #pragma pack(1)
 
@@ -71,6 +79,8 @@ typedef struct
 	char    passwordBufferNew[4];
 	char    passwordBufferNewAgain[4];
 	uint8_t passwordBufferIndex;				/* 密码位指示 */
+
+	PrintModeEnum printMode;					/* 打印模式 */
 } DISPLAY_StatusTypedef;
 
 

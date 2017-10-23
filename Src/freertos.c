@@ -121,18 +121,18 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadDef(LED, LED_Task, osPriorityNormal, 0, 128);
+  osThreadDef(LED, LED_Task, osPriorityBelowNormal, 0, 128);
   ledTaskHandle = osThreadCreate(osThread(LED), NULL);
 
-  osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 512);
+  osThreadDef(REALTIME, REALTIME_Task, osPriorityNormal, 0, 128);
   realtimeTaskHandle = osThreadCreate(osThread(REALTIME), NULL);
   /* 任务创建成功后再开启RTC的秒中断，否则会出错 */
   HAL_RTCEx_SetSecond_IT(&hrtc);
 
-  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 128);
+  osThreadDef(TFTLCD, TFTLCD_Task, osPriorityNormal, 0, 256);
   tftlcdTaskHandle = osThreadCreate(osThread(TFTLCD), NULL);
 //
-  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityNormal, 0, 128);
+  osThreadDef(MAINPROCESS, MAINPROCESS_Task, osPriorityHigh, 0, 128);
   mainprocessTaskHandle = osThreadCreate(osThread(MAINPROCESS), NULL);
   osThreadSuspend(mainprocessTaskHandle);
 

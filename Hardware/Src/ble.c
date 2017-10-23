@@ -3,6 +3,8 @@
 #include "TFTLCDProcess.h"
 #include "public.h"
 
+#include "tftlcd.h"
+
 /******************************************************************************/
 BLE_RecvBufferTypedef BLE_RecvBuffer;
 uint8_t BLE_RecvData[BLE_UART_RX_DATA_SIZE_MAX];
@@ -58,30 +60,36 @@ void BLE_UartIdleDeal(void)
  * 		  根据编号连接蓝牙
  * 		  连接完成即可开始打印
  */
-ErrorStatus BLE_LinkPrint(void)
+PrintModeEnum BLE_LinkPrint(void)
 {
-	BLE_ModeEnum BLE_Mode = BLE_MODE_TEST;
+	volatile BLE_ModeEnum BLE_Mode = BLE_MODE_TEST;
 	char* expectString;							/* 预期收到的字符串 */
 	osEvent signal;
 	char BLE_CMD_SPP_CONNECTED[14] = "AT+SPPCONN= \r\n";
 	uint8_t timeOutCnt = 0;						/* 超时计数 */
+	char* bleIndex;
+
+	osThreadSetPriority(tftlcdTaskHandle, osPriorityRealtime);
 
 	while (1)
 	{
 		switch (BLE_Mode)
 		{
+		/* 发送测试指令 */
 		case BLE_MODE_TEST:
 			BLE_SendCmd(BLE_CMD_AT_TEST);
 			expectString = BLE_CMD_AT_TEST_RESPOND;
 			BLE_Mode = BLE_MODE_TEST_FINISH;
 			break;
 
+		/* 开启扫描 */
 		case BLE_MODE_SCAN:
 			BLE_SendCmd(BLE_CMD_SCAN_DEVICE);
 			expectString = BLE_CMD_SCAN_DEVICE_RESPOND;
 			BLE_Mode = BLE_MODE_SCAN_DEVICE;
 			break;
 
+		/* SPP连接 */
 		case BLE_MODE_SPP_CONNECTED:
 			BLE_SendCmd(BLE_CMD_SPP_CONNECTED);
 			expectString = BLE_CMD_SPP_CONNECTED_RESPOND;
@@ -107,12 +115,18 @@ ErrorStatus BLE_LinkPrint(void)
 				switch (BLE_Mode)
 				{
 				case BLE_MODE_TEST_FINISH:
+					TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TEXT_BLE_STATUS,
+							"正在搜索打印机", 14);
 					BLE_Mode = BLE_MODE_SCAN;
 					break;
 
 				case BLE_MODE_SCAN_DEVICE:
-					BLE_CMD_SPP_CONNECTED[BLE_SCAN_CONNECT_INDEX_OFFSET]
-						 = BLE_RecvBuffer.recvBuffer[BLE_SCAN_DEVICE_INDEX_OFFSET];
+					TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TEXT_BLE_STATUS,
+							"找到打印机", 10);
+					bleIndex = strstr((char*)BLE_RecvBuffer.recvBuffer, "+SCAN=");
+//					BLE_CMD_SPP_CONNECTED[BLE_SCAN_CONNECT_INDEX_OFFSET]
+//						 = BLE_RecvBuffer.recvBuffer[bleIndex + 6];
+					BLE_CMD_SPP_CONNECTED[BLE_SCAN_CONNECT_INDEX_OFFSET] = *(bleIndex + 6);
 					BLE_Mode = BLE_MODE_SCAN_FINISH;
 					expectString = BLE_CMD_SCAN_FINISH_RESPOND;
 					break;
@@ -122,25 +136,37 @@ ErrorStatus BLE_LinkPrint(void)
 					break;
 
 				case BLE_MODE_SPP_CONNECTED_FINISH:
+					TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TEXT_BLE_STATUS,
+							"连接成功", 14);
 					BLE_Mode = BLE_MODE_LINK_DEVICE;
 					break;
 
 				default:
 					break;
 				}
+
+//				osDelay(1000);
 			}
 		}
 
 		/* 蓝牙配置完成,或者未搜索到蓝牙，退出while循环 */
 		if ((BLE_Mode == BLE_MODE_LINK_DEVICE) || (timeOutCnt > 10))
 		{
+			if (timeOutCnt > 10)
+			{
+				TFTLCD_TextValueUpdate(SCREEN_ID_PRINT, CTL_ID_PRINT_TEXT_BLE_STATUS,
+					"打印机连接失败", 14);
+			}
 			break;
 		}
 	}
+
+	osThreadSetPriority(tftlcdTaskHandle, osPriorityNormal);
+
 	if (BLE_Mode == BLE_MODE_LINK_DEVICE)
-		return SUCCESS;
+		return PRINT_MODE_BLE_LINK;
 	else
-		return ERROR;
+		return PRINT_MODE_BLE_UNLINK;
 }
 
 /*******************************************************************************

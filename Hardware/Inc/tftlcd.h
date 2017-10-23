@@ -126,6 +126,10 @@ typedef enum
 	CTL_ID_CHANNAL_SELECT_CH8_TOUCH,
 	CTL_ID_PRINT_DEFAULT,								/* 默认打印 */
 	CTL_ID_PRINT_CUSTOM,								/* 自定义打印 */
+	CTL_ID_PRINT_MODE_SELECT_INTEGRATED,				/* 选择一体式打印机模式 */
+	CTL_ID_PRINT_MODE_SELECT_BLE,						/* 选择蓝牙打印模式 */
+	CTL_ID_PRINT_LINK_BLE,								/* 连接蓝牙打印机 */
+	CTL_ID_PRINT_TEXT_BLE_STATUS,						/* 蓝牙打印机连接状态显示  */
 } TFTLCD_PrintDataCtlIdEnum;
 
 /* 时间选择界面控件ID */

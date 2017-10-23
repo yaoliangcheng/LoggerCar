@@ -1,5 +1,5 @@
 #include "print.h"
-
+#include "ble.h"
 
 
 /******************************************************************************/
@@ -230,7 +230,14 @@ static void PRINT_SetMode(void)
 static void PRINT_SendData(uint16_t size)
 {
 //	HAL_UART_Transmit_DMA(&PRINT_UART, PRINT_SendBuffer, size);
-	HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
+	if (PRINT_MODE_INTEGRATED == DISPLAY_Status.printMode)
+	{
+		HAL_UART_Transmit(&PRINT_UART, PRINT_SendBuffer, size, 1000);
+	}
+	else if (PRINT_MODE_BLE_LINK == DISPLAY_Status.printMode)
+	{
+		HAL_UART_Transmit(&BLE_UART, PRINT_SendBuffer, size, 1000);
+	}
 }
 
 /*******************************************************************************
