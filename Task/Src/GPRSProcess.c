@@ -3,11 +3,13 @@
 #include "gps.h"
 #include "rt.h"
 
-#include "osConfig.h"
 #include "MainProcess.h"
 
 /******************************************************************************/
 extern GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
+
+extern osMessageQId gprsTaskMessageQid;
+extern osThreadId mainprocessTaskHandle;
 /*******************************************************************************
  *
  */
@@ -74,10 +76,6 @@ void GPRSPROCESS_Task(void)
 
 			/* 开启GPRS发送数据 */
 			case START_TASK_GPRS:
-				/* 获取本次发送的条数 */
-//				signal = osMessageGet(infoCntMessageQId, 2000);
-//				curPatchPack = signal.value.v;
-
 				/* 如果模块已经初始化完成 */
 				if (gprsInited == TRUE)
 					moduleStatus = GET_SIGNAL_QUALITY;
@@ -275,7 +273,7 @@ void GPRSPROCESS_Task(void)
 				{
 					moduleTimeoutCnt = 0;
 					moduleStatus = EXTI_SERIANET_MODE;
-					osMessageGet(realtimeMessageQId, 1);
+//					osMessageGet(realtimeMessageQId, 1);
 					DebugPrintf("未接收到平台正确回文\r\n");
 				}
 
@@ -503,9 +501,9 @@ void GPRSPROCESS_Task(void)
 			{
 				/* 错误计数 */
 				moduleErrorCnt++;
-				if (moduleErrorCnt >= 10)
+				if (moduleErrorCnt >= 5)
 				{
-					DebugPrintf("模块接收到错误指令超过10次\r\n");
+					DebugPrintf("模块接收到错误指令超过5次\r\n");
 					moduleErrorCnt = 0;
 					switch (moduleStatus)
 					{
@@ -513,15 +511,15 @@ void GPRSPROCESS_Task(void)
 						break;
 
 					/* 链接服务器地址出现“FAIL”或者“ERROR”，不能链接上服务器 */
-					case SET_SERVER_IP_ADDR_FINISH:
-						if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, "FAIL"))
-						{
-							/* 放弃本次发送 */
-							moduleStatus = INIT;
-
-							DebugPrintf("不能链接上服务器，放弃本次发送\r\n");
-						}
-						break;
+//					case SET_SERVER_IP_ADDR_FINISH:
+//						if (NULL != strstr((char*)GPRS_RecvBuffer.recvBuffer, "FAIL"))
+//						{
+//							/* 放弃本次发送 */
+//							moduleStatus = INIT;
+//
+//							DebugPrintf("不能链接上服务器，放弃本次发送\r\n");
+//						}
+//						break;
 
 					case DATA_SEND_FINISH:
 						break;

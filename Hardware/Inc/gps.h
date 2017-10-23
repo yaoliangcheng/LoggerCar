@@ -5,9 +5,6 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 
-
-#include "osConfig.h"
-
 /******************************************************************************/
 #define GPS_FLAG_VALID					('A')			/* 数据有效 */
 #define GPS_FLAG_INVALID				('V')			/* 数据无效 */

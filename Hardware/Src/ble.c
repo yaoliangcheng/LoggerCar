@@ -1,5 +1,4 @@
 #include "ble.h"
-#include "osConfig.h"
 #include "TFTLCDProcess.h"
 #include "public.h"
 
@@ -8,6 +7,8 @@
 /******************************************************************************/
 BLE_RecvBufferTypedef BLE_RecvBuffer;
 uint8_t BLE_RecvData[BLE_UART_RX_DATA_SIZE_MAX];
+
+extern osThreadId tftlcdTaskHandle;
 
 /******************************************************************************/
 static void BLE_SendCmd(char* str);

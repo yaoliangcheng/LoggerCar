@@ -1,7 +1,6 @@
 #include "gprs.h"
 
 #include "GPRSProcess.h"
-#include "osConfig.h"
 
 /******************************************************************************/
 uint8_t GPRS_RecvData[GPRS_UART_RX_DATA_SIZE_MAX];
@@ -9,6 +8,8 @@ uint8_t GPRS_signalQuality;			/* GPRS–≈∫≈÷ ¡ø */
 
 GPRS_SendBufferTypedef GPRS_SendBuffer;
 GPRS_RecvBufferTypedef GPRS_RecvBuffer;
+
+extern osThreadId gprsprocessTaskHandle;
 
 /******************************************************************************/
 static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf);

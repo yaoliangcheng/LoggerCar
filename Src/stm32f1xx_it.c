@@ -37,8 +37,6 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-#include "osConfig.h"
-
 #include "analog.h"
 #include "gprs.h"
 #include "gps.h"
@@ -47,6 +45,8 @@
 
 #include "MainProcess.h"
 #include "RealTime.h"
+
+extern osThreadId realtimeTaskHandle;
 
 /* USER CODE END 0 */
 

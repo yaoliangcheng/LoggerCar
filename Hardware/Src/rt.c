@@ -2,7 +2,6 @@
 
 #include "../Inc/public.h"
 #include "RealTime.h"
-#include "osConfig.h"
 #include "param.h"
 
 /******************************************************************************/
@@ -11,6 +10,7 @@ RT_TimeTypedef RT_RecordTime;					/* ¼ÇÂ¼Ê±¼ä */
 
 /******************************************************************************/
 extern PARAM_DeviceParamTypedef PARAM_DeviceParam;
+extern osThreadId realtimeTaskHandle;
 
 /******************************************************************************/
 static void RT_SetRealTime(RT_TimeTypedef* time);

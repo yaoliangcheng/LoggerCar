@@ -1,10 +1,13 @@
 #include "RealTime.h"
 
-#include "osConfig.h"
 
 #include "analog.h"
 #include "tftlcd.h"
 #include "rt.h"
+
+/******************************************************************************/
+extern osThreadId mainprocessTaskHandle;
+extern osThreadId tftlcdTaskHandle;
 
 /*******************************************************************************
  *

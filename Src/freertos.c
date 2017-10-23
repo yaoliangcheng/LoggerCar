@@ -73,11 +73,6 @@ osThreadId mainprocessTaskHandle;
 osThreadId gprsprocessTaskHandle;
 
 /* ╤сап╬Д╠З */
-osMessageQId realtimeMessageQId;
-osMessageQId adjustTimeMessageQId;
-osMessageQId analogMessageQId;
-osMessageQId infoMessageQId;
-osMessageQId infoCntMessageQId;
 osMessageQId gprsTaskMessageQid;
 
 /* USER CODE END Variables */

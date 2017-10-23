@@ -36,7 +36,9 @@ static double GPS_ValueConvert(uint8_t* buf, GPS_LocationTypeEnum loc)
 }
 
 /*******************************************************************************
- * 获取定位数据
+ * @brief 获取定位数据
+ * @param buf：接收缓存
+ * @param info：定位数据
  */
 void GPS_GetLocation(uint8_t* buf, GPS_LocateTypedef* info)
 {

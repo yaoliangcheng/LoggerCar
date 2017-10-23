@@ -7,6 +7,9 @@
 #include "ble.h"
 
 /******************************************************************************/
+extern osThreadId tftlcdTaskHandle;
+
+/******************************************************************************/
 void ScreenDefaultDisplay(uint16_t screen);
 void ScreenTouchDisplay(uint16_t screenID, uint16_t typeID);
 

@@ -1,6 +1,5 @@
 #include "../Inc/MainProcess.h"
 #include "public.h"
-#include "osConfig.h"
 
 #include "GPRSProcess.h"
 
@@ -14,6 +13,8 @@
 extern FILE_SaveStructTypedef FILE_SaveStruct;
 extern FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
 extern FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
+extern osMessageQId gprsTaskMessageQid;
+extern GPS_LocateTypedef  GPS_Locate;
 
 /*******************************************************************************
  *
@@ -23,14 +24,11 @@ void MAINPROCESS_Task(void)
 	osEvent signal;
 	uint8_t curPatchPack;
 
-	RT_TimeTypedef time;
-	GPS_LocateTypedef* location;
-
 	while(1)
 	{		
 		/* 获取时间 */
-		signal = osMessageGet(realtimeMessageQId, 1000);
-		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
+//		signal = osMessageGet(realtimeMessageQId, 1000);
+//		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
 
 		printf("时间：%d.%d.%d %d:%d:%d\r\n", RT_RecordTime.date.Year, RT_RecordTime.date.Month,
 				RT_RecordTime.date.Date, RT_RecordTime.time.Hours, RT_RecordTime.time.Minutes, RT_RecordTime.time.Seconds);
@@ -45,8 +43,14 @@ void MAINPROCESS_Task(void)
 						== MAINPROCESS_GPS_CONVERT_FINISH)
 		{
 			/* 获取定位值 */
-			signal = osMessageGet(infoMessageQId, 100);
-			location = (GPS_LocateTypedef*)signal.value.v;
+			/* 定位值转换成ASCII */
+			sprintf((char*)&FILE_SaveStruct.longitude[0], "%10.5f", GPS_Locate.longitude);
+			sprintf((char*)&FILE_SaveStruct.latitude[0],  "%10.5f", GPS_Locate.latitude);
+		}
+		else
+		{
+			memset((char*)&FILE_SaveStruct.longitude[0], 0, 10);
+			memset((char*)&FILE_SaveStruct.latitude[0],  0, 10);
 		}
 
 		/* 时间转换成ASCII */
@@ -68,11 +72,8 @@ void MAINPROCESS_Task(void)
 		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[5], ANALOG_value.humi3);
 		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[6], ANALOG_value.temp4);
 		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[7], ANALOG_value.humi4);
-
 		sprintf((char*)&FILE_SaveStruct.batQuality[0], "%3d", ANALOG_value.batVoltage);
-		/* 定位值转换成ASCII */
-		sprintf((char*)&FILE_SaveStruct.longitude[0], "%10.5f", location->longitude);
-		sprintf((char*)&FILE_SaveStruct.latitude[0],  "%10.5f",  location->latitude);
+
 		/* CVS文件格式 */
 		FILE_SaveStruct.batQuality[3]	   = '%';		/* 电池电量百分号 */
 		FILE_SaveStruct.str7   			   = ',';

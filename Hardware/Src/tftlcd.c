@@ -2,7 +2,6 @@
 
 #include "file.h"
 #include "param.h"
-#include "osConfig.h"
 #include "TFTLCDProcess.h"
 
 /******************************************************************************/
@@ -14,6 +13,7 @@ TFTLCD_StatusTypedef TFTLCD_status;
 
 /******************************************************************************/
 extern ANALOG_ModeEnum ANALOG_Mode;
+extern osThreadId tftlcdTaskHandle;
 
 /******************************************************************************/
 static void TFTLCD_StructInit(void);
