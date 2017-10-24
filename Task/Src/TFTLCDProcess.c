@@ -24,6 +24,7 @@ void TFTLCD_Task(void)
 
 	/* 需等待os开始运行再开始延时启动，其余任务也可同步进行 */
 	TFTLCD_Init();
+	DISPLAY_Init();
 
 	while(1)
 	{
@@ -101,6 +102,8 @@ void ScreenDefaultDisplay(uint16_t screen)
 	switch(screen)
 	{
 	case SCREEN_ID_HIS_DATA:
+		DISPLAY_Status.hisDataTimePointStart = 0;
+		DISPLAY_Status.hisDataTimePointStop = FILE_DataSaveStructCnt;
 		if (FILE_DataSaveStructCnt >= DISPLAY_HIS_DATA_ONE_SCREEN_CNT)
 		{
 			/* 显示最新的一组数据 */

@@ -93,12 +93,19 @@ typedef enum
 	CTL_ID_PAGE_UP,
 	CTL_ID_PAGE_DOWN,
 	CTL_ID_DIS_CURVE,
+	CTL_ID_HISTORY_DATA_TEXT_START_TIME,
+	CTL_ID_HISTORY_DATA_TEXT_STOP_TIME,
+	CTL_ID_HISTORY_DATA_TOUCH_START_TIME,
+	CTL_ID_HISTORY_DATA_TOUCH_STOP_TIME,
+	CTL_ID_HISTORY_DATA_TOUCH_SEARCH,
 } TFTLCD_HisDataCtlIdEnum;
 
 /* 历史曲线界面控件ID */
 typedef enum
 {
 	CTL_ID_HIS_DATA_CURVE = 6,
+	CTL_ID_HIS_CURVE_START_TIME = 30,
+	CTL_ID_HIS_CURVE_STOP_TIME,
 } TFTLCD_HisDataCurveCtlIdEnum;
 
 /* 数据打印界面控件ID */
@@ -130,6 +137,8 @@ typedef enum
 	CTL_ID_PRINT_MODE_SELECT_BLE,						/* 选择蓝牙打印模式 */
 	CTL_ID_PRINT_LINK_BLE,								/* 连接蓝牙打印机 */
 	CTL_ID_PRINT_TEXT_BLE_STATUS,						/* 蓝牙打印机连接状态显示  */
+	CTL_ID_PRINT_ICON_INTEGRATED,						/* 一体式打印机图标 */
+	CTL_ID_PRINT_ICON_BLE,								/* 蓝牙打印机图标 */
 } TFTLCD_PrintDataCtlIdEnum;
 
 /* 时间选择界面控件ID */
@@ -451,7 +460,7 @@ void TFTLCD_AnalogDataAlarmDisplay(ANALOG_ValueTypedef* analog);
 void TFTLCD_StatusBarTextRefresh(uint16_t screenID, RT_TimeTypedef* rt, uint8_t batQuantity);
 void TFTLCD_StatusBarIconRefresh(uint16_t screenID);
 void TFTLCD_HistoryDataFormat(FILE_SaveStructTypedef* saveInfo, TFTLCD_HisDataCtlIdEnum typeID);
-void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
+void TFTLCD_SetIconValue(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status);
 void TFTLCD_SelectTimeUpdate(TFTLCD_ScreenIDEnum screen, uint16_t ctlID, FILE_RealTimeTypedef* time);
 void TFTLCD_SetTimeSelect(TFTLCD_ScreenIDEnum screen, TFTLCD_TimeSelectCtlIdEnum ctlID, uint8_t value);
 void TFTLCD_UartIdleDeal(void);

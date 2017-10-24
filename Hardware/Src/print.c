@@ -9,7 +9,6 @@ FILE_SaveStructTypedef PRINT_DataFileReadStruct;
 /******************************************************************************/
 static void PRINT_SendData(uint16_t size);
 //static BOOL PRINT_GetAnalogAndAdjust(uint16_t analog, uint8_t* buf, float alarmUp, float alarmLow);
-static uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime);
 static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 		DISPLAY_CompareTimeTypedef* endTimePoint,
 		DISPLAY_CompareTimeTypedef* printDate,
@@ -69,7 +68,7 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
  * @brief 根据开始时间查找结构体偏移，返回结构体偏移
  * @param destTime：目标时间点
  */
-static uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime)
+uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime)
 {
 	uint32_t fileStructStart, fileStructEnd, searchPoint;
 	int compareStatus;

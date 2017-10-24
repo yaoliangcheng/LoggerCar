@@ -53,7 +53,7 @@ void PRINT_SetMode(void);
 void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 						DISPLAY_CompareTimeTypedef* endTime,
 						ChannelSelectTypedef* select);
-
+uint32_t PRINT_SearchStartTime(DISPLAY_CompareTimeTypedef* destTime);
 
 
 

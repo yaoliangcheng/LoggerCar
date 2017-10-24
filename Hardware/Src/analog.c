@@ -33,7 +33,7 @@ void ANALOG_ConvertEnable(void)
 	/* 传感器电源控制到采集，加入适当的延时 */
 	ANALOG_PWR_ENABLE();
 	VBAT_PWR_CHECK_ENABLE();
-	osDelay(10);
+	osDelay(50);
 	HAL_ADC_Start_DMA(&ANALOG_ADC, (uint32_t*)convertValueBuffer,
 								sizeof(convertValueBuffer));
 }
@@ -141,9 +141,9 @@ static uint8_t ANALOG_GetBatVoltage(uint16_t value)
 	uint8_t  percent;
 
 	/* 获取电压值 */
-	voltage = (uint16_t)((((uint32_t)value * 3300) / 4096) * 3 - 6400);
+	voltage = (uint16_t)((((uint32_t)value * 3300) / 4096) * 3 - 6000);
 
-	percent = (voltage * 100) / 2000;
+	percent = (voltage * 100) / 2400;
 
 	if (percent > 100)
 	{

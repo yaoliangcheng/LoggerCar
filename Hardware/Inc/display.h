@@ -71,9 +71,15 @@ typedef struct
 	FunctionalState      displayModeBusy;		/* 显示状态忙，重复操作无效 */
 	ChannelSelectTypedef printChannelStatus;	/* 打印界面通道状态 */
 //	TimeSelectEnum timeSelectStatus;			/* 时间选择状态，标记是由哪个界面进入选择 */
+
 	DISPLAY_CompareTimeTypedef* selectTime;				/* 已被选择的时间 */
+	DISPLAY_CompareTimeTypedef  hisDataTimeStart;		/* 历史数据开始时间 */
+	DISPLAY_CompareTimeTypedef  hisDataTimeStop;		/* 历史数据停止时间 */
 	DISPLAY_CompareTimeTypedef  printTimeStart;			/* 开始打印时间 */
 	DISPLAY_CompareTimeTypedef  printTimeEnd;			/* 结束打印时间 */
+
+	uint32_t hisDataTimePointStart;				/* 历史数据开始时间点 */
+	uint32_t hisDataTimePointStop;				/* 历史数据结束时间点 */
 
 	char    passwordBuffer[4];					/* 密码缓存 */
 	char    passwordBufferNew[4];

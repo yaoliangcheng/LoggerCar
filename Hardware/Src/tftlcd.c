@@ -359,10 +359,10 @@ void TFTLCD_HistoryDataCurveFormat(FILE_SaveStructTypedef* saveInfo)
  * @ctrl：通道选择控件编号
  * @status：当前该通道的值，若选中则变成不选，反之亦然。
  */
-void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status)
+void TFTLCD_SetIconValue(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8_t status)
 {
 	/* 进入临界区 */
-	taskENTER_CRITICAL();
+//	taskENTER_CRITICAL();
 
 	TFTLCD_SendBuffer.cmd = TFTLCD_CMD_ICON_DISP;
 
@@ -381,7 +381,7 @@ void TFTLCD_ChannelSelectICON(TFTLCD_ScreenIDEnum screen, uint16_t typeID, uint8
 	TFTLCD_SendBuf(12);
 
 	/* 退出临界区 */
-	taskEXIT_CRITICAL();
+//	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
