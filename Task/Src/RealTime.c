@@ -1,6 +1,6 @@
 #include "RealTime.h"
 
-
+#include "iwdg.h"
 #include "analog.h"
 #include "tftlcd.h"
 #include "rt.h"
@@ -58,6 +58,11 @@ void REALTIME_Task(void)
 				osThreadResume(mainprocessTaskHandle);
 			}
 		}
+#if IWDG_ENABLE
+		/* ¿´ÃÅ¹·¼à¿Ø */
+		HAL_IWDG_Refresh(&hiwdg);
+#endif
+
 	}
 }
 

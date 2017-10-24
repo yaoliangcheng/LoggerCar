@@ -276,8 +276,10 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 		break;
 
 	case CTL_ID_PRINT_DEFAULT:
+		TFTLCD_SetScreenId(SCREEN_ID_WAITTING);
 		PRINT_PrintProcess(&DISPLAY_Status.printTimeStart, &DISPLAY_Status.printTimeEnd,
 				&DISPLAY_Status.printChannelStatus);
+		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
 		break;
 
 	case CTL_ID_PRINT_CUSTOM:

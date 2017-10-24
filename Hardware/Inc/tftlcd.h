@@ -268,6 +268,7 @@ typedef enum
 	SCREEN_ID_ABOUT_DEVICE,						/* 关于设备 */
 	SCREEN_ID_ABOUT_LUGE,						/* 关于路格 */
 	SCREEN_ID_TIME_SELECT,
+	SCREEN_ID_WAITTING,
 } TFTLCD_ScreenIDEnum;
 
 /**************************小图标控件*********************************************/

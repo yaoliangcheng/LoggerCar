@@ -1,6 +1,6 @@
 #include "print.h"
 #include "ble.h"
-
+#include "iwdg.h"
 
 /******************************************************************************/
 uint8_t PRINT_SendBuffer[PRINT_SEND_BYTES_MAX];
@@ -32,8 +32,6 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 	PRINT_DataStatusEnum status;
 	DISPLAY_CompareTimeTypedef printDate;	/* 当前打印日期 */
 
-	taskENTER_CRITICAL();
-
 	/* 清空当前打印日期 */
 	memset((uint8_t*)&printDate, 0, sizeof(DISPLAY_CompareTimeTypedef));
 
@@ -56,12 +54,17 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 			offsetStruct += 5;
 		else if (PRINT_DATA_OVERlIMITED == status)
 			offsetStruct += 2;
+
+		osDelay(100);
+
+#if IWDG_ENABLE
+		/* 看门狗监控 */
+		HAL_IWDG_Refresh(&hiwdg);
+#endif
 	}
 
 	/* 打印签名 */
 	PRINT_PrintTail();
-
-	taskEXIT_CRITICAL();
 }
 
 /*******************************************************************************
@@ -127,9 +130,10 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 	FILE_ReadFile(FILE_NAME_SAVE_DATA, offset * sizeof(FILE_SaveStructTypedef),
 			(uint8_t*)&PRINT_DataFileReadStruct, sizeof(FILE_SaveStructTypedef));
 
-	/* 读出数据的时间 > 结束时间点 */
-	if (memcmp(PRINT_DataFileReadStruct.year, endTimePoint,
-			sizeof(DISPLAY_CompareTimeTypedef)) > 0)
+	/* 读出数据的时间 >= 结束时间点 */
+	/* 为了防止用户选择的结束时间是当前的时间，但是当前时间并未记录数据，导致数据无限打印的现象 */
+	if ((memcmp(PRINT_DataFileReadStruct.year, endTimePoint, sizeof(DISPLAY_CompareTimeTypedef)) > 0)
+		|| (memcmp(PRINT_DataFileReadStruct.year, endTimePoint, sizeof(DISPLAY_CompareTimeTypedef)) == 0))
 	{
 		return PRINT_DATA_END;
 	}
