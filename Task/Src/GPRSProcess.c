@@ -11,12 +11,13 @@ extern GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
 extern osMessageQId gprsTaskMessageQid;
 extern osThreadId mainprocessTaskHandle;
 /*******************************************************************************
- *
+ * @note 模块重复开机无法启动解决方案：
+ * 		 开机先发送设置波特率指令，若超时则代表模块未启动，执行启动程序，如果收到指令，则复位模块，继续往下执行
  */
 void GPRSPROCESS_Task(void)
 {
 	osEvent signal;
-	GPRS_ModuleStatusEnum moduleStatus = MODULE_INVALID;		/* GPRS模块状态 */
+	GPRS_ModuleStatusEnum moduleStatus = SET_BAUD_RATE;			/* GPRS模块状态 */
 	char* expectString;											/* 预期收到的字符串 */
 
 	GPRS_TaskStatusEnum taskStatus;
@@ -267,6 +268,10 @@ void GPRSPROCESS_Task(void)
 				}
 				break;
 
+			case SET_BAUD_RATE_FINISH:
+				moduleStatus = MODULE_INVALID;
+				break;
+
 			/* 发送到平台的数据没有收到答复,放弃本次数据发送，将模式切换到退出透传模式 */
 			case DATA_SEND_FINISH:
 				if (moduleTimeoutCnt > 2)
@@ -299,7 +304,6 @@ void GPRSPROCESS_Task(void)
 			default:
 				/* 其他情况则将状态向前移动一步 */
 				moduleStatus--;
-
 				if (moduleTimeoutCnt > 2)
 				{
 					moduleTimeoutCnt = 0;
@@ -337,6 +341,11 @@ void GPRSPROCESS_Task(void)
 				/* 设置波特率完成 */
 				case SET_BAUD_RATE_FINISH:
 					DebugPrintf("设置波特率完成\r\n");
+					/* 复位模块 */
+					GPRS_RST_CTRL_ENABLE();
+					osDelay(50);
+					GPRS_RST_CTRL_DISABLE();
+					osDelay(50);
 					moduleStatus = ECHO_DISABLE;
 					break;
 

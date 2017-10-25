@@ -126,9 +126,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI2_Init();
   MX_TIM7_Init();
-#if IWDG_ENABLE
   MX_IWDG_Init();
-#endif
 
   /* USER CODE BEGIN 2 */
   ANALOG_Init();

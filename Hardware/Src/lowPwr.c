@@ -68,7 +68,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 			releaseCnt = 0;
 
 			GPRS_PWR_CTRL_ENABLE();
-			if (pressCnt >= 70)
+			if (pressCnt >= 50)
 			{
 				return ENABLE;
 			}
@@ -84,7 +84,7 @@ static FunctionalState LOWPWR_KeyStatusCheck(void)
 				return DISABLE;
 			}
 		}
-		HAL_Delay(100);
+		osDelay(100);
 	}
 }
 
