@@ -132,8 +132,7 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 
 	/* 读出数据的时间 >= 结束时间点 */
 	/* 为了防止用户选择的结束时间是当前的时间，但是当前时间并未记录数据，导致数据无限打印的现象 */
-	if ((memcmp(PRINT_DataFileReadStruct.year, endTimePoint, sizeof(DISPLAY_CompareTimeTypedef)) > 0)
-		|| (memcmp(PRINT_DataFileReadStruct.year, endTimePoint, sizeof(DISPLAY_CompareTimeTypedef)) == 0))
+	if (memcmp(PRINT_DataFileReadStruct.year, endTimePoint, sizeof(DISPLAY_CompareTimeTypedef)) >= 0)
 	{
 		return PRINT_DATA_END;
 	}
@@ -287,8 +286,8 @@ static void PRINT_PrintTail(void)
 	memcpy(&PRINT_SendBuffer[index], "签收日期：\n", 11);
 	index += 11;
 
-	memcpy(&PRINT_SendBuffer[index], "\n\n\n", 3);
-	index += 3;
+	memcpy(&PRINT_SendBuffer[index], "\n\n\n\n\n\n\n\n\n", 9);
+	index += 9;
 
 	PRINT_SendData(index);
 }
