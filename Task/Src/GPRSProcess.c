@@ -42,6 +42,10 @@ void GPRSPROCESS_Task(void)
 
 		/* 设置波特率 */
 		case SET_BAUD_RATE:
+			GPRS_RST_CTRL_ENABLE();
+			osDelay(50);
+			GPRS_RST_CTRL_DISABLE();
+			osDelay(1000);
 			DebugPrintf("设置波特率\r\n");
 			GPRS_SendCmd(AT_CMD_SET_BAUD_RATE);
 			expectString = AT_CMD_SET_BAUD_RATE_RESPOND;
@@ -307,7 +311,8 @@ void GPRSPROCESS_Task(void)
 				if (moduleTimeoutCnt > 2)
 				{
 					moduleTimeoutCnt = 0;
-					moduleStatus = INIT;
+					/* 回到复位状态 */
+					moduleStatus = SET_BAUD_RATE;
 					DebugPrintf("模块指令接收超时3次,放弃本次发送\r\n");
 				}
 				break;
@@ -541,7 +546,7 @@ void GPRSPROCESS_Task(void)
 						break;
 
 					default:
-						moduleStatus = INIT;
+						moduleStatus = SET_BAUD_RATE;
 						gprsInited = FALSE;
 						DebugPrintf("模块配置错误，等待下次重新配置\r\n");
 						break;
@@ -552,4 +557,7 @@ void GPRSPROCESS_Task(void)
 		}
 	}
 }
+
+
+
 
