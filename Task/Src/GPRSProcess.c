@@ -10,6 +10,9 @@ extern GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
 
 extern osMessageQId gprsTaskMessageQid;
 extern osThreadId mainprocessTaskHandle;
+
+extern GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
+extern const char Message[];
 /*******************************************************************************
  * @note 模块重复开机无法启动解决方案：
  * 		 开机先发送设置波特率指令，若超时则代表模块未启动，执行启动程序，如果收到指令，则复位模块，继续往下执行
@@ -60,6 +63,27 @@ void GPRSPROCESS_Task(void)
 			moduleStatus = ECHO_DISABLE_FINISH;
 			break;
 
+		/* 获取ICCID */
+		case GET_ICCID:
+			GPRS_SendCmd(AT_CMD_GET_ICCID);
+			expectString = AT_CMD_GET_ICCID_RESPOND;
+			moduleStatus = GET_ICCID_FINISH;
+			break;
+
+		/* 获取IMSI */
+		case GET_IMSI:
+			GPRS_SendCmd(AT_CMD_GET_IMSI);
+			expectString = AT_CMD_GET_IMSI_RESPOND;
+			moduleStatus = GET_IMSI_FINISH;
+			break;
+
+		/* 获取IMEI */
+		case GET_IMEI:
+			GPRS_SendCmd(AT_CMD_GET_IMEI);
+			expectString = AT_CMD_GET_IMEI_RESPOND;
+			moduleStatus = GET_IMEI_FINISH;
+			break;
+
 		/* 使能GPS功能 */
 		case ENABLE_GPS:
 			DebugPrintf("使能GPS功能\r\n");
@@ -80,7 +104,7 @@ void GPRSPROCESS_Task(void)
 				break;
 
 			/* 开启GPRS发送数据 */
-			case START_TASK_GPRS:
+			case START_TASK_DATA:
 				/* 如果模块已经初始化完成 */
 				if (gprsInited == TRUE)
 					moduleStatus = GET_SIGNAL_QUALITY;
@@ -89,7 +113,10 @@ void GPRSPROCESS_Task(void)
 				break;
 
 			/* 开启短信发送 */
-			case START_TASK_GSM:
+			case START_TASK_MESSAGE:
+				/* 如果模块已经初始化完成，则启动发送短信，否则短信发送失败，等待下次触发发送 */
+				if (gprsInited == TRUE)
+					moduleStatus = SET_MESSAGE_SERVER_IP_ADDR;
 				break;
 
 			default:
@@ -221,6 +248,20 @@ void GPRSPROCESS_Task(void)
 			GPRS_SendProtocol(&GPRS_SendBuffer);
 			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
+			break;
+
+		/* 设置短信服务器地址 */
+		case SET_MESSAGE_SERVER_IP_ADDR:
+			GPRS_SendCmd(AT_CMD_SET_MESSAGE_SERVER_IP_ADDR);
+			expectString = AT_CMD_SET_MESSAGE_SERVER_IP_ADDR_RESPOND;
+			moduleStatus = SET_MESSAGE_SERVER_IP_ADDR_FINISH;
+			break;
+
+		/* 短信准备好 */
+		case MESSAGE_READY:
+			GPRS_SendMessagePack(&GPRS_NewSendbuffer, RT_RealTime, (char*)Message, 12);
+			expectString = AT_CMD_MESSAGE_SEND_SUCCESS_RESPOND;
+			moduleStatus = MESSAGE_SEND_FINISH;
 			break;
 
 		/* 退出透传模式 */
@@ -357,6 +398,27 @@ void GPRSPROCESS_Task(void)
 				/* 关闭回显模式完成 */
 				case ECHO_DISABLE_FINISH:
 					DebugPrintf("关闭回显模式完成\r\n");
+					moduleStatus = GET_ICCID;
+					break;
+
+				/* 获取ICCID完成 */
+				case GET_ICCID_FINISH:
+					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.ICCID,
+							&GPRS_RecvBuffer.recvBuffer[10], 20);
+					moduleStatus = GET_IMSI;
+					break;
+
+				/* 获取IMSI完成 */
+				case GET_IMSI_FINISH:
+					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.IMSI,
+							&GPRS_RecvBuffer.recvBuffer[2], 15);
+					moduleStatus = GET_IMEI;
+					break;
+
+				/* 获取IMEI完成 */
+				case GET_IMEI_FINISH:
+					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.IMEI,
+							&GPRS_RecvBuffer.recvBuffer[10], 15);
 					moduleStatus = ENABLE_GPS;
 					break;
 
@@ -485,6 +547,16 @@ void GPRSPROCESS_Task(void)
 
 					/* GPRS发送完成 */
 					osSignalSet(mainprocessTaskHandle, MAINPROCESS_GPRS_SEND_FINISHED);
+					break;
+
+				/* 设置短信服务器地址完成 */
+				case SET_MESSAGE_SERVER_IP_ADDR_FINISH:
+					moduleStatus = MESSAGE_READY;
+					break;
+
+				/* 短信发送完成 */
+				case MESSAGE_SEND_FINISH:
+					moduleStatus = EXTI_SERIANET_MODE;
 					break;
 
 				/* 退出透传模式完成 */

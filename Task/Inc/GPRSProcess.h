@@ -85,6 +85,16 @@
 #define AT_CMD_SEND_MESSAGE_NUMB_RESPOND		(">")
 #define AT_CMD_SEND_MESSAGE_SUCCESS_RESPOND		(AT_CMD_RESPOND_OK)
 
+/* 物联网卡发送短信 */
+#define AT_CMD_GET_ICCID						("AT+ICCID\r\n")
+#define AT_CMD_GET_ICCID_RESPOND				("ICCID:")
+#define AT_CMD_GET_IMSI							("AT+CIMI\r\n")
+#define AT_CMD_GET_IMSI_RESPOND					(AT_CMD_RESPOND_OK)
+#define AT_CMD_GET_IMEI							("AT+EGMR=0,7\r\n")
+#define AT_CMD_GET_IMEI_RESPOND					("+EGMR:")
+#define AT_CMD_SET_MESSAGE_SERVER_IP_ADDR		("AT+CIPSTART=\"TCP\",\"sms.hzjly.cn\",\"10001\"\r\n")/* 连接服务器 */
+#define AT_CMD_SET_MESSAGE_SERVER_IP_ADDR_RESPOND ("CONNECT OK")
+#define AT_CMD_MESSAGE_SEND_SUCCESS_RESPOND  	("18367053909")
 /******************************************************************************/
 #define GPRSPROCESS_WAIT_FOR_PARAM_INIT			(1 << 0)
 //#define GPRSPROCESS_SEND_DATA_ENABLE			(1 << 1)
@@ -99,6 +109,12 @@ typedef enum
 	SET_BAUD_RATE_FINISH,							/* 波特率设置完成 */
 	ECHO_DISABLE,									/* 关闭回显模式 */
 	ECHO_DISABLE_FINISH,							/* 关闭回显模式完成 */
+	GET_ICCID,										/* 获取ICCID */
+	GET_ICCID_FINISH,								/* 获取ICCID完成 */
+	GET_IMSI,										/* 获取IMSI */
+	GET_IMSI_FINISH,								/* 获取IMSI完成 */
+	GET_IMEI,										/* 获取IMEI */
+	GET_IMEI_FINISH,								/* 获取IMEI完成 */
 	ENABLE_GPS,										/* 使能GPS功能 */
 	ENABLE_GPS_FINISH,								/* 使能GPS功能完成 */
 	INIT,											/* 初始状态 */
@@ -132,6 +148,12 @@ typedef enum
 	SET_SERVER_IP_ADDR_FINISH,						/* 设置服务器地址完成 */
 	READY,											/* 模块准备好 */
 	DATA_SEND_FINISH,								/* 数据发送完成 */
+
+	SET_MESSAGE_SERVER_IP_ADDR,						/* 设置短信服务器地址 */
+	SET_MESSAGE_SERVER_IP_ADDR_FINISH,				/* 设置短信服务器地址完成 */
+	MESSAGE_READY,									/* 短信准备好 */
+	MESSAGE_SEND_FINISH,							/* 短信发送完成 */
+
 	EXTI_SERIANET_MODE,								/* 退出透传模式 */
 	EXTI_SERIANET_MODE_FINISH,						/* 退出透传模式完成 */
 	RETURN_SERIANET_MODE,							/* 返回透传模式 */
@@ -144,9 +166,9 @@ typedef enum
 
 typedef enum
 {
-	START_TASK_GPS,
-	START_TASK_GPRS,
-	START_TASK_GSM,
+	START_TASK_GPS,									/* 获取GPS定位数据 */
+	START_TASK_DATA,								/* 发送数据 */
+	START_TASK_MESSAGE,								/* 发送短信 */
 } GPRS_TaskStatusEnum;
 
 /******************************************************************************/

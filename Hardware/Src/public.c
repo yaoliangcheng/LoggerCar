@@ -51,7 +51,7 @@ void ASCII2BCD(uint8_t* pBCD, char* pASCII, uint8_t size)
  * @pBCD：BCD存放指针
  * @size：要转换的数值长度
  */
-void HEX2BCD(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
+void HEX2BCD(uint8_t* pBCD, uint8_t* pHEX, uint8_t size)
 {
 	uint8_t i;
 

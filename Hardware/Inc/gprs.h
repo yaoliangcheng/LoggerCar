@@ -27,8 +27,20 @@
 #define GPRS_PACK_HEAD					  (uint8_t)(0X31)
 #define GPRS_PACK_TAIL					  (uint8_t)(0x32)
 
+#define GPRS_PACK_HEAD_NEW				  (0x37)
+#define GPRS_PACK_TAIL_NEW				  (0x38)
+
 #define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
 #define GPRS_SIGNAL_QUALITY_OFFSET		  (8)
+
+#define GPRS_MESSAGE_BYTES_MAX			  (70)
+
+/******************************************************************************/
+typedef enum
+{
+	GPRS_PACK_TYPE_MESSAGE,								/* 短信包 */
+	GPRS_PACK_TYPE_DATA,								/* 数据包 */
+} GPRS_PackTypeEnum;
 
 /******************************************************************************/
 #pragma pack(push)
@@ -76,6 +88,44 @@ typedef struct
 	uint8_t verifyData;										/* 校验数据 */
 } GPRS_SendBufferTypedef;
 
+/******************************************************************************/
+typedef struct
+{
+	uint8_t  packVersion;								/* 包体版本 */
+	uint16_t packSize;									/* 包体长度 */
+	char     ICCID[20];									/* ICCID */
+	char	 IMSI[15];									/* IMSI */
+	char     IMEI[15];									/* IMEI */
+	uint8_t  codeCount;									/* 号码数 */
+	char     codeNumber[1][11];							/* 号码 */
+	uint8_t  contentCount;								/* 短信内容字节数 */
+	char     content[GPRS_MESSAGE_BYTES_MAX];			/* 短信内容 */
+} MessageBufferTypedef;									/* 短信包 */
+
+typedef struct
+{
+	uint8_t  head;										/* 数据头 */
+	uint16_t  dataSize;									/* 字节数 */
+	uint8_t  dataVersion;								/* 数据包版本 */
+	char     serialNumber[10];							/* SN号 */
+	uint16_t deviceTypeCode;							/* 型号编码 */
+	uint8_t  firewareVersion;							/* 固件版本 */
+	uint8_t  year;										/* 上传时间 */
+	uint8_t  month;
+	uint8_t  day;
+	uint8_t  hour;
+	uint8_t  min;
+	uint8_t  sec;
+	uint16_t packCount;									/* 数据包序号 */
+	GPRS_PackTypeEnum packType;							/* 包体类型 */
+	union
+	{
+		MessageBufferTypedef MessageBuffer;				/* 短信包 */
+	} PackBuffer;										/* 包体 */
+	uint8_t tail;										/* 数据尾 */
+	uint8_t verify;										/* 校验和 */
+} GPRS_NewSendbufferTyepdef;							/* 新协议 */
+
 #pragma pack(pop)
 
 /******************************************************************************/
@@ -90,5 +140,6 @@ void GPRS_RstModule(void);
 void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf);
 uint8_t GPRS_GetSignalQuality(uint8_t* buf);
 void GPRS_UartIdleDeal(void);
-
+void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
+		RT_TimeTypedef curtime,	char* messageContent, uint16_t messageCount);
 #endif

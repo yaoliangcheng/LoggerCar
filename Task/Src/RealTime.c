@@ -60,7 +60,7 @@ void REALTIME_Task(void)
 		}
 #if IWDG_ENABLE
 		/* ¿´ÃÅ¹·¼à¿Ø */
-		HAL_IWDG_Refresh(&hiwdg);
+//		HAL_IWDG_Refresh(&hiwdg);
 #endif
 
 	}

@@ -9,7 +9,12 @@ uint8_t GPRS_signalQuality;			/* GPRS信号质量 */
 GPRS_SendBufferTypedef GPRS_SendBuffer;
 GPRS_RecvBufferTypedef GPRS_RecvBuffer;
 
+GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
+
 extern osThreadId gprsprocessTaskHandle;
+
+const char Message[] = {0x67, 0x6D, 0x5D, 0xDE, 0x8D, 0xEF, 0x68, 0x3C,
+		0x79, 0xD1, 0x62, 0x80};
 
 /******************************************************************************/
 static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf);
@@ -21,6 +26,16 @@ static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
  */
 void GPRS_Init(void)
 {
+	GPRS_NewSendbuffer.head = GPRS_PACK_HEAD_NEW;
+	GPRS_NewSendbuffer.dataVersion = 1;
+	memcpy(GPRS_NewSendbuffer.serialNumber, "1708151515", 10);
+	GPRS_NewSendbuffer.firewareVersion = 1;
+	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.packVersion = 1;
+	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeCount = 1;
+	memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeNumber[0], "18367053909", 11);
+
+	GPRS_NewSendbuffer.tail = GPRS_PACK_TAIL_NEW;
+
 	GPRS_StructInit(&GPRS_SendBuffer);
 	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvData, GPRS_UART_RX_DATA_SIZE_MAX);
 }
@@ -123,6 +138,55 @@ void GPRS_UartIdleDeal(void)
 		GPRS_UART.hdmarx->Instance->CNDTR = GPRS_UART.RxXferSize;
 		__HAL_DMA_ENABLE(GPRS_UART.hdmarx);
 	}
+}
+
+/*******************************************************************************
+ * @brief 发送短信包
+ */
+void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
+		RT_TimeTypedef curtime,	char* messageContent, uint16_t messageCount)
+{
+	/* 短信内容字节数 */
+	sendBuffer->PackBuffer.MessageBuffer.contentCount = messageCount;
+	/* 短信内容 */
+	memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.content, messageContent,
+			messageCount);
+	/* 包体长度 = 53 + 11 * 号码个数 + 短信内容字节数 */
+	sendBuffer->PackBuffer.MessageBuffer.packSize = messageCount
+			+ sendBuffer->PackBuffer.MessageBuffer.codeCount * 11 + 53;
+
+	/* 包体类型 */
+	sendBuffer->packType = GPRS_PACK_TYPE_MESSAGE;
+	/* 包序号 */
+	sendBuffer->packCount++;
+	/* 上传时间 */
+	/* 时间字符串转换成BCD */
+	HEX2BCD(&sendBuffer->year,  &curtime.date.Year,    1);
+	HEX2BCD(&sendBuffer->month, &curtime.date.Month,   1);
+	HEX2BCD(&sendBuffer->day,   &curtime.date.Date,    1);
+	HEX2BCD(&sendBuffer->hour,  &curtime.time.Hours,   1);
+	HEX2BCD(&sendBuffer->min,   &curtime.time.Minutes, 1);
+	HEX2BCD(&sendBuffer->sec,   &curtime.time.Seconds, 1);
+
+
+	/* 字节数 */
+	sendBuffer->dataSize = (sendBuffer->PackBuffer.MessageBuffer.packSize + 3) + 23;
+
+	if (messageCount < GPRS_MESSAGE_BYTES_MAX)
+	{
+		sendBuffer->PackBuffer.MessageBuffer.content[messageCount] = GPRS_PACK_TAIL_NEW;
+	}
+
+	sendBuffer->verify =
+			GPRS_VerifyCalculate(&sendBuffer->head, sendBuffer->dataSize + 4);
+
+	if (messageCount < GPRS_MESSAGE_BYTES_MAX)
+	{
+		sendBuffer->PackBuffer.MessageBuffer.content[messageCount + 1]
+													 = sendBuffer->verify;
+	}
+
+	HAL_UART_Transmit_DMA(&GPRS_UART, &sendBuffer->head, sendBuffer->dataSize + 5);
 }
 
 /*******************************************************************************

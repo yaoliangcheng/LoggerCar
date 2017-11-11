@@ -16,6 +16,8 @@ extern FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
 extern osMessageQId gprsTaskMessageQid;
 extern GPS_LocateTypedef  GPS_Locate;
 
+FunctionalState messageEnable = ENABLE;
+
 /*******************************************************************************
  *
  */
@@ -93,7 +95,7 @@ void MAINPROCESS_Task(void)
 		GPRS_SendBuffer.dataPackNumbL = curPatchPack;
 
 		/* 使能MainProcess任务发送数据 */
-		osMessagePut(gprsTaskMessageQid, START_TASK_GPRS, 1000);
+		osMessagePut(gprsTaskMessageQid, START_TASK_DATA, 1000);
 
 		/* 等待GPRSProcess完成 */
 		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 20000);
@@ -122,6 +124,14 @@ void MAINPROCESS_Task(void)
 				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
 						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 		}
+
+//		if (messageEnable)
+		{
+			/* 使能MainProcess任务发送数据 */
+//			osMessagePut(gprsTaskMessageQid, START_TASK_MESSAGE, 1000);
+		}
+
+
 		osThreadSuspend(NULL);
 	}
 }
