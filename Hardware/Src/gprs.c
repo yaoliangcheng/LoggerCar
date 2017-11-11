@@ -27,8 +27,10 @@ static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
 void GPRS_Init(void)
 {
 	GPRS_NewSendbuffer.head = GPRS_PACK_HEAD_NEW;
-	GPRS_NewSendbuffer.dataVersion = 1;
+	GPRS_NewSendbuffer.dataVersion = 2;
 	memcpy(GPRS_NewSendbuffer.serialNumber, "1708151515", 10);
+	GPRS_NewSendbuffer.deviceTypeCodeH = 10;
+	GPRS_NewSendbuffer.deviceTypeCodeL = 10;
 	GPRS_NewSendbuffer.firewareVersion = 1;
 	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.packVersion = 1;
 	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeCount = 1;
@@ -140,25 +142,47 @@ void GPRS_UartIdleDeal(void)
 	}
 }
 
+uint8_t MessageModule[] = {0x37, 0x00, 0x92, 0x02, 0x38, 0x33, 0x31, 0x31, 0x32,
+		0x31, 0x30, 0x30, 0x31, 0x32, 0x0B, 0x7E, 0x8C, 0x17, 0x10, 0x16, 0x19,
+		0x37, 0x28, 0x00, 0x00, 0x01, 0x02, 0x00, 0x78, 0x38, 0x39, 0x38, 0x36,
+		0x30, 0x32, 0x62, 0x34,	0x31, 0x31, 0x31, 0x36, 0x63, 0x30, 0x35, 0x38,
+		0x39, 0x39, 0x32, 0x35, 0x34, 0x36, 0x30, 0x30, 0x34, 0x30, 0x34, 0x30,
+		0x38, 0x30, 0x30, 0x32, 0x39, 0x32, 0x35, 0x38, 0x36, 0x36, 0x30, 0x35,
+		0x30, 0x30, 0x33, 0x35, 0x35, 0x30, 0x32, 0x31, 0x39, 0x32, 0x01, 0x31,
+		0x35, 0x39, 0x38, 0x38, 0x34, 0x35, 0x38, 0x30, 0x35, 0x31, 0x00, 0x38,
+		0x00, 0x0A, 0x00, 0x31, 0x00, 0x37, 0x00, 0x31, 0x00, 0x30, 0x00, 0x31,
+		0x00, 0x36, 0x00, 0x20, 0x00, 0x31, 0x00, 0x39, 0x00, 0x3A, 0x00, 0x33,
+		0x00, 0x34, 0x00, 0x0A, 0x00, 0x53, 0x00, 0x48, 0x00, 0x54, 0x00, 0x33,
+		0x00, 0x30, 0x00, 0x0A, 0x00, 0x31, 0x6E, 0x29, 0x00, 0x32, 0x00, 0x33,
+		0x00, 0x2E, 0x00, 0x30, 0x8D, 0x85, 0x00, 0x0A, 0x38, 0xA5};
+
 /*******************************************************************************
  * @brief 发送短信包
  */
 void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 		RT_TimeTypedef curtime,	char* messageContent, uint16_t messageCount)
 {
+	uint16_t size = 0;
+	static uint16_t GPRS_PackCount = 0;
+
 	/* 短信内容字节数 */
-	sendBuffer->PackBuffer.MessageBuffer.contentCount = messageCount;
+	sendBuffer->PackBuffer.MessageBuffer.contentCountH = HALFWORD_BYTE_H(messageCount);
+	sendBuffer->PackBuffer.MessageBuffer.contentCountL = HALFWORD_BYTE_L(messageCount);
+
 	/* 短信内容 */
 	memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.content, messageContent,
 			messageCount);
 	/* 包体长度 = 53 + 11 * 号码个数 + 短信内容字节数 */
-	sendBuffer->PackBuffer.MessageBuffer.packSize = messageCount
-			+ sendBuffer->PackBuffer.MessageBuffer.codeCount * 11 + 53;
+	size = messageCount + sendBuffer->PackBuffer.MessageBuffer.codeCount * 11 + 53;
+	sendBuffer->PackBuffer.MessageBuffer.packSizeH = HALFWORD_BYTE_H(size);
+	sendBuffer->PackBuffer.MessageBuffer.packSizeL = HALFWORD_BYTE_L(size);
 
 	/* 包体类型 */
 	sendBuffer->packType = GPRS_PACK_TYPE_MESSAGE;
 	/* 包序号 */
-	sendBuffer->packCount++;
+	GPRS_PackCount++;
+	sendBuffer->packCountH = HALFWORD_BYTE_H(GPRS_PackCount);
+	sendBuffer->packCountL = HALFWORD_BYTE_L(GPRS_PackCount);
 	/* 上传时间 */
 	/* 时间字符串转换成BCD */
 	HEX2BCD(&sendBuffer->year,  &curtime.date.Year,    1);
@@ -170,15 +194,18 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 
 
 	/* 字节数 */
-	sendBuffer->dataSize = (sendBuffer->PackBuffer.MessageBuffer.packSize + 3) + 23;
+	size = (size + 3) + 23;
+	sendBuffer->dataSizeH = HALFWORD_BYTE_H(size);
+	sendBuffer->dataSizeL = HALFWORD_BYTE_L(size);
 
 	if (messageCount < GPRS_MESSAGE_BYTES_MAX)
 	{
-		sendBuffer->PackBuffer.MessageBuffer.content[messageCount] = GPRS_PACK_TAIL_NEW;
+		sendBuffer->PackBuffer.MessageBuffer.content[messageCount]
+													 = GPRS_PACK_TAIL_NEW;
 	}
 
 	sendBuffer->verify =
-			GPRS_VerifyCalculate(&sendBuffer->head, sendBuffer->dataSize + 4);
+			GPRS_VerifyCalculate(&sendBuffer->head, size + 4);
 
 	if (messageCount < GPRS_MESSAGE_BYTES_MAX)
 	{
@@ -186,7 +213,11 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 													 = sendBuffer->verify;
 	}
 
-	HAL_UART_Transmit_DMA(&GPRS_UART, &sendBuffer->head, sendBuffer->dataSize + 5);
+
+
+//	memcpy(&sendBuffer->head, MessageModule, sizeof(MessageModule));
+
+	HAL_UART_Transmit_DMA(&GPRS_UART, &sendBuffer->head, size + 5);
 }
 
 /*******************************************************************************

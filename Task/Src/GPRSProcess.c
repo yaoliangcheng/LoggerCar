@@ -326,7 +326,14 @@ void GPRSPROCESS_Task(void)
 //					osMessageGet(realtimeMessageQId, 1);
 					DebugPrintf("未接收到平台正确回文\r\n");
 				}
+				break;
 
+			case MESSAGE_SEND_FINISH:
+				if (moduleTimeoutCnt > 2)
+				{
+					moduleTimeoutCnt = 0;
+					moduleStatus = EXTI_SERIANET_MODE;
+				}
 				break;
 
 			/* GPS启动过程比较慢，暂时忽略超时等待 */

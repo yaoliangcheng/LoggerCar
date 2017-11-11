@@ -38,7 +38,7 @@
 /******************************************************************************/
 typedef enum
 {
-	GPRS_PACK_TYPE_MESSAGE,								/* 短信包 */
+	GPRS_PACK_TYPE_MESSAGE = 0x01,								/* 短信包 */
 	GPRS_PACK_TYPE_DATA,								/* 数据包 */
 } GPRS_PackTypeEnum;
 
@@ -92,23 +92,27 @@ typedef struct
 typedef struct
 {
 	uint8_t  packVersion;								/* 包体版本 */
-	uint16_t packSize;									/* 包体长度 */
+	uint8_t  packSizeH;									/* 包体长度H */
+	uint8_t  packSizeL;									/* 包体长度L */
 	char     ICCID[20];									/* ICCID */
 	char	 IMSI[15];									/* IMSI */
 	char     IMEI[15];									/* IMEI */
 	uint8_t  codeCount;									/* 号码数 */
 	char     codeNumber[1][11];							/* 号码 */
-	uint8_t  contentCount;								/* 短信内容字节数 */
+	uint8_t  contentCountH;								/* 短信内容字节数H */
+	uint8_t  contentCountL;								/* 短信内容字节数L */
 	char     content[GPRS_MESSAGE_BYTES_MAX];			/* 短信内容 */
 } MessageBufferTypedef;									/* 短信包 */
 
 typedef struct
 {
 	uint8_t  head;										/* 数据头 */
-	uint16_t  dataSize;									/* 字节数 */
+	uint8_t  dataSizeH;									/* 字节数H */
+	uint8_t  dataSizeL;									/* 字节数L */
 	uint8_t  dataVersion;								/* 数据包版本 */
 	char     serialNumber[10];							/* SN号 */
-	uint16_t deviceTypeCode;							/* 型号编码 */
+	uint8_t  deviceTypeCodeH;							/* 型号编码H */
+	uint8_t  deviceTypeCodeL;							/* 型号编码L */
 	uint8_t  firewareVersion;							/* 固件版本 */
 	uint8_t  year;										/* 上传时间 */
 	uint8_t  month;
@@ -116,7 +120,8 @@ typedef struct
 	uint8_t  hour;
 	uint8_t  min;
 	uint8_t  sec;
-	uint16_t packCount;									/* 数据包序号 */
+	uint8_t packCountH;									/* 数据包序号H */
+	uint8_t packCountL;									/* 数据包序号L */
 	GPRS_PackTypeEnum packType;							/* 包体类型 */
 	union
 	{
