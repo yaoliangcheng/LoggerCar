@@ -23,7 +23,7 @@ void GPRSPROCESS_Task(void)
 	GPRS_ModuleStatusEnum moduleStatus = SET_BAUD_RATE;			/* GPRS模块状态 */
 	char* expectString;											/* 预期收到的字符串 */
 
-	GPRS_TaskStatusEnum taskStatus;
+	GPRS_TaskStatusEnum taskStatus = START_TASK_INVALID;
 	uint8_t moduleTimeoutCnt;									/* 模块超时计数 */
 	uint8_t moduleErrorCnt;										/* 模块接收错误指令计数 */
 //	uint16_t curPatchPack;										/* 本次上传条数 */
@@ -122,7 +122,6 @@ void GPRSPROCESS_Task(void)
 			default:
 				break;
 			}
-
 			/* 获取状态后，先发一次AT命令 */
 			GPRS_SendCmd(AT_CMD_CHECK_STATUS);
 			expectString = AT_CMD_CHECK_STATUS_RESPOND;
@@ -151,30 +150,6 @@ void GPRSPROCESS_Task(void)
 			GPRS_SendCmd(AT_CMD_SEARCH_NET_STATUS);
 			expectString = AT_CMD_SEARCH_NET_STATUS_RESPOND;
 			moduleStatus = SEARCH_NET_STATUS_FINISH;
-			break;
-
-		/* 获取运营商信息 */
-		case GET_OPERATOR:
-			DebugPrintf("获取运营商信息\r\n");
-			GPRS_SendCmd(AT_CMD_GET_OPERATOR);
-			expectString = AT_CMD_GET_OPERATOR_RESPOND;
-			moduleStatus = GET_OPERATOR_FINISH;
-			break;
-
-		/* 设置字符集格式为GSM */
-		case SET_TEXT_FORMAT_GSM:
-			DebugPrintf("设置字符集格式为GSM\r\n");
-			GPRS_SendCmd(AT_CMD_SET_TEXT_FORMAT_GSM);
-			expectString = AT_CMD_SET_TEXT_FORMAT_GSM_RESPOND;
-			moduleStatus = SET_TEXT_FORMAT_GSM_FINISH;
-			break;
-
-		/* 获取本机号码 */
-		case GET_SUBSCRIBER_NUMB:
-			DebugPrintf("获取本机号码\r\n");
-			GPRS_SendCmd(AT_CMD_GET_SUBSCRIBER_NUMB);
-			expectString = AT_CMD_GET_SUBSCRIBER_NUMB_RESPOND;
-			moduleStatus = GET_SUBSCRIBER_NUMB_FINISH;
 			break;
 
 		/* 查找GPRS状态 */
@@ -463,31 +438,12 @@ void GPRSPROCESS_Task(void)
 					if ((GPRS_RecvBuffer.recvBuffer[11] == '1') ||
 							(GPRS_RecvBuffer.recvBuffer[11] == '5'))
 					{
-						moduleStatus = GET_OPERATOR;
+						moduleStatus = CHECK_GPRS_STATUS;
 					}
 					else
 					{
 						moduleStatus = INIT;
 					}
-					break;
-
-				/* 获取运营商信息完成 */
-				case GET_OPERATOR_FINISH:
-					DebugPrintf("获取运营商信息完成\r\n");
-//					moduleStatus = SET_TEXT_FORMAT_GSM;
-					moduleStatus = CHECK_GPRS_STATUS;
-					break;
-
-				/* 设置字符集格式为GSM完成 */
-				case SET_TEXT_FORMAT_GSM_FINISH:
-					DebugPrintf("设置字符集格式为GSM完成\r\n");
-					moduleStatus = GET_SUBSCRIBER_NUMB;
-					break;
-
-				/* 获取本机号码完成 */
-				case GET_SUBSCRIBER_NUMB_FINISH:
-					DebugPrintf("获取本机号码完成\r\n");
-					moduleStatus = CHECK_GPRS_STATUS;
 					break;
 
 				/* 查找GPRS状态完成 */

@@ -124,12 +124,12 @@ typedef enum
 	CHECK_SIM_STATUS_FINISH,						/* 查询SIM卡状态完成 */
 	SEARCH_NET_STATUS,								/* 查找网络状态 */
 	SEARCH_NET_STATUS_FINISH,						/* 查找网络状态完成 */
-	GET_OPERATOR,									/* 获取运营商信息 */
-	GET_OPERATOR_FINISH,							/* 获取运营商信息完成 */
-	SET_TEXT_FORMAT_GSM,							/* 设置字符集格式为GSM */
-	SET_TEXT_FORMAT_GSM_FINISH,						/* 设置字符集格式为GSM完成 */
-	GET_SUBSCRIBER_NUMB,							/* 获取本机号码 */
-	GET_SUBSCRIBER_NUMB_FINISH,						/* 获取本机号码完成 */
+//	GET_OPERATOR,									/* 获取运营商信息 */
+//	GET_OPERATOR_FINISH,							/* 获取运营商信息完成 */
+//	SET_TEXT_FORMAT_GSM,							/* 设置字符集格式为GSM */
+//	SET_TEXT_FORMAT_GSM_FINISH,						/* 设置字符集格式为GSM完成 */
+//	GET_SUBSCRIBER_NUMB,							/* 获取本机号码 */
+//	GET_SUBSCRIBER_NUMB_FINISH,						/* 获取本机号码完成 */
 	CHECK_GPRS_STATUS,								/* 查找GPRS状态 */
 	CHECK_GPRS_STATUS_FINISH,						/* 查找GPRS状态完成 */
 	SET_SINGLE_LINK,								/* 设置单连接方式 */
@@ -166,6 +166,7 @@ typedef enum
 
 typedef enum
 {
+	START_TASK_INVALID,								/* 无效状态 */
 	START_TASK_GPS,									/* 获取GPS定位数据 */
 	START_TASK_DATA,								/* 发送数据 */
 	START_TASK_MESSAGE,								/* 发送短信 */
