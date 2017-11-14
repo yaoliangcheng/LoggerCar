@@ -80,17 +80,17 @@ void ANALOG_GetSensorValue(void)
  * @param buffer：储存地址指针
  * @param value:模拟量
  */
-void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value)
-{
-	if (value == ANALOG_CHANNLE_INVALID_VALUE)
-		memcpy(buffer->value, ANALOG_INVALID_VALUE, 5);
-	else
-	{
-		/* %5.1表示有效数据长度为5，小数1位 */
-		sprintf(buffer->value, "%5.1f", value);
-		buffer->str = ',';
-	}
-}
+//void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value)
+//{
+//	if (value == ANALOG_CHANNLE_INVALID_VALUE)
+//		memcpy(buffer->value, ANALOG_INVALID_VALUE, 5);
+//	else
+//	{
+//		/* %5.1表示有效数据长度为5，小数1位 */
+//		sprintf(buffer->value, "%5.1f", value);
+//		buffer->str = ',';
+//	}
+//}
 
 /*******************************************************************************
  * function：将AD值从大到小排序，取中间的数值

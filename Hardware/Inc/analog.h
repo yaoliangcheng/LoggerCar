@@ -7,7 +7,7 @@
 
 #include "adc.h"
 #include "public.h"
-#include "file.h"
+//#include "file.h"
 
 /******************************************************************************/
 #define ANALOG_ADC								(hadc1)
@@ -100,6 +100,6 @@ void ANALOG_Init(void);
 void ANALOG_ConvertEnable(void);
 void ANALOG_ConvertDisable(void);
 void ANALOG_GetSensorValue(void);
-void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value);
+//void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value);
 
 #endif

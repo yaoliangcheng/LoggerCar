@@ -13,6 +13,11 @@ extern osThreadId mainprocessTaskHandle;
 
 extern GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
 extern const char Message[];
+
+extern uint16_t GPRS_SendPackSize;							/* GPRS发送包大小 */
+extern char     ICCID[20];									/* ICCID */
+extern char	 	IMSI[15];									/* IMSI */
+extern char     IMEI[15];									/* IMEI */
 /*******************************************************************************
  * @note 模块重复开机无法启动解决方案：
  * 		 开机先发送设置波特率指令，若超时则代表模块未启动，执行启动程序，如果收到指令，则复位模块，继续往下执行
@@ -220,8 +225,9 @@ void GPRSPROCESS_Task(void)
 		case READY:
 			DebugPrintf("模块准备好了，发送数据\r\n");
 			/* 发送数据到平台 */
-			GPRS_SendProtocol(&GPRS_SendBuffer);
-			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
+//			GPRS_SendProtocol(&GPRS_SendBuffer);
+			GPRS_SendData(GPRS_SendPackSize);
+//			expectString = AT_CMD_DATA_SEND_SUCCESS_RESPOND;
 			moduleStatus = DATA_SEND_FINISH;
 			break;
 
@@ -385,22 +391,19 @@ void GPRSPROCESS_Task(void)
 
 				/* 获取ICCID完成 */
 				case GET_ICCID_FINISH:
-					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.ICCID,
-							&GPRS_RecvBuffer.recvBuffer[10], 20);
+					memcpy(ICCID, &GPRS_RecvBuffer.recvBuffer[10], 20);
 					moduleStatus = GET_IMSI;
 					break;
 
 				/* 获取IMSI完成 */
 				case GET_IMSI_FINISH:
-					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.IMSI,
-							&GPRS_RecvBuffer.recvBuffer[2], 15);
+					memcpy(IMSI, &GPRS_RecvBuffer.recvBuffer[2], 15);
 					moduleStatus = GET_IMEI;
 					break;
 
 				/* 获取IMEI完成 */
 				case GET_IMEI_FINISH:
-					memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.IMEI,
-							&GPRS_RecvBuffer.recvBuffer[10], 15);
+					memcpy(IMEI, &GPRS_RecvBuffer.recvBuffer[10], 15);
 					moduleStatus = ENABLE_GPS;
 					break;
 

@@ -7,6 +7,7 @@
 
 #include "param.h"
 #include "exFlash.h"
+#include "analog.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart1)
@@ -24,23 +25,45 @@
 
 /******************************************************************************/
 #define GPRS_PATCH_PACK_NUMB_MAX		  (20)				/* 最多支持补传数据组数 */
-#define GPRS_PACK_HEAD					  (uint8_t)(0X31)
-#define GPRS_PACK_TAIL					  (uint8_t)(0x32)
-
-#define GPRS_PACK_HEAD_NEW				  (0x37)
-#define GPRS_PACK_TAIL_NEW				  (0x38)
+#define GPRS_PACK_HEAD					  (0X37)
+#define GPRS_PACK_TAIL					  (0x38)
 
 #define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
 #define GPRS_SIGNAL_QUALITY_OFFSET		  (8)
 
 #define GPRS_MESSAGE_BYTES_MAX			  (70)
 
+#define GPRS_PARAM_DATA_VERSION				(0x02)
+#define GPRS_PARAM_DEVICE_TYPE_CODE			(0x0A0A)
+#define GPRS_PARAM_FIRMWARE_VERSION			(0x01)
+#define GPRS_PARAM_MESSAGE_PACK_VERSION		(0x01)
+#define GPRS_PARAM_DATA_PACK_VERSION		(0x01)
+
 /******************************************************************************/
 typedef enum
 {
-	GPRS_PACK_TYPE_MESSAGE = 0x01,								/* 短信包 */
+	GPRS_PACK_TYPE_MESSAGE = 0x01,						/* 短信包 */
 	GPRS_PACK_TYPE_DATA,								/* 数据包 */
 } GPRS_PackTypeEnum;
+
+typedef enum
+{
+	GPRS_RECORD_STATUS_CURRENT,							/* 实时数据 */
+	GPRS_RECORD_STATUS_RECORD,							/* 历史数据 */
+} GPRS_RecordStatusEnum;								/* 数据包数据类型 */
+
+typedef enum
+{
+	GPRS_EXTERNAL_PWR_OFF,								/* 无外部电源 */
+	GPRS_EXTERNAL_PWR_ON,								/* 有外部电源 */
+} GPRS_ExternalPowerStatusEnum;							/* 外部电源状态 */
+
+typedef enum
+{
+	GPRS_LOCATION_TYPE_BASE_STATION,					/* 基站定位 */
+	GPRS_LOCATION_TYPE_GPS,								/* GPS定位 */
+} GPRS_LocationTypeEnum;								/* 定位类型 */
+
 
 /******************************************************************************/
 #pragma pack(push)
@@ -106,6 +129,35 @@ typedef struct
 
 typedef struct
 {
+	uint8_t year;										/* 时间 */
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t min;
+	uint8_t sec;
+	uint8_t batteryLevel;								/* 电池电量 */
+	GPRS_ExternalPowerStatusEnum externalPowerStatus;	/* 外部电池状态 */
+	GPRS_LocationTypeEnum locationStatus;				/* 定位标志 */
+	uint32_t longitude;									/* 经度 */
+	uint32_t latitude;									/* 纬度 */
+	uint16_t analogValue[ANALOG_CHANNEL_NUMB];			/* 模拟量值 */
+} SendDataTypedef;
+
+typedef struct
+{
+	uint8_t packVersion;								/* 包体版本 */
+	uint8_t packSizeH;									/* 包体长度 */
+	uint8_t packSizeL;
+	GPRS_RecordStatusEnum recordStatus;					/* 记录标记 */
+	uint8_t channelCount;								/* 通道数 */
+	ParamTypeTypedef param[ANALOG_CHANNEL_NUMB];		/* n个通道参数 */
+	uint8_t dataPackCountH;								/* 数据条数 */
+	uint8_t dataPackCountL;
+	SendDataTypedef SendData[GPRS_PATCH_PACK_NUMB_MAX];	/* 数据点 */
+} DataBufferTypedef;
+
+typedef struct
+{
 	uint8_t  head;										/* 数据头 */
 	uint8_t  dataSizeH;									/* 字节数H */
 	uint8_t  dataSizeL;									/* 字节数L */
@@ -126,6 +178,7 @@ typedef struct
 	union
 	{
 		MessageBufferTypedef MessageBuffer;				/* 短信包 */
+		DataBufferTypedef    DataBuffer;				/* 数据包 */
 	} PackBuffer;										/* 包体 */
 	uint8_t tail;										/* 数据尾 */
 	uint8_t verify;										/* 校验和 */
@@ -141,10 +194,15 @@ extern GPRS_SendBufferTypedef GPRS_SendBuffer;
 /******************************************************************************/
 void GPRS_Init(void);
 void GPRS_SendCmd(char* str);
+void GPRS_SendData(uint16_t size);
 void GPRS_RstModule(void);
 void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf);
 uint8_t GPRS_GetSignalQuality(uint8_t* buf);
 void GPRS_UartIdleDeal(void);
 void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 		RT_TimeTypedef curtime,	char* messageContent, uint16_t messageCount);
+
+uint16_t GPRS_SendDataPackFromCurrent(GPRS_NewSendbufferTyepdef* sendBuffer,
+		RT_TimeTypedef* curtime, ANALOG_ValueTypedef* analog,
+		GPS_LocateTypedef* location);
 #endif

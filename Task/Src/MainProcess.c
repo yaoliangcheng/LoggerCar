@@ -18,6 +18,10 @@ extern GPS_LocateTypedef  GPS_Locate;
 
 FunctionalState messageEnable = ENABLE;
 
+
+extern uint16_t GPRS_SendPackSize;		/* GPRS发送包大小 */
+extern GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
+
 /*******************************************************************************
  *
  */
@@ -56,43 +60,46 @@ void MAINPROCESS_Task(void)
 		}
 
 		/* 时间转换成ASCII */
-		HEX2ASCII(&FILE_SaveStruct.year[0],  &RT_RecordTime.date.Year,    1);
-		HEX2ASCII(&FILE_SaveStruct.month[0], &RT_RecordTime.date.Month,   1);
-		HEX2ASCII(&FILE_SaveStruct.day[0],   &RT_RecordTime.date.Date,    1);
-		HEX2ASCII(&FILE_SaveStruct.hour[0],  &RT_RecordTime.time.Hours,   1);
-		HEX2ASCII(&FILE_SaveStruct.min[0],   &RT_RecordTime.time.Minutes, 1);
-		HEX2ASCII(&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
-		/* 获取外部电源状态 */
-		FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
+//		HEX2ASCII(&FILE_SaveStruct.year[0],  &RT_RecordTime.date.Year,    1);
+//		HEX2ASCII(&FILE_SaveStruct.month[0], &RT_RecordTime.date.Month,   1);
+//		HEX2ASCII(&FILE_SaveStruct.day[0],   &RT_RecordTime.date.Date,    1);
+//		HEX2ASCII(&FILE_SaveStruct.hour[0],  &RT_RecordTime.time.Hours,   1);
+//		HEX2ASCII(&FILE_SaveStruct.min[0],   &RT_RecordTime.time.Minutes, 1);
+//		HEX2ASCII(&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
+//		/* 获取外部电源状态 */
+//		FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
 
 		/* 模拟量转换为ASCII */
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[0], ANALOG_value.temp1);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[1], ANALOG_value.humi1);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[2], ANALOG_value.temp2);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[3], ANALOG_value.humi2);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[4], ANALOG_value.temp3);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[5], ANALOG_value.humi3);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[6], ANALOG_value.temp4);
-		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[7], ANALOG_value.humi4);
-		sprintf((char*)&FILE_SaveStruct.batQuality[0], "%3d", ANALOG_value.batVoltage);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[0], ANALOG_value.temp1);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[1], ANALOG_value.humi1);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[2], ANALOG_value.temp2);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[3], ANALOG_value.humi2);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[4], ANALOG_value.temp3);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[5], ANALOG_value.humi3);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[6], ANALOG_value.temp4);
+//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[7], ANALOG_value.humi4);
+//		sprintf((char*)&FILE_SaveStruct.batQuality[0], "%3d", ANALOG_value.batVoltage);
 
 		/* CVS文件格式 */
-		FILE_SaveStruct.batQuality[3]	   = '%';		/* 电池电量百分号 */
-		FILE_SaveStruct.str7   			   = ',';
-		FILE_SaveStruct.str8   			   = ',';
+//		FILE_SaveStruct.batQuality[3]	   = '%';		/* 电池电量百分号 */
+//		FILE_SaveStruct.str7   			   = ',';
+//		FILE_SaveStruct.str8   			   = ',';
+//
+//		/* 储存数据 */
+//		FILE_SaveInfo();
+//
+//		/* 读取补传数据条数 */
+//		/* 读取成功，则表明曾经有补传数据记录 */
+//		FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
+//				(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
+//		curPatchPack = FILE_ReadInfo(&FILE_PatchPack);
+//
+//		FILE_SendInfoFormatConvert((uint8_t*)GPRS_SendBuffer.dataPack,
+//								   (uint8_t*)FILE_ReadStruct, curPatchPack);
+//		GPRS_SendBuffer.dataPackNumbL = curPatchPack;
 
-		/* 储存数据 */
-		FILE_SaveInfo();
-
-		/* 读取补传数据条数 */
-		/* 读取成功，则表明曾经有补传数据记录 */
-		FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
-				(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
-		curPatchPack = FILE_ReadInfo(&FILE_PatchPack);
-
-		FILE_SendInfoFormatConvert((uint8_t*)GPRS_SendBuffer.dataPack, 
-								   (uint8_t*)FILE_ReadStruct, curPatchPack);
-		GPRS_SendBuffer.dataPackNumbL = curPatchPack;
+		GPRS_SendPackSize = GPRS_SendDataPackFromCurrent(&GPRS_NewSendbuffer,
+				&RT_RealTime, &ANALOG_value, &GPS_Locate);
 
 		/* 使能MainProcess任务发送数据 */
 		osMessagePut(gprsTaskMessageQid, START_TASK_DATA, 1000);

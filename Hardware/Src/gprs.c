@@ -3,8 +3,13 @@
 #include "GPRSProcess.h"
 
 /******************************************************************************/
-uint8_t GPRS_RecvData[GPRS_UART_RX_DATA_SIZE_MAX];
-uint8_t GPRS_signalQuality;			/* GPRS信号质量 */
+uint8_t  GPRS_RecvData[GPRS_UART_RX_DATA_SIZE_MAX];
+uint8_t  GPRS_signalQuality;						/* GPRS信号质量 */
+uint16_t GPRS_PackCount = 0;						/* GPRS包序号 */
+uint16_t GPRS_SendPackSize = 0;						/* GPRS发送包大小 */
+char     ICCID[20];									/* ICCID */
+char	 IMSI[15];									/* IMSI */
+char     IMEI[15];									/* IMEI */
 
 GPRS_SendBufferTypedef GPRS_SendBuffer;
 GPRS_RecvBufferTypedef GPRS_RecvBuffer;
@@ -18,36 +23,45 @@ const char Message[] = {0x67, 0x6D, 0x5D, 0xDE, 0x8D, 0xEF, 0x68, 0x3C,
 
 /******************************************************************************/
 static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf);
-static void GPRS_SendData(uint8_t *pData, uint16_t Size);
 static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
+static void ProtocolFormat_LocationFloat(float value, uint8_t* pBuffer);
+static void ProtocolFormat_AnalogFloat(float value, uint8_t* pBuffer, DataFormatEnum format);
 
 /*******************************************************************************
  * function：GPRS初始化，包括发送结构体初始化、串口idle接收初始化
  */
 void GPRS_Init(void)
 {
-	GPRS_NewSendbuffer.head = GPRS_PACK_HEAD_NEW;
+	GPRS_NewSendbuffer.head = GPRS_PACK_HEAD;
 	GPRS_NewSendbuffer.dataVersion = 2;
 	memcpy(GPRS_NewSendbuffer.serialNumber, "1708151515", 10);
 	GPRS_NewSendbuffer.deviceTypeCodeH = 10;
 	GPRS_NewSendbuffer.deviceTypeCodeL = 10;
 	GPRS_NewSendbuffer.firewareVersion = 1;
-	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.packVersion = 1;
-	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeCount = 1;
-	memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeNumber[0], "18367053909", 11);
+//	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.packVersion = 1;
+//	GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeCount = 1;
+//	memcpy(GPRS_NewSendbuffer.PackBuffer.MessageBuffer.codeNumber[0], "18367053909", 11);
 
-	GPRS_NewSendbuffer.tail = GPRS_PACK_TAIL_NEW;
+	GPRS_NewSendbuffer.tail = GPRS_PACK_TAIL;
 
 	GPRS_StructInit(&GPRS_SendBuffer);
 	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvData, GPRS_UART_RX_DATA_SIZE_MAX);
 }
 
 /*******************************************************************************
- * function:GPRS发送命令
+ * @brief:GPRS发送命令
  */
 void GPRS_SendCmd(char* str)
 {
-	GPRS_SendData((uint8_t*)str, strlen(str));
+	HAL_UART_Transmit_DMA(&GPRS_UART, (uint8_t*)str, strlen(str));
+}
+
+/*******************************************************************************
+ * @brief:GPRS发送数据
+ */
+void GPRS_SendData(uint16_t size)
+{
+	HAL_UART_Transmit_DMA(&GPRS_UART, (uint8_t*)&GPRS_NewSendbuffer, size);
 }
 
 /*******************************************************************************
@@ -98,7 +112,7 @@ void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf)
 	}
 
 	/* 发送数据，发送的总字节数 = 5+数据长度 */
-	GPRS_SendData(&sendBuf->head, dataSize + 5);
+//	GPRS_SendData(&sendBuf->head, dataSize + 5);
 }
 
 /*******************************************************************************
@@ -201,7 +215,7 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 	if (messageCount < GPRS_MESSAGE_BYTES_MAX)
 	{
 		sendBuffer->PackBuffer.MessageBuffer.content[messageCount]
-													 = GPRS_PACK_TAIL_NEW;
+													 = GPRS_PACK_TAIL;
 	}
 
 	sendBuffer->verify =
@@ -218,6 +232,112 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 //	memcpy(&sendBuffer->head, MessageModule, sizeof(MessageModule));
 
 	HAL_UART_Transmit_DMA(&GPRS_UART, &sendBuffer->head, size + 5);
+}
+
+/*******************************************************************************
+ * @brief：发送实时数据包
+ */
+uint16_t GPRS_SendDataPackFromCurrent(GPRS_NewSendbufferTyepdef* sendBuffer,
+		RT_TimeTypedef* curtime, ANALOG_ValueTypedef* analog,
+		GPS_LocateTypedef* location)
+{
+	uint16_t size = 0;
+
+	/* 包体版本 */
+	sendBuffer->PackBuffer.DataBuffer.packVersion = GPRS_PARAM_DATA_PACK_VERSION;
+	/* 记录类型为实时数据 */
+	sendBuffer->PackBuffer.DataBuffer.recordStatus = GPRS_RECORD_STATUS_CURRENT;
+	/* 设置通道数 */
+	sendBuffer->PackBuffer.DataBuffer.channelCount = ANALOG_CHANNEL_NUMB;
+	/* N个通道参数 */
+	memcpy(sendBuffer->PackBuffer.DataBuffer.param, PARAM_DeviceParam.chParam,
+			sizeof(ParamTypeTypedef) * ANALOG_CHANNEL_NUMB);
+	/* 数据条数为1 */
+	sendBuffer->PackBuffer.DataBuffer.dataPackCountH = 0;
+	sendBuffer->PackBuffer.DataBuffer.dataPackCountL = 1;
+
+	/* 时间字符串转换成BCD */
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].year,  &curtime->date.Year,    1);
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].month, &curtime->date.Month,   1);
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].day,   &curtime->date.Date,    1);
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].hour,  &curtime->time.Hours,   1);
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].min,   &curtime->time.Minutes, 1);
+	HEX2BCD(&sendBuffer->PackBuffer.DataBuffer.SendData[0].sec,   &curtime->time.Seconds, 1);
+	/* 电池电量 */
+	sendBuffer->PackBuffer.DataBuffer.SendData[0].batteryLevel = (uint8_t)analog->batVoltage;
+	/* 外部电源状态 */
+	sendBuffer->PackBuffer.DataBuffer.SendData[0].externalPowerStatus =
+			(GPRS_ExternalPowerStatusEnum)INPUT_CheckPwrOnStatus();
+
+	/* 定位为GPS定位 */
+	sendBuffer->PackBuffer.DataBuffer.SendData[0].locationStatus = GPRS_LOCATION_TYPE_GPS;
+	/* 转换经纬度值 */
+	ProtocolFormat_LocationFloat(location->latitude,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].latitude);
+	ProtocolFormat_LocationFloat(location->longitude,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].longitude);
+
+	/* 转换模拟量值 */
+	ProtocolFormat_AnalogFloat(analog->temp1,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[0],
+			sendBuffer->PackBuffer.DataBuffer.param[0].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->humi1,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[1],
+			sendBuffer->PackBuffer.DataBuffer.param[1].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->temp2,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[2],
+			sendBuffer->PackBuffer.DataBuffer.param[2].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->humi2,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[3],
+			sendBuffer->PackBuffer.DataBuffer.param[3].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->temp3,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[4],
+			sendBuffer->PackBuffer.DataBuffer.param[4].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->humi3,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[5],
+			sendBuffer->PackBuffer.DataBuffer.param[5].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->temp4,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[6],
+			sendBuffer->PackBuffer.DataBuffer.param[6].dataFormat);
+	ProtocolFormat_AnalogFloat(analog->humi4,
+			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[7],
+			sendBuffer->PackBuffer.DataBuffer.param[7].dataFormat);
+
+	/* 当前数据形式固定为61字节 */
+	size = 61;
+	sendBuffer->PackBuffer.DataBuffer.packSizeH = 0;
+	sendBuffer->PackBuffer.DataBuffer.packSizeL = 61;
+
+	/* 包体类型 */
+	sendBuffer->packType = GPRS_PACK_TYPE_DATA;
+	/* 包序号 */
+	GPRS_PackCount++;
+	sendBuffer->packCountH = HALFWORD_BYTE_H(GPRS_PackCount);
+	sendBuffer->packCountL = HALFWORD_BYTE_L(GPRS_PackCount);
+	/* 上传时间 */
+	/* 时间字符串转换成BCD */
+	HEX2BCD(&sendBuffer->year,  &curtime->date.Year,    1);
+	HEX2BCD(&sendBuffer->month, &curtime->date.Month,   1);
+	HEX2BCD(&sendBuffer->day,   &curtime->date.Date,    1);
+	HEX2BCD(&sendBuffer->hour,  &curtime->time.Hours,   1);
+	HEX2BCD(&sendBuffer->min,   &curtime->time.Minutes, 1);
+	HEX2BCD(&sendBuffer->sec,   &curtime->time.Seconds, 1);
+
+	/* 字节数 */
+//	size = (size + 3) + 23;
+	size += 26;
+	sendBuffer->dataSizeH = HALFWORD_BYTE_H(size);
+	sendBuffer->dataSizeL = HALFWORD_BYTE_L(size);
+
+//	sendBuffer->PackBuffer.DataBuffer.SendData[1] = GPRS_PACK_TAIL;
+
+	*(&sendBuffer->head + size + 3) = GPRS_PACK_TAIL;
+	*(&sendBuffer->head + size + 4) =
+			GPRS_VerifyCalculate(&sendBuffer->head, size + 4);
+
+	/* 返回整体包大小 */
+	return (size + 5);
+//	HAL_UART_Transmit_DMA(&GPRS_UART, &sendBuffer->head, size + 5);
 }
 
 /*******************************************************************************
@@ -248,10 +368,10 @@ static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf)
 /*******************************************************************************
  * function:串口dma发送数据
  */
-static void GPRS_SendData(uint8_t *pData, uint16_t Size)
-{
-	HAL_UART_Transmit_DMA(&GPRS_UART, pData, Size);
-}
+//static void GPRS_SendData(uint8_t *pData, uint16_t Size)
+//{
+//	HAL_UART_Transmit_DMA(&GPRS_UART, pData, Size);
+//}
 
 /*******************************************************************************
  * function：gprs发送数据校验
@@ -267,3 +387,68 @@ static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size)
 
 	return cal;
 }
+
+/*******************************************************************************
+ * @brief 定位浮点型值协议格式转换
+ */
+static void ProtocolFormat_LocationFloat(float value, uint8_t* pBuffer)
+{
+	uint32_t temp;
+
+	/* 无效的定位数值 */
+	if (value == 0)
+		memset(pBuffer, 0, 4);
+
+	/* 获取整数部分 */
+	*pBuffer = abs((int)value);
+
+	temp = (uint32_t)((value - (*pBuffer)) * 1000000);
+
+	if (value < 0)
+		temp |= 0x800000;
+
+	*(pBuffer + 1) = (uint8_t)((temp & 0x00FF0000) >> 16);
+	*(pBuffer + 2) = (uint8_t)((temp & 0x0000FF00) >> 8);
+	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
+}
+
+/*******************************************************************************
+ * @brief 模拟量浮点型值协议格式转换
+ */
+static void ProtocolFormat_AnalogFloat(float value, uint8_t* pBuffer, DataFormatEnum format)
+{
+	uint16_t temp = 0;
+	/* 无效值 */
+	if (value == ANALOG_CHANNLE_INVALID_VALUE)
+	{
+		*pBuffer       = 0xFF;
+		*(pBuffer + 1) = 0xFE;
+		return;
+	}
+
+	switch (format)
+	{
+	case FORMAT_INT:
+		temp = (uint16_t)abs((int)(value));
+		break;
+
+	case FORMAT_ONE_DECIMAL:
+		temp = (uint16_t)abs((int)(value * 10));
+		break;
+
+	case FORMAT_TWO_DECIMAL:
+		temp = (uint16_t)abs((int)(value * 100));
+		break;
+	default:
+		break;
+	}
+
+	*pBuffer       = HALFWORD_BYTE_H(temp);
+	*(pBuffer + 1) = HALFWORD_BYTE_L(temp);
+
+	/* 负数则最高位置一 */
+	if (value < 0)
+		*pBuffer |= 0x80;
+}
+
+
