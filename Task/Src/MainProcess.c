@@ -16,8 +16,7 @@ extern FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
 extern osMessageQId gprsTaskMessageQid;
 extern GPS_LocateTypedef  GPS_Locate;
 
-FunctionalState messageEnable = ENABLE;
-
+extern FunctionalState sendPackRecordEnable;			/* 发送数据包记录使能 */
 
 extern uint16_t GPRS_SendPackSize;		/* GPRS发送包大小 */
 extern GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
@@ -31,16 +30,7 @@ void MAINPROCESS_Task(void)
 	uint8_t curPatchPack;
 
 	while(1)
-	{		
-		/* 获取时间 */
-//		signal = osMessageGet(realtimeMessageQId, 1000);
-//		memcpy(&time, (uint32_t*)signal.value.v, sizeof(RT_TimeTypedef));
-
-		printf("时间：%d.%d.%d %d:%d:%d\r\n", RT_RecordTime.date.Year, RT_RecordTime.date.Month,
-				RT_RecordTime.date.Date, RT_RecordTime.time.Hours, RT_RecordTime.time.Minutes, RT_RecordTime.time.Seconds);
-
-		/* 激活 */
-//		osThreadResume(gprsprocessTaskHandle);
+	{
 		/* 获取定位数据 */
 		osMessagePut(gprsTaskMessageQid, START_TASK_GPS, 1000);
 		/* 等待GPS完成,因为这个过程可能要启动GSM模块，所以等待周期必须长点，20s */
@@ -59,64 +49,57 @@ void MAINPROCESS_Task(void)
 			memset((char*)&FILE_SaveStruct.latitude[0],  0, 10);
 		}
 
-		/* 时间转换成ASCII */
-//		HEX2ASCII(&FILE_SaveStruct.year[0],  &RT_RecordTime.date.Year,    1);
-//		HEX2ASCII(&FILE_SaveStruct.month[0], &RT_RecordTime.date.Month,   1);
-//		HEX2ASCII(&FILE_SaveStruct.day[0],   &RT_RecordTime.date.Date,    1);
-//		HEX2ASCII(&FILE_SaveStruct.hour[0],  &RT_RecordTime.time.Hours,   1);
-//		HEX2ASCII(&FILE_SaveStruct.min[0],   &RT_RecordTime.time.Minutes, 1);
-//		HEX2ASCII(&FILE_SaveStruct.sec[0],   &RT_RecordTime.time.Seconds, 1);
-//		/* 获取外部电源状态 */
-//		FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
+		/* 如果是需要保存的，先保存数据 */
+		if (sendPackRecordEnable == ENABLE)
+		{
+			FILE_SaveSendInfo(&FILE_SaveStruct, &RT_RecordTime, &GPS_Locate, &ANALOG_value);
+		}
 
-		/* 模拟量转换为ASCII */
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[0], ANALOG_value.temp1);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[1], ANALOG_value.humi1);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[2], ANALOG_value.temp2);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[3], ANALOG_value.humi2);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[4], ANALOG_value.temp3);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[5], ANALOG_value.humi3);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[6], ANALOG_value.temp4);
-//		ANALOG_Float2ASCII(&FILE_SaveStruct.analogValue[7], ANALOG_value.humi4);
-//		sprintf((char*)&FILE_SaveStruct.batQuality[0], "%3d", ANALOG_value.batVoltage);
+		/* 读取补传文件 */
+		FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
+				(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
+		/* 如果有断点数据 */
+//		if (FILE_PatchPack.patchStructOffset != 0)
+//		{
+//			/* 读取从断点开始的数据，返回当前读出的包数 */
+//			curPatchPack =
+//					FILE_ReadSaveInfo(FILE_ReadStruct, FILE_PatchPack.patchStructOffset);
+//			GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
+//					FILE_ReadStruct, curPatchPack, &RT_RealTime);
+//			FILE_PatchPack.patchStructOffset += curPatchPack;
+//		}
+//		else /* 没有断点数据 */
+		{
+			/* 记录数据 */
+			if (sendPackRecordEnable == ENABLE)
+			{
+				curPatchPack = FILE_ReadSaveInfo(FILE_ReadStruct, 0);
+				GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
+						FILE_ReadStruct, 1, &RT_RealTime);
+			}
+			else	/* 实时数据 */
+			{
+				GPRS_SendPackSize = GPRS_SendDataPackFromCurrent(&GPRS_NewSendbuffer,
+						&RT_RealTime, &ANALOG_value, &GPS_Locate);
+			}
+		}
 
-		/* CVS文件格式 */
-//		FILE_SaveStruct.batQuality[3]	   = '%';		/* 电池电量百分号 */
-//		FILE_SaveStruct.str7   			   = ',';
-//		FILE_SaveStruct.str8   			   = ',';
-//
-//		/* 储存数据 */
-//		FILE_SaveInfo();
-//
-//		/* 读取补传数据条数 */
-//		/* 读取成功，则表明曾经有补传数据记录 */
-//		FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
-//				(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
-//		curPatchPack = FILE_ReadInfo(&FILE_PatchPack);
-//
-//		FILE_SendInfoFormatConvert((uint8_t*)GPRS_SendBuffer.dataPack,
-//								   (uint8_t*)FILE_ReadStruct, curPatchPack);
-//		GPRS_SendBuffer.dataPackNumbL = curPatchPack;
-
-		GPRS_SendPackSize = GPRS_SendDataPackFromCurrent(&GPRS_NewSendbuffer,
-				&RT_RealTime, &ANALOG_value, &GPS_Locate);
+		/* 不管什么情况，均取消记录 */
+		sendPackRecordEnable = DISABLE;
 
 		/* 使能MainProcess任务发送数据 */
 		osMessagePut(gprsTaskMessageQid, START_TASK_DATA, 1000);
-
 		/* 等待GPRSProcess完成 */
 		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 20000);
 		if ((signal.value.signals & MAINPROCESS_GPRS_SEND_FINISHED)
 						!= MAINPROCESS_GPRS_SEND_FINISHED)
 		{
 			printf("发送数据超时，说明数据发送失败，记录数据等待补传\r\n");
-
 			/* 如果是本次发生的补传，则记录时间，否则是正在补传的过程，保持补传文件内容不变 */
 			if (curPatchPack == 1)
 			{
 				/* 记录当前文件前一次位置 */
 				FILE_PatchPack.patchStructOffset = FILE_DataSaveStructCnt - 1;
-
 				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
 						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 			}
@@ -125,19 +108,11 @@ void MAINPROCESS_Task(void)
 		{
 			/* 数据发送成功 */
 			printf("数据发送到平台成功！！\r\n");
-
 			/* 有补传数据 */
 			if (curPatchPack > 1)
 				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
 						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 		}
-
-//		if (messageEnable)
-		{
-			/* 使能MainProcess任务发送数据 */
-//			osMessagePut(gprsTaskMessageQid, START_TASK_MESSAGE, 1000);
-		}
-
 
 		osThreadSuspend(NULL);
 	}

@@ -295,20 +295,20 @@ static void PRINT_PrintTail(void)
 /*******************************************************************************
  * function：判断数值是否超标
  */
-static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
-													ParamAlarmTypedef* param)
-{
-	float value;
+//static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
+//													ParamAlarmTypedef* param)
+//{
+//	float value;
 
-	/* 转换成float */
-	value = FILE_Analog2Float(analog);
+//	/* 转换成float */
+//	value = FILE_Analog2Float(analog);
 
-	/* 比较上下限 */
-	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
-		return PRINT_DATA_OVERlIMITED;
-	else
-		return PRINT_DATA_NORMAL;
-}
+//	/* 比较上下限 */
+//	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
+//		return PRINT_DATA_OVERlIMITED;
+//	else
+//		return PRINT_DATA_NORMAL;
+//}
 
 /*******************************************************************************
  * @brief 打印日期

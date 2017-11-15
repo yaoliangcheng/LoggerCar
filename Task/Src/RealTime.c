@@ -9,6 +9,10 @@
 extern osThreadId mainprocessTaskHandle;
 extern osThreadId tftlcdTaskHandle;
 
+uint8_t sendPackTimeCnt = 0;							/* 发送数据包次数计数 */
+/* 初始化时，使能，就可在第一次触发的时候记录 */
+FunctionalState sendPackRecordEnable = ENABLE;			/* 发送数据包记录使能 */
+
 /*******************************************************************************
  *
  */
@@ -52,6 +56,12 @@ void REALTIME_Task(void)
 			/* 如果是闹钟触发，则记录数据 */
 			if ((signal.value.signals & REALTIME_TASK_ALRAM_RECORD) == REALTIME_TASK_ALRAM_RECORD)
 			{
+				sendPackTimeCnt++;
+				if (sendPackTimeCnt > 5)
+				{
+					sendPackTimeCnt = 0;
+					sendPackRecordEnable = ENABLE;
+				}
 				/* 发送记录时间数据 */
 				memcpy(&RT_RecordTime, &RT_RealTime, sizeof(RT_TimeTypedef));
 				/* 激活MainProcess任务 */

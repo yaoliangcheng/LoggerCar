@@ -14,7 +14,7 @@ TFTLCD_StatusTypedef TFTLCD_status;
 /******************************************************************************/
 extern ANALOG_ModeEnum ANALOG_Mode;
 extern osThreadId tftlcdTaskHandle;
-
+extern uint8_t  GPRS_signalQuality;
 /******************************************************************************/
 static void TFTLCD_StructInit(void);
 static void TFTLCD_UartInit(void);

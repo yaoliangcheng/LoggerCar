@@ -1,5 +1,4 @@
 #include "file.h"
-#include "fatfs.h"
 
 /******************************************************************************/
 FILE_PatchPackTypedef FILE_PatchPack;		/* 补传文件信息 */
@@ -7,7 +6,7 @@ uint64_t FILE_DataSaveStructCnt;			/* 数据储存文件结构体总数 */
 
 
 FILE_SaveStructTypedef FILE_SaveStruct;			/* 储存信息写入结构体 */
-FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
+FILE_SaveStructTypedef FILE_ReadStruct[SEND_PACK_CNT_MAX];
 												/* 储存信息读取结构体 */
 
 /******************************************************************************/
@@ -16,8 +15,7 @@ extern FIL   objFile;
 
 /******************************************************************************/
 static void SaveStructSymbolInit(void);
-static void FormatConvert(GPRS_SendInfoTypedef*   sendInfo,
-						  FILE_SaveStructTypedef* readInfo);
+static void Analog2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value);
 
 /*******************************************************************************
  * function：文件系统初始化，获取数据储存文件的结构体总数
@@ -111,12 +109,13 @@ void FILE_WriteFile(char* fileName, DWORD offset, BYTE* pBuffer, UINT size)
  * saveInfo：储存结构体指针
  * fileStructCount：当前文件结构体数
  */
-void FILE_SaveInfo(void)
+static void FILE_SaveInfo(BYTE* saveInfo, UINT size)
 {
 	uint32_t byteWrite = 0;
 
 	if (FR_OK != f_mount(&objFileSystem, USERPath, 1))
 		return;
+
 	/* 进入临界区 */
 	taskENTER_CRITICAL();
 
@@ -131,11 +130,9 @@ void FILE_SaveInfo(void)
 					(objFile.fsize / sizeof(FILE_SaveStructTypedef))
 					* sizeof(FILE_SaveStructTypedef));
 		/* 把结构体写入文件 */
-		f_write(&objFile, (BYTE*)&FILE_SaveStruct,
-				sizeof(FILE_SaveStructTypedef), &byteWrite);
-		/* 获取文件大小 */
+		f_write(&objFile, saveInfo, size, &byteWrite);
+		/* 获取文件中结构体数 */
 		FILE_DataSaveStructCnt = objFile.fsize / sizeof(FILE_SaveStructTypedef);
-
 		f_close(&objFile);
 	}
 
@@ -145,215 +142,75 @@ void FILE_SaveInfo(void)
 }
 
 /*******************************************************************************
- * function：从Flash中读出最近一个结构体
- * readInfo：储存读出结构体指针
- * @patch：补传信息
+ *
  */
-uint8_t FILE_ReadInfo(FILE_PatchPackTypedef*  patch)
+void FILE_SaveSendInfo(FILE_SaveStructTypedef* saveInfo, RT_TimeTypedef* curtime,
+		GPS_LocateTypedef* location, ANALOG_ValueTypedef* analog)
 {
-	uint8_t readInfoCount;
+	/* 时间转换 */
+	HEX2ASCII(saveInfo->year,  &curtime->date.Year,    1);
+	HEX2ASCII(saveInfo->month, &curtime->date.Month,   1);
+	HEX2ASCII(saveInfo->day,   &curtime->date.Date,    1);
+	HEX2ASCII(saveInfo->hour,  &curtime->time.Hours,   1);
+	HEX2ASCII(saveInfo->min,   &curtime->time.Minutes, 1);
+	HEX2ASCII(saveInfo->sec,   &curtime->time.Seconds, 1);
+	/* 获取外部电源状态 */
+	FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
 
-	/* 没有补传数据 */
-	if (patch->patchStructOffset == 0)
+	/* 模拟量转换为ASCII */
+	Analog2ASCII(&saveInfo->analogValue[0], ANALOG_value.temp1);
+	Analog2ASCII(&saveInfo->analogValue[1], ANALOG_value.humi1);
+	Analog2ASCII(&saveInfo->analogValue[2], ANALOG_value.temp2);
+	Analog2ASCII(&saveInfo->analogValue[3], ANALOG_value.humi2);
+	Analog2ASCII(&saveInfo->analogValue[4], ANALOG_value.temp3);
+	Analog2ASCII(&saveInfo->analogValue[5], ANALOG_value.humi3);
+	Analog2ASCII(&saveInfo->analogValue[6], ANALOG_value.temp4);
+	Analog2ASCII(&saveInfo->analogValue[7], ANALOG_value.humi4);
+	sprintf(saveInfo->batQuality, "%3d", ANALOG_value.batVoltage);
+
+	/* 定位值 */
+	saveInfo->locationStatus = GPS_LOCATION_TYPE_GPS + '0';
+	sprintf(saveInfo->longitude, "%10.5f", location->longitude);
+	sprintf(saveInfo->latitude,  "%10.5f", location->latitude);
+
+	/* CVS文件格式 */
+	saveInfo->batQuality[3] = '%';		/* 电池电量百分号 */
+	saveInfo->str8   		= ',';
+	saveInfo->str9   		= ',';
+
+	/* 储存数据 */
+	FILE_SaveInfo((uint8_t*)saveInfo, sizeof(FILE_SaveStructTypedef));
+}
+
+/*******************************************************************************
+ *
+ */
+uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint8_t structoffset)
+{
+	uint16_t sendPackCnt = 0;			/* 发送的包数 */
+
+	/* 代表没有补传数据，读取最新的一条数据 */
+	if (structoffset == 0)
 	{
-		/* 读取数据为1组 */
-		readInfoCount = 1;
-		/* 读取最后一个结构体 */
 		FILE_ReadFile(FILE_NAME_SAVE_DATA,
-				(FILE_DataSaveStructCnt - 1) * sizeof(FILE_SaveStructTypedef),
-				(uint8_t*)FILE_ReadStruct, sizeof(FILE_SaveStructTypedef));
+			(FILE_DataSaveStructCnt - 1) * sizeof(FILE_SaveStructTypedef),
+			(uint8_t*)readInfo, sizeof(FILE_SaveStructTypedef));
+		return 1;
 	}
-	else
+
+	sendPackCnt = FILE_DataSaveStructCnt - structoffset;
+	/* 不能够一次性发送完成 */
+	if (sendPackCnt > SEND_PACK_CNT_MAX)
 	{
-		/* 当前文件还有多少个结构体可以读 */
-		readInfoCount = FILE_DataSaveStructCnt - patch->patchStructOffset;
-
-		/* 文件中结构体数不能一次读完 */
-		if (readInfoCount > GPRS_PATCH_PACK_NUMB_MAX)
-		{
-			/* 最大上传的数据组数 */
-			readInfoCount = GPRS_PATCH_PACK_NUMB_MAX;
-			patch->patchStructOffset += GPRS_PATCH_PACK_NUMB_MAX;
-		}
-		/* 当前文件剩余的结构体能够被一次读完 */
-		else
-		{
-			/* 补传数据清空 */
-			patch->patchStructOffset = 0;
-		}
-		FILE_ReadFile(FILE_NAME_SAVE_DATA,
-				patch->patchStructOffset * sizeof(FILE_SaveStructTypedef),
-				(uint8_t*)FILE_ReadStruct,
-				readInfoCount * sizeof(FILE_SaveStructTypedef));
+		sendPackCnt = SEND_PACK_CNT_MAX;
 	}
-	return readInfoCount;
+	FILE_ReadFile(FILE_NAME_SAVE_DATA,
+			structoffset * sizeof(FILE_SaveStructTypedef),
+			(uint8_t*)readInfo, sendPackCnt * sizeof(FILE_SaveStructTypedef));
+
+	/* 返回本次读取的结构体数 */
+	return sendPackCnt;
 }
-
-/*******************************************************************************
- * @brief 将读出的数据转换成发送的格式
- * @param sendInfo：发送数据结构体指针
- * @param readInfo：读取数据的结构体指针
- * @param sendPackNumb：需要转换的包数
- */
-void FILE_SendInfoFormatConvert(uint8_t* sendInfo, uint8_t* readInfo,
-							    uint8_t  sendPackNumb)
-{
-	uint8_t i;
-
-	for (i = 0; i < sendPackNumb; i++)
-	{
-		FormatConvert((GPRS_SendInfoTypedef*)sendInfo, (FILE_SaveStructTypedef*)readInfo);
-		readInfo += sizeof(FILE_SaveStructTypedef);
-		sendInfo += sizeof(GPRS_SendInfoTypedef);
-	}
-}
-
-/*******************************************************************************
- * @brief 将储存的ASCII码转换成float
- * @retval 模拟量ASCII码
- */
-float FILE_Analog2Float(FILE_SaveInfoAnalogTypedef* value)
-{
-	char str[6];
-
-	memcpy(str, value->value, 5);
-	str[5] = '\0';
-	return (float)atof(str);
-}
-
-/*******************************************************************************
- * function:模拟量数据格式转换
- */
-static void AnalogDataFormatConvert(char* analog, DataFormatEnum format, uint8_t* pBuffer)
-{
-	char str[6];
-	float value;
-	BOOL negative = FALSE;
-	uint16_t temp = 0;
-
-	/* 如果该通道值是NULL，则根据协议填写FFFE */
-	if (memcmp(analog, " NULL", 5) == 0)
-	{
-		*pBuffer       = 0xFF;
-		*(pBuffer + 1) = 0xFE;
-		return;
-	}
-
-	/* 将字符串转为float */
-	memcpy(str, analog, 5);
-	str[5] = '\0';
-	value = (float)atof(str);
-
-	/* 判断是否为负数 */
-	if (value < 0)
-		negative = TRUE;
-
-	switch (format)
-	{
-	case FORMAT_INT:
-		temp = (uint16_t)abs((int)(value));
-		break;
-
-	case FORMAT_ONE_DECIMAL:
-		temp = (uint16_t)abs((int)(value * 10));
-		break;
-
-	case FORMAT_TWO_DECIMAL:
-		temp = (uint16_t)abs((int)(value * 100));
-		break;
-	default:
-		break;
-	}
-
-	*pBuffer = HALFWORD_BYTE_H(temp);
-	*(pBuffer + 1) = HALFWORD_BYTE_L(temp);
-
-	/* 负数则最高位置一 */
-	if (negative)
-		*pBuffer |= 0x80;
-}
-
-/*******************************************************************************
- * @brief 将字符串型的定位值转换成协议格式
- */
-static void LocationFormatConvert(char* lacation, uint8_t* pBuffer)
-{
-	char str[11];
-	double value;
-	BOOL negative = FALSE;
-	uint32_t temp;
-
-	/* 将字符串转为double */
-	memcpy(str, lacation, 10);
-	str[10] = '\0';
-	value = atof(str);
-
-	if (value < 0)
-		negative = TRUE;
-
-	/* 获取整数部分 */
-	*pBuffer = abs((int)value);
-
-	temp = (uint32_t)((value - (*pBuffer)) * 1000000);
-
-	if (negative)
-		temp |= 0x800000;
-
-	*(pBuffer + 1) = (uint8_t)((temp & 0x00FF0000) >> 16);
-	*(pBuffer + 2) = (uint8_t)((temp & 0x0000FF00) >> 8);
-	*(pBuffer + 3) = (uint8_t)(temp & 0x000000FF);
-}
-
-/*******************************************************************************
- * @brief 将储存的格式（ASCII码）转换成协议规定的格式
- */
-static void FormatConvert(GPRS_SendInfoTypedef*   sendInfo,
-						  FILE_SaveStructTypedef* readInfo)
-{
-	char str[4];
-
-	/* 结构体复位，避免数据出错 */
-	memset(sendInfo, 0, sizeof(GPRS_SendInfoTypedef));
-
-	/* 时间字符串转换成BCD */
-	ASCII2BCD(&sendInfo->year,  readInfo->year,  2);
-	ASCII2BCD(&sendInfo->month, readInfo->month, 2);
-	ASCII2BCD(&sendInfo->day,   readInfo->day,   2);
-	ASCII2BCD(&sendInfo->hour,  readInfo->hour,  2);
-	ASCII2BCD(&sendInfo->min,   readInfo->min,   2);
-	ASCII2BCD(&sendInfo->sec,   readInfo->sec,   2);
-
-	/* 转换电池电量 */
-	memcpy(str, readInfo->batQuality, 3);
-	str[3] = '\0';
-	sendInfo->batteryLevel = atoi(str);
-
-	/* 转换外部电源状态 */
-	str2numb(&sendInfo->externalPowerStatus, (uint8_t*)&readInfo->exPwrStatus, 1);
-
-	/* 转换经度 */
-	LocationFormatConvert(readInfo->longitude, (uint8_t*)&sendInfo->longitude);
-	LocationFormatConvert(readInfo->latitude,  (uint8_t*)&sendInfo->latitude);
-
-	AnalogDataFormatConvert(readInfo->analogValue[0].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[0]);
-	AnalogDataFormatConvert(readInfo->analogValue[1].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[1]);
-	AnalogDataFormatConvert(readInfo->analogValue[2].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[2]);
-	AnalogDataFormatConvert(readInfo->analogValue[3].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[3]);
-	AnalogDataFormatConvert(readInfo->analogValue[4].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[4]);
-	AnalogDataFormatConvert(readInfo->analogValue[5].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[5]);
-	AnalogDataFormatConvert(readInfo->analogValue[6].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[6]);
-	AnalogDataFormatConvert(readInfo->analogValue[7].value, ANALOG_VALUE_FORMAT,
-			(uint8_t*)&sendInfo->analogValue[7]);
-}
-
-
 
 /*******************************************************************************
  * @brief 数据储存结构体中添加符号，使其能用Excel软件打开
@@ -366,11 +223,25 @@ static void SaveStructSymbolInit(void)
 	FILE_SaveStruct.str4   = ',';
 	FILE_SaveStruct.str5   = ',';
 	FILE_SaveStruct.str6   = ',';
+	FILE_SaveStruct.str7   = ',';
 	FILE_SaveStruct.end[0] = 0x0D;
 	FILE_SaveStruct.end[1] = 0x0A;
 }
 
-
+/*******************************************************************************
+ * @brief 判断模拟量值是否有效，无效则填充“ NULL”，有效则转换成ASCII
+ */
+static void Analog2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value)
+{
+	if (value == ANALOG_CHANNLE_INVALID_VALUE)
+		memcpy(buffer->value, ANALOG_INVALID_VALUE, 5);
+	else
+	{
+		/* %5.1表示有效数据长度为5，小数1位 */
+		sprintf(buffer->value, "%5.1f", value);
+		buffer->str = ',';
+	}
+}
 
 
 

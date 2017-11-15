@@ -40,6 +40,8 @@ void RT_Init(void)
 	__HAL_TIM_ENABLE_IT(&RT_TIM, TIM_IT_UPDATE);
 	/* 开机触发一次采样 */
 	osSignalSet(realtimeTaskHandle, REALTIME_TASK_TIME_ANALOG_UPDATE);
+	/* 开机时触发一次记录 */
+	osSignalSet(realtimeTaskHandle, REALTIME_TASK_ALRAM_RECORD);
 }
 
 /*******************************************************************************

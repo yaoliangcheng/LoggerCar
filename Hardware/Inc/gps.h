@@ -22,7 +22,13 @@ typedef enum
 {
 	GPS_LATITUDE,
 	GPS_LONGITUDE
-} GPS_LocationTypeEnum;
+} GPS_LocationEnum;
+
+typedef enum
+{
+	GPS_LOCATION_TYPE_BASE_STATION,					/* 基站定位 */
+	GPS_LOCATION_TYPE_GPS,							/* GPS定位 */
+} GPS_LocationTypeEnum;								/* 定位类型 */
 
 typedef struct
 {

@@ -57,6 +57,7 @@ FIL USERFile;       /* File object for USER */
 #include "file.h"
 #include "param.h"
 #include "rt.h"
+#include "gprs.h"
 
 FATFS objFileSystem;			/* FatFs文件系统对象 */
 FIL   objFile;					/* 文件对象 */

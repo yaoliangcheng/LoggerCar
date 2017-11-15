@@ -8,6 +8,7 @@
 #include "param.h"
 #include "exFlash.h"
 #include "analog.h"
+#include "file.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart1)
@@ -58,11 +59,7 @@ typedef enum
 	GPRS_EXTERNAL_PWR_ON,								/* 有外部电源 */
 } GPRS_ExternalPowerStatusEnum;							/* 外部电源状态 */
 
-typedef enum
-{
-	GPRS_LOCATION_TYPE_BASE_STATION,					/* 基站定位 */
-	GPRS_LOCATION_TYPE_GPS,								/* GPS定位 */
-} GPRS_LocationTypeEnum;								/* 定位类型 */
+
 
 
 /******************************************************************************/
@@ -137,7 +134,7 @@ typedef struct
 	uint8_t sec;
 	uint8_t batteryLevel;								/* 电池电量 */
 	GPRS_ExternalPowerStatusEnum externalPowerStatus;	/* 外部电池状态 */
-	GPRS_LocationTypeEnum locationStatus;				/* 定位标志 */
+	GPS_LocationTypeEnum locationStatus;				/* 定位标志 */
 	uint32_t longitude;									/* 经度 */
 	uint32_t latitude;									/* 纬度 */
 	uint16_t analogValue[ANALOG_CHANNEL_NUMB];			/* 模拟量值 */
@@ -205,4 +202,6 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 uint16_t GPRS_SendDataPackFromCurrent(GPRS_NewSendbufferTyepdef* sendBuffer,
 		RT_TimeTypedef* curtime, ANALOG_ValueTypedef* analog,
 		GPS_LocateTypedef* location);
+uint16_t GPRS_SendDataPackFromRecord(GPRS_NewSendbufferTyepdef* sendBuffer,
+		FILE_SaveStructTypedef* saveInfo, uint16_t sendPackCount, RT_TimeTypedef* curtime);
 #endif

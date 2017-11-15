@@ -82,7 +82,7 @@ void HEX2ASCII(char* pASCII, uint8_t* pHEX, uint8_t size)
  * @brief ASCII码转换成HEX
  * 			注意：只支持转换1、2、3个字符
  */
-void ASCII2HEX(uint8_t* pHEX, uint8_t* pASCII, uint8_t size)
+void ASCII2HEX(uint8_t* pHEX, char* pASCII, uint8_t size)
 {
 	switch (size)
 	{

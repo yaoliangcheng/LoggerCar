@@ -111,7 +111,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
   /* 在外设配置前，检测是否开机 */
-  LOWPWR_Init();
+//  LOWPWR_Init();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */

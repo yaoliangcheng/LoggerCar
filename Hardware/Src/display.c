@@ -5,11 +5,12 @@
 #include "print.h"
 #include "param.h"
 #include "ble.h"
+#include "public.h"
 
 /******************************************************************************/
 DISPLAY_StatusTypedef DISPLAY_Status;
 
-extern FILE_SaveStructTypedef FILE_ReadStruct[GPRS_PATCH_PACK_NUMB_MAX];
+extern FILE_SaveStructTypedef FILE_ReadStruct[SEND_PACK_CNT_MAX];
 
 /******************************************************************************/
 //static void TimeSelectReturn(void);

@@ -7,7 +7,7 @@ GPS_LocateTypedef  GPS_Locate;				/* 定位信息 */
 /*******************************************************************************
  *
  */
-static double GPS_ValueConvert(uint8_t* buf, GPS_LocationTypeEnum loc)
+static double GPS_ValueConvert(uint8_t* buf, GPS_LocationEnum loc)
 {
 	/* 格式：abcde.fghi
 	 * 计算方式： abc + (de / 60) + (fghi / 600000) */
