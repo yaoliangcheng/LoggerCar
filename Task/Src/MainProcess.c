@@ -19,7 +19,7 @@ extern GPS_LocateTypedef  GPS_Locate;
 extern FunctionalState sendPackRecordEnable;			/* 发送数据包记录使能 */
 
 extern uint16_t GPRS_SendPackSize;		/* GPRS发送包大小 */
-extern GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
+extern GPRS_SendbufferTyepdef GPRS_NewSendbuffer;
 
 /*******************************************************************************
  *
@@ -59,16 +59,16 @@ void MAINPROCESS_Task(void)
 		FILE_ReadFile(FILE_NAME_PATCH_PACK, 0,
 				(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 		/* 如果有断点数据 */
-//		if (FILE_PatchPack.patchStructOffset != 0)
-//		{
-//			/* 读取从断点开始的数据，返回当前读出的包数 */
-//			curPatchPack =
-//					FILE_ReadSaveInfo(FILE_ReadStruct, FILE_PatchPack.patchStructOffset);
-//			GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
-//					FILE_ReadStruct, curPatchPack, &RT_RealTime);
-//			FILE_PatchPack.patchStructOffset += curPatchPack;
-//		}
-//		else /* 没有断点数据 */
+		if (FILE_PatchPack.patchStructOffset != 0)
+		{
+			/* 读取从断点开始的数据，返回当前读出的包数 */
+			curPatchPack =
+					FILE_ReadSaveInfo(FILE_ReadStruct, FILE_PatchPack.patchStructOffset);
+			GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
+					FILE_ReadStruct, curPatchPack, &RT_RealTime);
+
+		}
+		else /* 没有断点数据 */
 		{
 			/* 记录数据 */
 			if (sendPackRecordEnable == ENABLE)
@@ -84,19 +84,25 @@ void MAINPROCESS_Task(void)
 			}
 		}
 
-		/* 不管什么情况，均取消记录 */
-		sendPackRecordEnable = DISABLE;
-
 		/* 使能MainProcess任务发送数据 */
 		osMessagePut(gprsTaskMessageQid, START_TASK_DATA, 1000);
 		/* 等待GPRSProcess完成 */
 		signal = osSignalWait(MAINPROCESS_GPRS_SEND_FINISHED, 20000);
 		if ((signal.value.signals & MAINPROCESS_GPRS_SEND_FINISHED)
-						!= MAINPROCESS_GPRS_SEND_FINISHED)
+						== MAINPROCESS_GPRS_SEND_FINISHED)
 		{
-			printf("发送数据超时，说明数据发送失败，记录数据等待补传\r\n");
-			/* 如果是本次发生的补传，则记录时间，否则是正在补传的过程，保持补传文件内容不变 */
-			if (curPatchPack == 1)
+			/* 数据发送成功，上传的是补传数据，记录最新的断点 */
+			if (curPatchPack > 1)
+			{
+				FILE_PatchPack.patchStructOffset += curPatchPack;
+				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
+						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
+			}
+		}
+		else
+		{
+			/* 数据发送失败，如果是最新记录数据，则记录新的断点 */
+			if ((curPatchPack == 1) && (sendPackRecordEnable == ENABLE))
 			{
 				/* 记录当前文件前一次位置 */
 				FILE_PatchPack.patchStructOffset = FILE_DataSaveStructCnt - 1;
@@ -104,15 +110,9 @@ void MAINPROCESS_Task(void)
 						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 			}
 		}
-		else
-		{
-			/* 数据发送成功 */
-			printf("数据发送到平台成功！！\r\n");
-			/* 有补传数据 */
-			if (curPatchPack > 1)
-				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
-						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
-		}
+
+		/* 取消记录 */
+		sendPackRecordEnable = DISABLE;
 
 		osThreadSuspend(NULL);
 	}

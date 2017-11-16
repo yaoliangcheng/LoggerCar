@@ -57,7 +57,7 @@ void REALTIME_Task(void)
 			if ((signal.value.signals & REALTIME_TASK_ALRAM_RECORD) == REALTIME_TASK_ALRAM_RECORD)
 			{
 				sendPackTimeCnt++;
-				if (sendPackTimeCnt > 5)
+				if (sendPackTimeCnt >= 5)
 				{
 					sendPackTimeCnt = 0;
 					sendPackRecordEnable = ENABLE;

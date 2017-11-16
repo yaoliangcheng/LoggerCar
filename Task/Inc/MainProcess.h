@@ -10,7 +10,7 @@
 #define MAINPROCESS_START_TASK					(1 << 1)	/* 开启任务 */
 #define MAINPROCESS_GPS_CONVERT_FINISH			(1 << 2)	/* GPS转换完成 */
 #define MAINPROCESS_GPRS_SEND_FINISHED			(1 << 3)	/* GPRS数据发送完成 */
-
+#define MAINPROCESS_GPRS_SEND_ERROR				(1 << 4)	/* GPRS数据发送错误 */
 
 
 /******************************************************************************/

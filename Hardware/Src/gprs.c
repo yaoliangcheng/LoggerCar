@@ -10,10 +10,9 @@ char     ICCID[20];									/* ICCID */
 char	 IMSI[15];									/* IMSI */
 char     IMEI[15];									/* IMEI */
 
-GPRS_SendBufferTypedef GPRS_SendBuffer;
 GPRS_RecvBufferTypedef GPRS_RecvBuffer;
 
-GPRS_NewSendbufferTyepdef GPRS_NewSendbuffer;
+GPRS_SendbufferTyepdef GPRS_NewSendbuffer;
 
 extern osThreadId gprsprocessTaskHandle;
 
@@ -21,7 +20,6 @@ const char Message[] = {0x67, 0x6D, 0x5D, 0xDE, 0x8D, 0xEF, 0x68, 0x3C,
 		0x79, 0xD1, 0x62, 0x80};
 
 /******************************************************************************/
-static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf);
 static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size);
 static void ProtocolFormat_LocationFloat(float value, uint8_t* pBuffer);
 static void ProtocolFormat_LocationASCII(char* value, uint8_t* pBuffer);
@@ -45,7 +43,6 @@ void GPRS_Init(void)
 
 	GPRS_NewSendbuffer.tail = GPRS_PACK_TAIL;
 
-	GPRS_StructInit(&GPRS_SendBuffer);
 	UART_DMAIdleConfig(&GPRS_UART, GPRS_RecvData, GPRS_UART_RX_DATA_SIZE_MAX);
 }
 
@@ -73,47 +70,6 @@ void GPRS_RstModule(void)
 	GPRS_RST_CTRL_ENABLE();
 	osDelay(100);
 	GPRS_RST_CTRL_DISABLE();
-}
-
-/*******************************************************************************
- * function：GPRS发送协议到平台
- * sendBuf：发送数据指针
- * patch：该缓存中包含几个补传的数据
- */
-void GPRS_SendProtocol(GPRS_SendBufferTypedef* sendBuf)
-{
-	uint16_t dataSize = 0;
-
-	/* 数据长度计算方法：m=数据包数； n=通道数
-	 * 数据长度 = m(17+2n)+3n+23 */
-//	dataSize = patchPack * (17 + 2 * ANALOG_CHANNEL_NUMB)
-//				+ sizeof(GPRS_ParamTypedef) * ANALOG_CHANNEL_NUMB
-//				+ 23;
-	dataSize = GPRS_SendBuffer.dataPackNumbL * sizeof(GPRS_SendInfoTypedef) + 47;
-
-	/* 获取数据长度 */
-	sendBuf->dateSizeH = HALFWORD_BYTE_H(dataSize);
-	sendBuf->dateSizeL = HALFWORD_BYTE_L(dataSize);
-
-	/* 如果缓存未被装在满，则在下一数据中加入帧尾 */
-	if (GPRS_SendBuffer.dataPackNumbL < GPRS_PATCH_PACK_NUMB_MAX)
-	{
-		/* 在数据的结尾，添加上帧尾 */
-		memcpy(&sendBuf->dataPack[GPRS_SendBuffer.dataPackNumbL], &sendBuf->tail, 1);
-	}
-
-	/* 计算校验 */
-	sendBuf->verifyData =
-			GPRS_VerifyCalculate(&sendBuf->head, dataSize + 4);
-	if (GPRS_SendBuffer.dataPackNumbL < GPRS_PATCH_PACK_NUMB_MAX)
-	{
-		/* 数据最后添加上校验 */
-		memcpy((void*)(&(sendBuf->dataPack[GPRS_SendBuffer.dataPackNumbL].month)),
-					&sendBuf->verifyData, 1);
-	}
-
-	/* 发送数据，发送的总字节数 = 5+数据长度 */
-//	GPRS_SendData(&sendBuf->head, dataSize + 5);
 }
 
 /*******************************************************************************
@@ -147,7 +103,7 @@ void GPRS_UartIdleDeal(void)
 		GPRS_RecvBuffer.bufferSize = GPRS_UART_RX_DATA_SIZE_MAX
 						- __HAL_DMA_GET_COUNTER(GPRS_UART.hdmarx);
 
-		memcpy(GPRS_RecvBuffer.recvBuffer, GPRS_RecvData, GPRS_RecvBuffer.bufferSize);
+		memcpy(GPRS_RecvBuffer.buffer.recvBuffer, GPRS_RecvData, GPRS_RecvBuffer.bufferSize);
 		memset(GPRS_RecvData, 0, GPRS_RecvBuffer.bufferSize);
 
 		osSignalSet(gprsprocessTaskHandle, GPRS_PROCESS_TASK_RECV_ENABLE);
@@ -160,7 +116,7 @@ void GPRS_UartIdleDeal(void)
 /*******************************************************************************
  * @brief 发送结构体公共部分
  */
-uint16_t GPRS_SendPackPublicPart(GPRS_NewSendbufferTyepdef* sendBuffer,
+uint16_t GPRS_SendPackPublicPart(GPRS_SendbufferTyepdef* sendBuffer,
 		volatile uint16_t packContentSize, RT_TimeTypedef* curtime, GPRS_PackTypeEnum type)
 {
 	static uint16_t GPRS_PackCount = 0;						/* GPRS包序号 */
@@ -197,7 +153,7 @@ uint16_t GPRS_SendPackPublicPart(GPRS_NewSendbufferTyepdef* sendBuffer,
 /*******************************************************************************
  * @brief 发送短信包
  */
-void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
+void GPRS_SendMessagePack(GPRS_SendbufferTyepdef* sendBuffer,
 		RT_TimeTypedef curtime,	char* messageContent, uint16_t messageCount)
 {
 	uint16_t size = 0;
@@ -261,7 +217,7 @@ void GPRS_SendMessagePack(GPRS_NewSendbufferTyepdef* sendBuffer,
 /*******************************************************************************
  * @brief：发送实时数据包
  */
-uint16_t GPRS_SendDataPackFromCurrent(GPRS_NewSendbufferTyepdef* sendBuffer,
+uint16_t GPRS_SendDataPackFromCurrent(GPRS_SendbufferTyepdef* sendBuffer,
 		RT_TimeTypedef* curtime, ANALOG_ValueTypedef* analog,
 		GPS_LocateTypedef* location)
 {
@@ -343,7 +299,7 @@ uint16_t GPRS_SendDataPackFromCurrent(GPRS_NewSendbufferTyepdef* sendBuffer,
 /*******************************************************************************
  * @brief：发送记录数据包
  */
-uint16_t GPRS_SendDataPackFromRecord(GPRS_NewSendbufferTyepdef* sendBuffer,
+uint16_t GPRS_SendDataPackFromRecord(GPRS_SendbufferTyepdef* sendBuffer,
 		FILE_SaveStructTypedef* saveInfo, uint16_t sendPackCount, RT_TimeTypedef* curtime)
 {
 	uint8_t i = 0;
@@ -424,31 +380,6 @@ uint16_t GPRS_SendDataPackFromRecord(GPRS_NewSendbufferTyepdef* sendBuffer,
 
 	/* 返回整体包大小 */
 	return size;
-}
-
-/*******************************************************************************
- * function:发送到平台数据结构初始化
- */
-static void GPRS_StructInit(GPRS_SendBufferTypedef* sendBuf)
-{
-	sendBuf->head = GPRS_PACK_HEAD;
-
-	sendBuf->locationType = PARAM_DeviceParam.locationType;
-
-	/* eeprom中读出数据 */
-	memcpy(&sendBuf->seriaNumber, PARAM_DeviceParam.deviceSN, sizeof(sendBuf->seriaNumber));
-	sendBuf->firmwareVersion = 	  PARAM_DeviceParam.firmwareVersion;
-	sendBuf->recordInterval = 	  PARAM_DeviceParam.recordInterval;
-	sendBuf->overLimitInterval =  PARAM_DeviceParam.overLimitRecordInterval;
-
-	/* 设置通道类型 */
-	sendBuf->exitAnalogChannelNumb = PARAM_DeviceParam.exAnalogChannelNumb;
-	memcpy(&sendBuf->param[0], &PARAM_DeviceParam.chParam[0], sizeof(ParamTypeTypedef) * 8);
-
-	/* 数据包长度最大不可能超过255，包个数H只能为0 */
-	sendBuf->dataPackNumbH = 0x00;
-
-	sendBuf->tail = GPRS_PACK_TAIL;
 }
 
 /*******************************************************************************
