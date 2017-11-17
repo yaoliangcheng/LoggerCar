@@ -19,7 +19,7 @@
 #define HALFWORD_BYTE_H(value)      ((uint8_t)((value & 0xFF00) >> 8))
 #define HALFWORD_BYTE_L(value)      ((uint8_t)(value & 0x00FF))
 
-#define IWDG_ENABLE				(1)
+#define IWDG_ENABLE				(0)
 
 #define SEND_PACK_CNT_MAX			(20)
 

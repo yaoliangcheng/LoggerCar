@@ -694,6 +694,11 @@
               <FileType>1</FileType>
               <FilePath>..\Task\Src\TFTLCDProcess.c</FilePath>
             </File>
+            <File>
+              <FileName>BLEProcess.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Task\Src\BLEProcess.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

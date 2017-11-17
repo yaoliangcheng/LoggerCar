@@ -50,19 +50,11 @@ void PRINT_PrintProcess(DISPLAY_CompareTimeTypedef* startTime,
 
 		if (PRINT_DATA_END == status)
 			break;
-		else if (PRINT_DATA_NORMAL == status)
-			offsetStruct += 5;
-		else if (PRINT_DATA_OVERlIMITED == status)
-			offsetStruct += 2;
+		else
+			offsetStruct++;
 
 		osDelay(100);
-
-#if IWDG_ENABLE
-		/* 看门狗监控 */
-		HAL_IWDG_Refresh(&hiwdg);
-#endif
 	}
-
 	/* 打印签名 */
 	PRINT_PrintTail();
 }
@@ -153,57 +145,41 @@ static PRINT_DataStatusEnum PRINT_DataPrint(uint64_t offset,
 	if (select->status.bit.ch1)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[0], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[0], &PARAM_DeviceParam.chAlarmValue[0]);
 		index += 6;
 	}
 	if (select->status.bit.ch2)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[1], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[1], &PARAM_DeviceParam.chAlarmValue[1]);
 		index += 6;
 	}
 	if (select->status.bit.ch3)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[2], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[2], &PARAM_DeviceParam.chAlarmValue[2]);
 		index += 6;
 	}
 	if (select->status.bit.ch4)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[3], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[3], &PARAM_DeviceParam.chAlarmValue[3]);
 		index += 6;
 	}
 	if (select->status.bit.ch5)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[4], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[4], &PARAM_DeviceParam.chAlarmValue[4]);
 		index += 6;
 	}
 	if (select->status.bit.ch6)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[5], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[5], &PARAM_DeviceParam.chAlarmValue[5]);
 		index += 6;
 	}
 	if (select->status.bit.ch7)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[6], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[6], &PARAM_DeviceParam.chAlarmValue[6]);
 		index += 6;
 	}
 	if (select->status.bit.ch8)
 	{
 		memcpy((char*)&PRINT_SendBuffer[index],  &PRINT_DataFileReadStruct.analogValue[7], 6);
-		/* 判断是否超标 */
-//		status = PRINT_AdjustOverLimited(&saveInfo.analogValue[7], &PARAM_DeviceParam.chAlarmValue[7]);
 		index += 6;
 	}
 
@@ -291,24 +267,6 @@ static void PRINT_PrintTail(void)
 
 	PRINT_SendData(index);
 }
-
-/*******************************************************************************
- * function：判断数值是否超标
- */
-//static PRINT_DataStatusEnum PRINT_AdjustOverLimited(FILE_SaveInfoAnalogTypedef* analog,
-//													ParamAlarmTypedef* param)
-//{
-//	float value;
-
-//	/* 转换成float */
-//	value = FILE_Analog2Float(analog);
-
-//	/* 比较上下限 */
-//	if ((value > param->alarmValueUp) || (value < param->alarmValueLow))
-//		return PRINT_DATA_OVERlIMITED;
-//	else
-//		return PRINT_DATA_NORMAL;
-//}
 
 /*******************************************************************************
  * @brief 打印日期

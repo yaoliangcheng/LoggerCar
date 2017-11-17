@@ -12,6 +12,8 @@ DISPLAY_StatusTypedef DISPLAY_Status;
 
 extern FILE_SaveStructTypedef FILE_ReadStruct[SEND_PACK_CNT_MAX];
 
+extern osThreadId bleprocessTaskHandle;
+
 /******************************************************************************/
 //static void TimeSelectReturn(void);
 static void PasswordSelect(char numb);
@@ -278,6 +280,9 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 
 	case CTL_ID_PRINT_DEFAULT:
 		TFTLCD_SetScreenId(SCREEN_ID_WAITTING);
+
+		memcpy(&DISPLAY_Status.printTimeStart, "171115 16:30", 12);
+		memcpy(&DISPLAY_Status.printTimeEnd,   "171116 15:30", 12);
 		PRINT_PrintProcess(&DISPLAY_Status.printTimeStart, &DISPLAY_Status.printTimeEnd,
 				&DISPLAY_Status.printChannelStatus);
 		TFTLCD_SetScreenId(SCREEN_ID_PRINT);
@@ -297,15 +302,17 @@ void DISPLAY_PrintTouch(uint16_t typeID)
 	case CTL_ID_PRINT_MODE_SELECT_BLE:
 		TFTLCD_SetIconValue(SCREEN_ID_PRINT, CTL_ID_PRINT_ICON_INTEGRATED, DISABLE);
 		TFTLCD_SetIconValue(SCREEN_ID_PRINT, CTL_ID_PRINT_ICON_BLE,		   ENABLE);
-		DISPLAY_Status.printMode = BLE_LinkPrint();
+//		DISPLAY_Status.printMode = BLE_LinkPrint();
 		break;
 
 	/* 连接蓝牙打印机 */
 	case CTL_ID_PRINT_LINK_BLE:
-		if (PRINT_MODE_BLE_UNLINK == DISPLAY_Status.printMode)
-		{
-			DISPLAY_Status.printMode = BLE_LinkPrint();
-		}
+		/* 激活bleprocessTaskHandle任务 */
+		osThreadResume(bleprocessTaskHandle);
+//		if (PRINT_MODE_BLE_UNLINK == DISPLAY_Status.printMode)
+//		{
+//			DISPLAY_Status.printMode = BLE_LinkPrint();
+//		}
 		break;
 
 	default:

@@ -28,8 +28,6 @@ void TFTLCD_Task(void)
 
 	while(1)
 	{
-//		BLE_LinkPrint();
-
 		/* 获取任务信号 */
 		signal = osSignalWait(TFTLCD_TASK_STATUS_BAR_UPDATE
 				| TFTLCD_TASK_ANALOG_UPDATE | TFTLCD_TASK_RECV_ENABLE, 1000);

@@ -57,6 +57,7 @@
 #include "MainProcess.h"
 #include "GPRSProcess.h"
 #include "TFTLCDProcess.h"
+#include "BLEProcess.h"
 
 /* USER CODE END Includes */
 
@@ -71,6 +72,7 @@ osThreadId realtimeTaskHandle;
 osThreadId tftlcdTaskHandle;
 osThreadId mainprocessTaskHandle;
 osThreadId gprsprocessTaskHandle;
+osThreadId bleprocessTaskHandle;
 
 /* ╤сап╬Д╠З */
 osMessageQId gprsTaskMessageQid;
@@ -133,6 +135,11 @@ void MX_FREERTOS_Init(void) {
 
   osThreadDef(GPRSPROCESS, GPRSPROCESS_Task, osPriorityRealtime, 0, 128);
   gprsprocessTaskHandle = osThreadCreate(osThread(GPRSPROCESS), NULL);
+
+  osThreadDef(BLEPROCESS, BLEPROCESS_TASK, osPriorityRealtime, 0, 128);
+  bleprocessTaskHandle = osThreadCreate(osThread(BLEPROCESS), NULL);
+  osThreadSuspend(bleprocessTaskHandle);
+
 //  osThreadSuspend(gprsprocessTaskHandle);
 
 
