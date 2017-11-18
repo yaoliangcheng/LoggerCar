@@ -185,12 +185,16 @@ void FILE_SaveSendInfo(FILE_SaveStructTypedef* saveInfo, RT_TimeTypedef* curtime
 /*******************************************************************************
  *
  */
-uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint8_t structoffset)
+uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint32_t* structoffset)
 {
 	uint16_t sendPackCnt = 0;			/* 发送的包数 */
+	uint64_t offset = 0;
+
+	/* 重新申请一个变量记录指针内容，避免指针冲突 */
+	offset = *structoffset;
 
 	/* 代表没有补传数据，读取最新的一条数据 */
-	if (structoffset == 0)
+	if (offset == 0)
 	{
 		FILE_ReadFile(FILE_NAME_SAVE_DATA,
 			(FILE_DataSaveStructCnt - 1) * sizeof(FILE_SaveStructTypedef),
@@ -198,14 +202,21 @@ uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint8_t structoffset
 		return 1;
 	}
 
-	sendPackCnt = FILE_DataSaveStructCnt - structoffset;
+	sendPackCnt = FILE_DataSaveStructCnt - offset;
 	/* 不能够一次性发送完成 */
 	if (sendPackCnt > SEND_PACK_CNT_MAX)
 	{
 		sendPackCnt = SEND_PACK_CNT_MAX;
+		offset += SEND_PACK_CNT_MAX;
+		*structoffset = offset;
+	}
+	else
+	{
+		/* 已经补传完成 */
+		*structoffset = 0;
 	}
 	FILE_ReadFile(FILE_NAME_SAVE_DATA,
-			structoffset * sizeof(FILE_SaveStructTypedef),
+			offset * sizeof(FILE_SaveStructTypedef),
 			(uint8_t*)readInfo, sendPackCnt * sizeof(FILE_SaveStructTypedef));
 
 	/* 返回本次读取的结构体数 */

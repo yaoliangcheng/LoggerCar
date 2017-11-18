@@ -112,5 +112,5 @@ float FILE_Analog2Float(FILE_SaveInfoAnalogTypedef* value);
 
 void FILE_SaveSendInfo(FILE_SaveStructTypedef* saveInfo, RT_TimeTypedef* curtime,
 		GPS_LocateTypedef* location, ANALOG_ValueTypedef* analog);
-uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint8_t structoffset);
+uint8_t FILE_ReadSaveInfo(FILE_SaveStructTypedef* readInfo, uint32_t* structoffset);
 #endif

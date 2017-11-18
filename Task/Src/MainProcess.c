@@ -63,7 +63,7 @@ void MAINPROCESS_Task(void)
 		{
 			/* 读取从断点开始的数据，返回当前读出的包数 */
 			curPatchPack =
-					FILE_ReadSaveInfo(FILE_ReadStruct, FILE_PatchPack.patchStructOffset);
+					FILE_ReadSaveInfo(FILE_ReadStruct, &FILE_PatchPack.patchStructOffset);
 			GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
 					FILE_ReadStruct, curPatchPack, &RT_RealTime);
 
@@ -73,7 +73,7 @@ void MAINPROCESS_Task(void)
 			/* 记录数据 */
 			if (sendPackRecordEnable == ENABLE)
 			{
-				curPatchPack = FILE_ReadSaveInfo(FILE_ReadStruct, 0);
+				curPatchPack = FILE_ReadSaveInfo(FILE_ReadStruct, &FILE_PatchPack.patchStructOffset);
 				GPRS_SendPackSize = GPRS_SendDataPackFromRecord(&GPRS_NewSendbuffer,
 						FILE_ReadStruct, 1, &RT_RealTime);
 			}
@@ -94,7 +94,6 @@ void MAINPROCESS_Task(void)
 			/* 数据发送成功，上传的是补传数据，记录最新的断点 */
 			if (curPatchPack > 1)
 			{
-				FILE_PatchPack.patchStructOffset += curPatchPack;
 				FILE_WriteFile(FILE_NAME_PATCH_PACK, 0,
 						(uint8_t*)&FILE_PatchPack, sizeof(FILE_PatchPackTypedef));
 			}

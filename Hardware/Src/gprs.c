@@ -304,6 +304,7 @@ uint16_t GPRS_SendDataPackFromRecord(GPRS_SendbufferTyepdef* sendBuffer,
 {
 	uint8_t i = 0;
 	uint16_t size = 0;
+	__IO uint8_t* saveInfoAddr = 0;
 
 	/* 包体版本 */
 	sendBuffer->PackBuffer.DataBuffer.packVersion = GPRS_PARAM_DATA_PACK_VERSION;
@@ -366,7 +367,10 @@ uint16_t GPRS_SendDataPackFromRecord(GPRS_SendbufferTyepdef* sendBuffer,
 				(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[i].analogValue[7],
 				sendBuffer->PackBuffer.DataBuffer.param[7].dataFormat);
 
-		saveInfo += sizeof(FILE_SaveStructTypedef);
+		/* 结构体指针不可直接相加减 */
+		saveInfoAddr = (__IO uint8_t*)saveInfo;
+		saveInfoAddr += sizeof(FILE_SaveStructTypedef);
+		saveInfo = (FILE_SaveStructTypedef*)saveInfoAddr;
 	}
 
 	/* 当前数据形式固定为61字节 */
