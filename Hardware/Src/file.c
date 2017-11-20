@@ -158,15 +158,16 @@ void FILE_SaveSendInfo(FILE_SaveStructTypedef* saveInfo, RT_TimeTypedef* curtime
 	FILE_SaveStruct.exPwrStatus = INPUT_CheckPwrOnStatus() + '0';
 
 	/* 模拟量转换为ASCII */
-	Analog2ASCII(&saveInfo->analogValue[0], ANALOG_value.temp1);
-	Analog2ASCII(&saveInfo->analogValue[1], ANALOG_value.humi1);
-	Analog2ASCII(&saveInfo->analogValue[2], ANALOG_value.temp2);
-	Analog2ASCII(&saveInfo->analogValue[3], ANALOG_value.humi2);
-	Analog2ASCII(&saveInfo->analogValue[4], ANALOG_value.temp3);
-	Analog2ASCII(&saveInfo->analogValue[5], ANALOG_value.humi3);
-	Analog2ASCII(&saveInfo->analogValue[6], ANALOG_value.temp4);
-	Analog2ASCII(&saveInfo->analogValue[7], ANALOG_value.humi4);
 	sprintf(saveInfo->batQuality, "%3d", ANALOG_value.batVoltage);
+	Analog2ASCII(&saveInfo->analogValue[0], ANALOG_value.channel1);
+	Analog2ASCII(&saveInfo->analogValue[1], ANALOG_value.channel2);
+	Analog2ASCII(&saveInfo->analogValue[2], ANALOG_value.channel3);
+	Analog2ASCII(&saveInfo->analogValue[3], ANALOG_value.channel4);
+	Analog2ASCII(&saveInfo->analogValue[4], ANALOG_value.channel5);
+	Analog2ASCII(&saveInfo->analogValue[5], ANALOG_value.channel6);
+	Analog2ASCII(&saveInfo->analogValue[6], ANALOG_value.channel7);
+	Analog2ASCII(&saveInfo->analogValue[7], ANALOG_value.channel8);
+
 
 	/* 定位值 */
 	saveInfo->locationStatus = GPS_LOCATION_TYPE_GPS + '0';

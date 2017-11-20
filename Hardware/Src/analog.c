@@ -59,38 +59,18 @@ void ANALOG_GetSensorValue(void)
 	/* 获取AD转换值 */
 	ANALOG_GetAverageValue(&ANALOG_convertValue);
 
-	/* 获取温度 */
-	ANALOG_value.temp1 = NTC_GetTemp(ANALOG_convertValue.temp1);
-	ANALOG_value.temp2 = NTC_GetTemp(ANALOG_convertValue.temp2);
-	ANALOG_value.temp3 = NTC_GetTemp(ANALOG_convertValue.temp3);
-	ANALOG_value.temp4 = NTC_GetTemp(ANALOG_convertValue.temp4);
-
-	/* 获取湿度，并补偿 */
-	ANALOG_value.humi1 = HIH5030_GetHumi(ANALOG_convertValue.humi1, ANALOG_value.temp1);
-	ANALOG_value.humi2 = HIH5030_GetHumi(ANALOG_convertValue.humi2, ANALOG_value.temp2);
-	ANALOG_value.humi3 = HIH5030_GetHumi(ANALOG_convertValue.humi3, ANALOG_value.temp3);
-	ANALOG_value.humi4 = HIH5030_GetHumi(ANALOG_convertValue.humi4, ANALOG_value.temp4);
-
 	/* 获取电池电压 */
 	ANALOG_value.batVoltage = ANALOG_GetBatVoltage(ANALOG_convertValue.batVoltage);
+	/* 获取温度 */
+	ANALOG_value.channel1 = NTC_GetTemp(ANALOG_convertValue.channel1);
+	ANALOG_value.channel2 = HIH5030_GetHumi(ANALOG_convertValue.channel2, ANALOG_value.channel1);
+	ANALOG_value.channel3 = NTC_GetTemp(ANALOG_convertValue.channel3);
+	ANALOG_value.channel4 = HIH5030_GetHumi(ANALOG_convertValue.channel4, ANALOG_value.channel3);
+	ANALOG_value.channel5 = NTC_GetTemp(ANALOG_convertValue.channel5);
+	ANALOG_value.channel6 = HIH5030_GetHumi(ANALOG_convertValue.channel6, ANALOG_value.channel5);
+	ANALOG_value.channel7 = NTC_GetTemp(ANALOG_convertValue.channel7);
+	ANALOG_value.channel8 = HIH5030_GetHumi(ANALOG_convertValue.channel8, ANALOG_value.channel7);
 }
-
-/*******************************************************************************
- * @brief 把模拟量值转换为ASCII
- * @param buffer：储存地址指针
- * @param value:模拟量
- */
-//void ANALOG_Float2ASCII(FILE_SaveInfoAnalogTypedef* buffer, float value)
-//{
-//	if (value == ANALOG_CHANNLE_INVALID_VALUE)
-//		memcpy(buffer->value, ANALOG_INVALID_VALUE, 5);
-//	else
-//	{
-//		/* %5.1表示有效数据长度为5，小数1位 */
-//		sprintf(buffer->value, "%5.1f", value);
-//		buffer->str = ',';
-//	}
-//}
 
 /*******************************************************************************
  * function：将AD值从大到小排序，取中间的数值
@@ -126,7 +106,7 @@ static void ANALOG_GetAverageValue(ANALOG_ConvertValueTypedef* convertValue)
 		{
 			average += convertValueBuffer[j][i];
 		}
-		*(&convertValue->temp1 + i) = (uint16_t)(average / 10);
+		*(&convertValue->batVoltage + i) = (uint16_t)(average / 10);
 	}
 }
 

@@ -39,34 +39,32 @@ typedef enum
 
 /******************************************************************************/
 #pragma pack(push)
-#pragma pack(1)											/* 按字节对齐 */
+#pragma pack(1)						/* 按字节对齐 */
 
 typedef struct
 {
-	uint16_t temp1;					/* temp1转换值 */
-	uint16_t humi1;					/* humi1转换值 */
-	uint16_t temp2;					/* temp2转换值 */
-	uint16_t humi2;					/* humi2转换值 */
-	uint16_t temp3;					/* temp3转换值 */
-	uint16_t humi3;					/* humi3转换值 */
-	uint16_t temp4;					/* temp4转换值 */
-	uint16_t humi4;					/* humi4转换值 */
 	uint16_t batVoltage;			/* 电池电压 */
+	uint16_t channel1;				/* channel1转换值 */
+	uint16_t channel2;				/* channel2转换值 */
+	uint16_t channel3;				/* channel3转换值 */
+	uint16_t channel4;				/* channel4转换值 */
+	uint16_t channel5;				/* channel5转换值 */
+	uint16_t channel6;				/* channel6转换值 */
+	uint16_t channel7;				/* channel7转换值 */
+	uint16_t channel8;				/* channel8转换值 */
 } ANALOG_ConvertValueTypedef;
 
 typedef struct
 {
-	float temp1;				/* temp1转换值 */
-	float temp2;				/* temp2转换值 */
-	float temp3;				/* temp3转换值 */
-	float temp4;				/* temp4转换值 */
-
-	float humi1;				/* humi1转换值 */
-	float humi2;				/* humi2转换值 */
-	float humi3;				/* humi3转换值 */
-	float humi4;				/* humi4转换值 */
-
 	uint8_t batVoltage;				/* 电池电压 */
+	float channel1;					/* channel1转换值 */
+	float channel2;					/* channel2转换值 */
+	float channel3;					/* channel3转换值 */
+	float channel4;					/* channel4转换值 */
+	float channel5;					/* channel5转换值 */
+	float channel6;					/* channel6转换值 */
+	float channel7;					/* channel7转换值 */
+	float channel8;					/* channel8转换值 */
 } ANALOG_ValueTypedef;
 
 typedef struct

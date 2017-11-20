@@ -100,22 +100,22 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
 	TFTLCD_SendBuffer.screenIdL = HALFWORD_BYTE_L(SCREEN_ID_CUR_DATA_8CH);
 
 	/* 模拟量更新 */
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH1, analog->temp1,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH1, analog->channel1,
 			&TFTLCD_SendBuffer.buffer.analogValue[0]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH2, analog->temp2,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH2, analog->channel2,
 			&TFTLCD_SendBuffer.buffer.analogValue[1]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH3, analog->temp3,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH3, analog->channel3,
 			&TFTLCD_SendBuffer.buffer.analogValue[2]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH4, analog->temp4,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH4, analog->channel4,
 			&TFTLCD_SendBuffer.buffer.analogValue[3]);
 
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH5, analog->humi1,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH5, analog->channel5,
 			&TFTLCD_SendBuffer.buffer.analogValue[4]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH6, analog->humi2,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH6, analog->channel6,
 			&TFTLCD_SendBuffer.buffer.analogValue[5]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH7, analog->humi3,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH7, analog->channel7,
 			&TFTLCD_SendBuffer.buffer.analogValue[6]);
-	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH8, analog->humi4,
+	TFTLCD_Analog2ASCII(CTL_ID_DATA_CH8, analog->channel8,
 			&TFTLCD_SendBuffer.buffer.analogValue[7]);
 
 	/* 不知道为什么，这个字节总是被清零 */
@@ -134,14 +134,14 @@ void TFTLCD_AnalogDataRefresh(ANALOG_ValueTypedef* analog)
  */
 void TFTLCD_AnalogDataAlarmDisplay(ANALOG_ValueTypedef* analog)
 {
-	AnalogAlarmDisplay(CTL_ID_DATA_CH1, analog->temp1, &PARAM_DeviceParam.chAlarmValue[0]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH5, analog->humi1, &PARAM_DeviceParam.chAlarmValue[1]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH2, analog->temp2, &PARAM_DeviceParam.chAlarmValue[2]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH6, analog->humi2, &PARAM_DeviceParam.chAlarmValue[3]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH3, analog->temp3, &PARAM_DeviceParam.chAlarmValue[4]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH7, analog->humi3, &PARAM_DeviceParam.chAlarmValue[5]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH4, analog->temp4, &PARAM_DeviceParam.chAlarmValue[6]);
-	AnalogAlarmDisplay(CTL_ID_DATA_CH8, analog->humi4, &PARAM_DeviceParam.chAlarmValue[7]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH1, analog->channel1, &PARAM_DeviceParam.chAlarmValue[0]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH5, analog->channel2, &PARAM_DeviceParam.chAlarmValue[1]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH2, analog->channel3, &PARAM_DeviceParam.chAlarmValue[2]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH6, analog->channel4, &PARAM_DeviceParam.chAlarmValue[3]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH3, analog->channel5, &PARAM_DeviceParam.chAlarmValue[4]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH7, analog->channel6, &PARAM_DeviceParam.chAlarmValue[5]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH4, analog->channel7, &PARAM_DeviceParam.chAlarmValue[6]);
+	AnalogAlarmDisplay(CTL_ID_DATA_CH8, analog->channel8, &PARAM_DeviceParam.chAlarmValue[7]);
 }
 
 /*******************************************************************************

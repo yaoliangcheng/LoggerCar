@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * File Name          : main.h
+  * File Name          : main.hpp
   * Description        : This file contains the common defines of the application
   ******************************************************************************
   * This notice applies to any and all portions of this file
@@ -50,6 +50,7 @@
 #define __MAIN_H
   /* Includes ------------------------------------------------------------------*/
 
+/* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -62,25 +63,25 @@
 #define O_VSCREEN_GPIO_Port GPIOE
 #define O_VPRINT_Pin GPIO_PIN_6
 #define O_VPRINT_GPIO_Port GPIOE
-#define TEMP1_Pin GPIO_PIN_0
-#define TEMP1_GPIO_Port GPIOC
-#define HUMI1_Pin GPIO_PIN_1
-#define HUMI1_GPIO_Port GPIOC
-#define TEMP2_Pin GPIO_PIN_2
-#define TEMP2_GPIO_Port GPIOC
-#define HUMI2_Pin GPIO_PIN_3
-#define HUMI2_GPIO_Port GPIOC
+#define CH1_Pin GPIO_PIN_0
+#define CH1_GPIO_Port GPIOC
+#define CH2_Pin GPIO_PIN_1
+#define CH2_GPIO_Port GPIOC
+#define CH3_Pin GPIO_PIN_2
+#define CH3_GPIO_Port GPIOC
+#define CH4_Pin GPIO_PIN_3
+#define CH4_GPIO_Port GPIOC
 #define WKUP_Pin GPIO_PIN_0
 #define WKUP_GPIO_Port GPIOA
 #define WKUP_EXTI_IRQn EXTI0_IRQn
-#define TEMP3_Pin GPIO_PIN_1
-#define TEMP3_GPIO_Port GPIOA
-#define HUMI3_Pin GPIO_PIN_2
-#define HUMI3_GPIO_Port GPIOA
-#define TEMP4_Pin GPIO_PIN_3
-#define TEMP4_GPIO_Port GPIOA
-#define HUMI4_Pin GPIO_PIN_4
-#define HUMI4_GPIO_Port GPIOA
+#define CH5_Pin GPIO_PIN_1
+#define CH5_GPIO_Port GPIOA
+#define CH6_Pin GPIO_PIN_2
+#define CH6_GPIO_Port GPIOA
+#define CH7_Pin GPIO_PIN_3
+#define CH7_GPIO_Port GPIOA
+#define CH8_Pin GPIO_PIN_4
+#define CH8_GPIO_Port GPIOA
 #define A_VBAT_Pin GPIO_PIN_1
 #define A_VBAT_GPIO_Port GPIOB
 #define O_VBAT_Pin GPIO_PIN_2
@@ -102,13 +103,26 @@
 #define O_GSM_RST_Pin GPIO_PIN_1
 #define O_GSM_RST_GPIO_Port GPIOE
 
+/* ########################## Assert Selection ############################## */
+/**
+  * @brief Uncomment the line below to expanse the "assert_param" macro in the 
+  *        HAL drivers code
+  */
+/* #define USE_FULL_ASSERT    1U */
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 void _Error_Handler(char *, int);
 
 #define Error_Handler() _Error_Handler(__FILE__, __LINE__)
+#ifdef __cplusplus
+}
+#endif
 
 /**
   * @}

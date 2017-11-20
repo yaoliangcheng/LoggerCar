@@ -42,21 +42,6 @@ typedef struct
 
 typedef struct
 {
-	uint16_t temp1;
-	uint16_t humi1;
-
-	uint16_t temp2;
-	uint16_t humi2;
-
-	uint16_t temp3;
-	uint16_t humi3;
-
-	uint16_t temp4;
-	uint16_t humi4;
-} FILE_AnalogValueTypedef;
-
-typedef struct
-{
 	char value[5];
 	char str;
 } FILE_SaveInfoAnalogTypedef;

@@ -258,28 +258,28 @@ uint16_t GPRS_SendDataPackFromCurrent(GPRS_SendbufferTyepdef* sendBuffer,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].longitude);
 
 	/* 转换模拟量值 */
-	ProtocolFormat_AnalogFloat(analog->temp1,
+	ProtocolFormat_AnalogFloat(analog->channel1,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[0],
 			sendBuffer->PackBuffer.DataBuffer.param[0].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->humi1,
+	ProtocolFormat_AnalogFloat(analog->channel2,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[1],
 			sendBuffer->PackBuffer.DataBuffer.param[1].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->temp2,
+	ProtocolFormat_AnalogFloat(analog->channel3,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[2],
 			sendBuffer->PackBuffer.DataBuffer.param[2].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->humi2,
+	ProtocolFormat_AnalogFloat(analog->channel4,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[3],
 			sendBuffer->PackBuffer.DataBuffer.param[3].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->temp3,
+	ProtocolFormat_AnalogFloat(analog->channel5,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[4],
 			sendBuffer->PackBuffer.DataBuffer.param[4].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->humi3,
+	ProtocolFormat_AnalogFloat(analog->channel6,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[5],
 			sendBuffer->PackBuffer.DataBuffer.param[5].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->temp4,
+	ProtocolFormat_AnalogFloat(analog->channel7,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[6],
 			sendBuffer->PackBuffer.DataBuffer.param[6].dataFormat);
-	ProtocolFormat_AnalogFloat(analog->humi4,
+	ProtocolFormat_AnalogFloat(analog->channel8,
 			(uint8_t*)&sendBuffer->PackBuffer.DataBuffer.SendData[0].analogValue[7],
 			sendBuffer->PackBuffer.DataBuffer.param[7].dataFormat);
 

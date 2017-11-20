@@ -11,25 +11,6 @@
 <filestoremove>
 	<file>
 	   		<name>..\Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\arm\startup_stm32f105xc.s</name>
-	   		<name>..\Src\main.c</name>
-	   		<name>..\Src\gpio.c</name>
-	   		<name>..\Src\adc.c</name>
-	   		<name>..\Src\dma.c</name>
-	   		<name>..\Src\user_diskio.c</name>
-	   		<name>..\Src\fatfs.c</name>
-	   		<name>..\Src\freertos.c</name>
-	   		<name>..\Src\iwdg.c</name>
-	   		<name>..\Src\rtc.c</name>
-	   		<name>..\Src\spi.c</name>
-	   		<name>..\Src\tim.c</name>
-	   		<name>..\Src\usart.c</name>
-	   		<name>..\Src\usb_device.c</name>
-	   		<name>..\Src\usbd_conf.c</name>
-	   		<name>..\Src\usbd_desc.c</name>
-	   		<name>..\Src\usbd_storage_if.c</name>
-	   		<name>..\Src\stm32f1xx_it.c</name>
-	   		<name>..\Src\stm32f1xx_hal_msp.c</name>
-	   		<name>..\Src\stm32f1xx_hal_timebase_TIM.c</name>
 	</file>
 </filestoremove>
 
