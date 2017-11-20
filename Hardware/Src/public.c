@@ -62,6 +62,23 @@ void HEX2BCD(uint8_t* pBCD, uint8_t* pHEX, uint8_t size)
 }
 
 /*******************************************************************************
+ * @brief 把BCD码转换成数值
+ * @pHEX  BCD指针
+ * @pBCD  数值存放指针
+ * @size  要转换的数值长度
+ */
+void BCD2HEX(uint8_t* pHEX, uint8_t* pBCD, uint8_t size)
+{
+	uint8_t i;
+
+	for (i = 0; i < size; i++)
+	{
+		*(pHEX + i) = (*(pBCD + i) / 16 * 10 + *(pBCD + i) % 16);
+	}
+}
+
+
+/*******************************************************************************
  * @brief 把16进制的数值转换成ASCII，一个16进制数转换成2个ASCII码
  * @param pASCII：ASCII指针
  * @param pHEX：16进制数值指针

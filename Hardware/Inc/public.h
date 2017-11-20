@@ -31,6 +31,7 @@ HAL_StatusTypeDef UART_DMAIdleConfig(UART_HandleTypeDef *huart, uint8_t *pData, 
 
 void BCD2ASCII(char* pASCII, uint8_t* pBCD, uint8_t size);
 void HEX2BCD(uint8_t* pBCD, uint8_t* pHEX, uint8_t size);
+void BCD2HEX(uint8_t* pHEX, uint8_t* pBCD, uint8_t size);
 void ASCII2HEX(uint8_t* pHEX, char* pASCII, uint8_t size);
 void DebugPrintf(char* str);
 

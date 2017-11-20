@@ -13,7 +13,6 @@ extern PARAM_DeviceParamTypedef PARAM_DeviceParam;
 extern osThreadId realtimeTaskHandle;
 
 /******************************************************************************/
-static void RT_SetRealTime(RT_TimeTypedef* time);
 static void RT_BKUP_ReadDate(void);
 static void RT_SetAlarmTimeInterval(uint8_t interval);
 
@@ -60,32 +59,17 @@ void RT_BKUP_UpdateDate(RT_TimeTypedef* time)
 }
 
 /*******************************************************************************
- * 与云平台时间校准
- * @pBuffer：接收缓存数据（平台回文）
- * @pStruct：发送结构体
+ * @brief 设置当前时间，并将当前时间的日期更新到备份区域
+ * @param time：当前时间值
  */
-void RT_TimeAdjustWithCloud(uint8_t* pBuffer)
+void RT_SetRealTime(RT_TimeTypedef* time)
 {
-	uint8_t str[12] = {0};
+	HAL_RTC_SetDate(&RT_RTC, &time->date, RTC_FORMAT_BIN);
+	HAL_RTC_SetTime(&RT_RTC, &time->time, RTC_FORMAT_BIN);
 
-	RT_TimeTypedef   eTime;
-
-	/* 将字符转换成数字 */
-	str2numb(str, (pBuffer + RT_OFFSET_CLOUD_TIME), sizeof(str));
-
-	eTime.date.Year    = (str[0]  * 10)   + str[1];
-	eTime.date.Month   = (str[2]  * 10)   + str[3];
-	eTime.date.Date    = (str[4]  * 10)   + str[5];
-	eTime.time.Hours   = (str[6]  * 10)   + str[7];
-	eTime.time.Minutes = (str[8]  * 10)   + str[9];
-	eTime.time.Seconds = (str[10]  * 10)  + str[11];
-
-	/* 接收到平台回文，与发送时间比较，若相差年月日时分有偏差，则校准，秒钟不计，校准字节长度为5 */
-	if ((0 != memcmp(&eTime.date, &RT_RealTime.date, 3)
-			|| (0 != memcmp(&eTime.time, &RT_RealTime.time, 2))))
-	{
-		RT_SetRealTime(&eTime);
-	}
+	/* 将更新的日期备份 */
+	RT_BKUP_UpdateDate(time);
+	HAL_RTC_GetDate(&hrtc, &RT_RealTime.date, RTC_FORMAT_BIN);
 }
 
 /*******************************************************************************
@@ -140,16 +124,4 @@ static void RT_BKUP_ReadDate(void)
 	RT_RTC.DateToUpdate.WeekDay = HAL_RTCEx_BKUPRead(&RT_RTC, RTC_BKUP_REG_WEEK);
 }
 
-/*******************************************************************************
- * function:设置当前时间，并将当前时间的日期更新到备份区域
- * time：当前时间值
- */
-static void RT_SetRealTime(RT_TimeTypedef* time)
-{
-	HAL_RTC_SetDate(&RT_RTC, &time->date, RTC_FORMAT_BIN);
-	HAL_RTC_SetTime(&RT_RTC, &time->time, RTC_FORMAT_BIN);
 
-	/* 将更新的日期备份 */
-	RT_BKUP_UpdateDate(time);
-	HAL_RTC_GetDate(&hrtc, &RT_RealTime.date, RTC_FORMAT_BIN);
-}

@@ -46,7 +46,7 @@ extern BOOL RT_recordFlag;
 /******************************************************************************/
 void RT_Init(void);
 void RT_BKUP_UpdateDate(RT_TimeTypedef* time);
-void RT_TimeAdjustWithCloud(uint8_t* pBuffer);
+void RT_SetRealTime(RT_TimeTypedef* time);
 
 #endif
 

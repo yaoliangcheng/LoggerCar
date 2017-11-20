@@ -387,6 +387,34 @@ uint16_t GPRS_SendDataPackFromRecord(GPRS_SendbufferTyepdef* sendBuffer,
 }
 
 /*******************************************************************************
+ * 与云平台时间校准
+ * @pBuffer：接收缓存数据（平台回文）
+ * @pStruct：发送结构体
+ */
+void GPRS_TimeAdjustWithCloud(GPRS_RecvPackTypedef* recvPack)
+{
+	RT_TimeTypedef   eTime;
+
+	BCD2HEX(&eTime.date.Year,    &recvPack->serverYear,  1);
+	BCD2HEX(&eTime.date.Month,   &recvPack->serverMonth, 1);
+	BCD2HEX(&eTime.date.Date,    &recvPack->serverDay,   1);
+	BCD2HEX(&eTime.time.Hours,   &recvPack->serverHour,  1);
+	BCD2HEX(&eTime.time.Minutes, &recvPack->serverMin,   1);
+	BCD2HEX(&eTime.time.Seconds, &recvPack->serverSec,   1);
+
+	if ((eTime.date.Year           != RT_RealTime.date.Year)
+			|| (eTime.date.Month   != RT_RealTime.date.Month)
+			|| (eTime.date.Date    != RT_RealTime.date.Date)
+			|| (eTime.time.Hours   != RT_RealTime.time.Hours)
+			|| (eTime.time.Minutes != RT_RealTime.time.Minutes)
+			|| (eTime.time.Seconds != RT_RealTime.time.Seconds))
+	{
+		RT_SetRealTime(&eTime);
+	}
+}
+
+
+/*******************************************************************************
  * function：gprs发送数据校验
  */
 static uint8_t GPRS_VerifyCalculate(uint8_t* pBuffer, uint16_t size)

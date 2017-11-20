@@ -9,6 +9,7 @@
 #include "exFlash.h"
 #include "analog.h"
 #include "file.h"
+#include "rt.h"
 
 /******************************************************************************/
 #define GPRS_UART 						(huart1)
@@ -25,14 +26,14 @@
 		HAL_GPIO_WritePin(O_GSM_RST_GPIO_Port, O_GSM_RST_Pin, GPIO_PIN_SET);
 
 /******************************************************************************/
-#define GPRS_PATCH_PACK_NUMB_MAX		  (20)				/* 最多支持补传数据组数 */
-#define GPRS_PACK_HEAD					  (0X37)
-#define GPRS_PACK_TAIL					  (0x38)
+#define GPRS_PATCH_PACK_NUMB_MAX		  	(20)				/* 最多支持补传数据组数 */
+#define GPRS_PACK_HEAD					  	(0X37)
+#define GPRS_PACK_TAIL					  	(0x38)
 
-#define GPRS_UART_RX_DATA_SIZE_MAX		  (50)
-#define GPRS_SIGNAL_QUALITY_OFFSET		  (8)
+#define GPRS_UART_RX_DATA_SIZE_MAX		  	(50)
+#define GPRS_SIGNAL_QUALITY_OFFSET		  	(8)
 
-#define GPRS_MESSAGE_BYTES_MAX			  (70)
+#define GPRS_MESSAGE_BYTES_MAX			  	(70)
 
 #define GPRS_PARAM_DATA_VERSION				(0x02)
 #define GPRS_PARAM_DEVICE_TYPE_CODE			(0x0A0A)
@@ -74,7 +75,7 @@ typedef struct
 {
 	uint8_t packVersion;								/* 包体版本 */
 	uint8_t packSize;									/* 包体长度 */
-	ErrorStatus recvResult;									/* 接收结果 */
+	ErrorStatus recvResult;								/* 接收结果 */
 } RecvMessageBufferTypedef;
 
 typedef struct
@@ -91,6 +92,7 @@ typedef struct
 {
 	uint8_t head;										/* 数据头 */
 	uint8_t dataSizeH;									/* 字节数H */
+	uint8_t dataSizeL;
 	char    serialNumber[10];							/* SN号 */
 	uint8_t serverYear;									/* 服务器时间 */
 	uint8_t serverMonth;
@@ -120,7 +122,7 @@ typedef struct
 	uint8_t bufferSize;										/* 缓存大小 */
 } GPRS_RecvBufferTypedef;
 
-/***********-------------------发送部分-----------------*************************/
+/******************************发送部分******************************************/
 typedef struct
 {
 	uint8_t  packVersion;								/* 包体版本 */
@@ -214,4 +216,5 @@ uint16_t GPRS_SendDataPackFromCurrent(GPRS_SendbufferTyepdef* sendBuffer,
 		GPS_LocateTypedef* location);
 uint16_t GPRS_SendDataPackFromRecord(GPRS_SendbufferTyepdef* sendBuffer,
 		FILE_SaveStructTypedef* saveInfo, uint16_t sendPackCount, RT_TimeTypedef* curtime);
+void GPRS_TimeAdjustWithCloud(GPRS_RecvPackTypedef* recvPack);
 #endif
