@@ -29,6 +29,8 @@
 #define GPRS_PATCH_PACK_NUMB_MAX		  	(20)				/* 最多支持补传数据组数 */
 #define GPRS_PACK_HEAD					  	(0X37)
 #define GPRS_PACK_TAIL					  	(0x38)
+#define GPRS_SERVER_PACK_HEAD				(0X39)
+#define GPRS_SERVER_PACK_TAIL				(0x30)
 
 #define GPRS_UART_RX_DATA_SIZE_MAX		  	(50)
 #define GPRS_SIGNAL_QUALITY_OFFSET		  	(8)

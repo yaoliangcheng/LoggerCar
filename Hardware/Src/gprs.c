@@ -406,8 +406,7 @@ void GPRS_TimeAdjustWithCloud(GPRS_RecvPackTypedef* recvPack)
 			|| (eTime.date.Month   != RT_RealTime.date.Month)
 			|| (eTime.date.Date    != RT_RealTime.date.Date)
 			|| (eTime.time.Hours   != RT_RealTime.time.Hours)
-			|| (eTime.time.Minutes != RT_RealTime.time.Minutes)
-			|| (eTime.time.Seconds != RT_RealTime.time.Seconds))
+			|| (eTime.time.Minutes != RT_RealTime.time.Minutes))
 	{
 		RT_SetRealTime(&eTime);
 	}

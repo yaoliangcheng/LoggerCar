@@ -59,7 +59,12 @@ void GPRSPROCESS_Task(void)
 			/* 数据或者短信发送完成后收到平台的回文 */
 			if ((moduleStatus == DATA_SEND_FINISH) || (moduleStatus == MESSAGE_SEND_FINISH))
 			{
-				GPRS_TimeAdjustWithCloud(&GPRS_RecvBuffer.buffer.GPRS_RecvPack);
+				if (GPRS_RecvBuffer.buffer.GPRS_RecvPack.head == GPRS_SERVER_PACK_HEAD)
+				{
+					GPRS_TimeAdjustWithCloud(&GPRS_RecvBuffer.buffer.GPRS_RecvPack);
+				}
+
+
 				/* 如果是发送数据的，则标志发送完成 */
 				if (moduleStatus == DATA_SEND_FINISH)
 				{
